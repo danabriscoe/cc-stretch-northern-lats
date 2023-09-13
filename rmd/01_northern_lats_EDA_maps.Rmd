@@ -1,0 +1,194 @@
+---
+title: "1 | Maps"
+subtitle: "Project STRETCH: Northern Latitudes - Exploratory Analyses"
+author: "Dana K Briscoe"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    code_folding: none
+    df_print: paged
+    highlight: tango
+    number_sections: no
+    theme: flatly
+    toc: yes
+    toc_float: true
+    toc_collapsed: true
+  pdf_document:
+    toc: yes
+    toc_depth: '2'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+    echo = FALSE,
+    eval = TRUE,
+    message = FALSE,
+    warning = FALSE,
+    dpi = 300,
+    fig.align = "center"
+    )
+
+# See Options: knitr::opts_chunk$get()
+```
+
+```{r load-libraries, message=FALSE}
+library(tidyverse)
+library(data.table)
+library(ggplot2)
+library(plotly)
+
+library(leaflet)
+library(mapview)
+library(leafsync)
+library(leafgl)
+library(sf)
+
+library(kableExtra)
+library(knitr)
+
+```
+
+```{r source-helper-funcs}
+source('../code/00_northern_lats_helper_functions.R')
+```
+
+```{r load-cohort-1}
+source('../code/01_prep_turtle_data.R')
+
+```
+
+```{r rename dfs}
+raw_df <- raw_data_cohort_1_w_names
+daily_df <- daily_avg_data_cohort_1
+
+# make historic df consistent with cohort df(s)
+hist_df <- historic_tags %>% wrangleHistDF()
+
+```
+
+## 1) Cohort 1
+
+```{r set-plot-params}
+# wildlife computers color pal
+# wc_pal <- colorFactor(rainbow(n), unique(daily_df$id))
+
+# unique track info
+ids = unique(daily_df$id)
+t_names = unique(daily_df$turtle_name)
+t_nums = unique(daily_df$turtle_num)
+t_names_num <- c(str_c(t_nums, ' - ', t_names))
+
+n = length(ids)
+wc_pal <-  n |>
+  {\(x) colorFactor(rainbow(x), unique(daily_df$id))}()
+
+# base_pal <- makePal('honeydew', col=unique(test$id))
+
+
+
+
+```
+
+```{r make-leaflet-basemap}
+
+# create basemap
+m <- leaflet( options = leafletOptions(preferCanvas = TRUE), width = 900, height = 600) %>% addTiles() %>% 
+    fitBounds(-160, 20, -110, 50) %>%
+    addProviderTiles("Esri.WorldImagery", group = "ESRI World Imagery") %>%
+    addProviderTiles("Esri.WorldPhysical", group = "ESRI OpenStreetMap")
+
+m360 <- leaflet(options = leafletOptions(preferCanvas = TRUE), width = 900, height = 600) %>% addTiles() %>% 
+    fitBounds(make360(-160), 20, make360(-110), 50) %>%
+    addProviderTiles("Esri.WorldImagery", group = "ESRI World Imagery") %>%
+    addProviderTiles("Esri.WorldPhysical", group = "ESRI OpenStreetMap")
+
+```
+
+```{r map-all-cohort-1}
+
+# #plot the map
+# # map_all_cohort_1 <- 
+#     m %>% 
+#     addMapTracks(df=daily_df, cpal=wc_pal, .indiv=FALSE, .addLines=TRUE, .addMarkers=TRUE) %>%
+#     addMapInset()
+# 
+
+
+### use this instead:
+
+m %>% 
+    addTrackLines(df=daily_df, cpal=wc_pal, .indiv=FALSE) %>%
+    addTrackLines(df=daily_df, cpal=wc_pal) %>%
+
+    addLayersControl(
+        baseGroups = c("ESRI World Imagery", "ESRI OpenStreetMap"),
+        overlayGroups = c(str_c("All Tracks (n=", daily_df$id %>% n_distinct(),")"),ids),
+        options = layersControlOptions(collapsed = TRUE)) %>%
+    hideGroup(ids)%>%
+    addMapInset()
+
+
+
+```
+
+```{r map-indiv-cohort-1}
+
+#plot the map
+map_indiv_cohort_1 <-
+    m %>%
+    addMapTracks(df=daily_df, cpal=wc_pal, .indiv=TRUE, .addLines=TRUE, .addMarkers=TRUE) %>%
+    addMapInset()   
+
+```
+
+
+```{r get-historic-nlats}
+
+hist_df_lon <- hist_df %>% 
+    subsetByLatLon(lon_min = -160, lon_max = 0, lat_min = 0, lat_max = 43)
+
+length(unique(hist_df_lon$id))
+
+hist_df_lon %>% getMaxLat()
+```
+
+```{r subset-hist-df_latlon}
+
+hist_subset <- hist_df %>% 
+    # filter(lon > -179 & lon < 0) %>%
+    mutate(lon  = make360(lon)) %>%
+    filter(id %in% unique(hist_df_lon$id)) 
+
+hist_ids <- unique(hist_subset$id)
+
+```
+
+```{r map-hist-subset}
+base_pal <- makePal('honeydew', col=unique(hist_subset$id))
+
+m %>%
+    addMapTracks(df=hist_subset, cpal=base_pal, .indiv=TRUE, .addLines=TRUE, .addMarkers=FALSE)
+
+
+```
+
+
+```{r map-hist-df-gl}
+m360 %>%
+    addGlPolylines(data = hist_subset %>% makeSpatialLines(), group = "id", color='gray')  %>%
+        addLayersControl(
+            baseGroups = c("ESRI World Imagery", "ESRI OpenStreetMap"
+                           # , "Esri.WorldPhysical"
+            ),
+            overlayGroups = str_c('Historic Tracks (n=', hist_ids %>% n_distinct(), ')'),
+            # hideGroup(as.character(c(ids[3:25])))
+            options = layersControlOptions(collapsed = TRUE)) %>%
+        
+        addScaleBar(position = c("bottomleft"),
+                    scaleBarOptions(
+                        # maxWidth = 100,
+                        metric = TRUE,
+                        imperial = TRUE,
+                        updateWhenIdle = TRUE)
+        )
+```

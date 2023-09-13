@@ -1,0 +1,235 @@
+---
+title: "3 | Turtle-Env Figs"
+subtitle: "Project STRETCH: Northern Latitudes - Exploratory Analyses"
+author: "Dana K Briscoe"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    code_folding: none
+    df_print: paged
+    highlight: tango
+    number_sections: no
+    theme: flatly
+    toc: no
+    toc_float: true
+    toc_collapsed: true
+  pdf_document:
+    toc: yes
+    toc_depth: '2'
+---
+
+```{=html}
+<style>
+.main-container {
+    max-width: 1180px;
+    margin-left: 10;
+    margin-right: 10;
+}
+</style>
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+    echo = FALSE,
+    eval = TRUE,
+    message = FALSE,
+    warning = FALSE,
+    dpi = 300,
+    fig.align = "center"
+    )
+
+# See Options: knitr::opts_chunk$get()
+```
+
+```{r load-libraries, message=FALSE}
+# 01
+library(tidyverse)
+library(data.table)
+library(ggplot2)
+library(plotly)
+library(leaflet)
+library(mapview)
+library(leafsync)
+library(leafgl)
+library(sf)
+library(kableExtra)
+library(knitr)
+# 02
+library(lubridate)
+library(scales)
+# 03 
+library(RColorBrewer)
+library(fields)
+library(colorRamps)
+require(latticeExtra)
+require(zoo)
+library(raster)
+```
+
+```{r source-helper-funcs}
+source('../code/00_northern_lats_helper_functions.R')
+```
+
+```{r load-cohort-1}
+source('../code/01_prep_turtle_data.R')
+
+```
+
+```{r rename-dfs-for-consistency}
+raw_df <- raw_data_cohort_1_w_names
+daily_df <- daily_avg_data_cohort_1
+
+# make historic df consistent with cohort df(s)
+hist_df <-  historic_tags %>% wrangleHistDF()
+
+```
+
+```{r set-spatial-extent}
+bbox <- c(make360(-170), make360(-110), 20, 50)
+e <- extent(bbox[1], bbox[2], bbox[3], bbox[4])
+
+```
+
+```{r set-ras-params}
+params <- tibble(
+    eov = "ssta",
+    timestep = "month",
+    min_dt = '2023-07-16',
+    max_dt = '2023-08-16')
+
+```
+
+
+```{r load ssta-monthly-ncdf}
+
+nc_path = "/Users/briscoedk/dbriscoe@stanford.edu - Google Drive/My Drive/ncdf/npac"
+
+ncs <- list.files(nc_path, pattern = str_c(params$eov, "_"), full.names=T) %>%
+    .[grep(params$timestep, .)]
+
+
+fdates <- ncs %>% 
+    str_split(., "_") %>%
+    purrr::map_chr(~ pluck(., 6)) %>%
+    substr(., start=1, stop=10)
+       
+
+ras_stack <- ncs[fdates >= params$min_dt & fdates <= params$max_dt] %>%
+    raster::stack(.) %>%
+    crop(., e)
+
+```
+
+
+```{r set-ras-info}
+
+dt_idx <- getDateRange(params$min_dt, params$max_dt, unit = params$timestep)
+ras_names_yrmon <- as.yearmon(dt_idx)
+
+ras_stack <- setZ(ras_stack, ras_names_yrmon)
+# names(ssta_monthly_stack) <- as.character(ras_names_yrmon)  # mon-yr abbreb
+names(ras_stack) <- as.character(dt_idx) # full Xyr-mon-d 
+
+```
+
+
+```{r calc-ras-mean-layer}
+ras_mean <- ras_stack %>%
+     calc(., mean, na.rm=TRUE)
+
+names(ras_mean) = as.character(dt_idx |> (\(x) { tail(x, n=1)})() )# assign dummy date for mean ras. use last date
+```
+
+
+```{r convert-ras-to-df}
+# all-time mean df
+ras_mean_df <- ras_mean %>% 
+    ras2df()
+
+# monthly df
+ras_monthly_df <- ras_stack %>% ras2df()
+    
+```
+
+
+```{r set-plot-params}
+mapdata <- map_data('world', wrap=c(-25,335), ylim=c(-55,75)) %>%
+    filter(long >= 120 & long <= 270 & lat >= 15 & lat <=80) 
+
+
+ssta_pal <- rev(c(rev(brewer.pal(9, "YlOrRd")),"white", brewer.pal(9, "Blues")))
+
+```
+
+
+```{r make-baseplot}
+baseplot <- ggplot() + 
+        # add coast 
+    geom_polygon(data = mapdata, aes(x=long, y = lat, group = group), color = "black", fill = "black") +
+   
+    theme_minimal() + 
+    
+    coord_sf(xlim = c(bbox[1], bbox[2]), ylim = c(bbox[3], bbox[4]), 
+             expand = FALSE, crs = st_crs(4326)) +
+labs(x = "Longitude", y = "Latitude")
+
+```
+
+```{r plot-ssta-mean-cc-tracks}
+
+p_ssta_mean <- baseplot + 
+    # add ssta layer
+    geom_raster(data = ras_mean_df, aes(x = lon, y = lat, fill = val, interpolate = TRUE)) +
+        scale_fill_gradientn(colours = ssta_pal[6:length(ssta_pal)], 
+                         breaks=seq(-2,5,1),
+                         limits = c(-2,5), 
+                         na.value = 'snow',
+                         name = "SSTA (°C) \n") +
+    # add cohort 1 tracks
+    geom_sf(data = daily_df %>% makeSpatialLines(), 
+            aes(colour = as.factor(id)), alpha = 0.9,show.legend=FALSE) +
+        scale_colour_manual(values = rainbow(25)) +
+
+    # add tcms box
+    geom_rect(aes(xmin=225,xmax=243 ,ymin=25,ymax=35),colour="honeydew2",alpha=0, size=0.45)
+   
+
+# show plot with coord bbox
+p <- p_ssta_mean +
+    coord_sf(xlim = c(bbox[1], bbox[2]), ylim = c(bbox[3], bbox[4]), 
+             expand = FALSE, crs = st_crs(4326)) +
+    
+    guides(fill = guide_colourbar(
+            barheight =12, ticks = TRUE)
+            )
+
+p
+
+```
+
+
+```{r}
+# p_ssta_mean <- ras_mean_df %>%
+#     ggplot(data = ., aes(x = lon, y = lat, fill = val)) + 
+#     geom_raster(interpolate = TRUE) +
+#     # add coast 
+#     geom_polygon(data = mapdata, aes(x=long, y = lat, group = group), color = "black", fill = "black") +
+#    
+#     theme_minimal() + 
+#     
+#     coord_sf(xlim = c(bbox[1], bbox[2]), ylim = c(bbox[3], bbox[4]), 
+#              expand = FALSE, crs = st_crs(4326)) +
+#     scale_fill_gradientn(colours = ssta_pal[6:length(ssta_pal)], 
+#                          breaks=seq(-2,5,1),
+#                          limits = c(-2,5), 
+#                          na.value = 'snow',
+#                          name = "SSTA (°C) \n") + 
+#     labs(x = "Longitude", y = "Latitude") +
+#     
+#     guides(fill = guide_colourbar(
+#             barheight = 22, ticks = TRUE)
+#             )
+# 
+# p_ssta_mean 
+```
+

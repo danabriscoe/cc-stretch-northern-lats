@@ -1,0 +1,194 @@
+---
+title: "2 | Turtle-Lat Plots"
+subtitle: "Project STRETCH: Northern Latitudes - Exploratory Analyses"
+author: "Dana K Briscoe"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    code_folding: none
+    df_print: paged
+    highlight: tango
+    number_sections: no
+    theme: flatly
+    toc: yes
+    toc_float: true
+    toc_collapsed: true
+  pdf_document:
+    toc: yes
+    toc_depth: '2'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+    echo = FALSE,
+    eval = TRUE,
+    message = FALSE,
+    warning = FALSE,
+    dpi = 300,
+    fig.align = "center"
+    )
+
+# See Options: knitr::opts_chunk$get()
+```
+
+```{r load-libraries, message=FALSE}
+# 01
+library(tidyverse)
+library(data.table)
+library(ggplot2)
+library(plotly)
+library(leaflet)
+library(mapview)
+library(leafsync)
+library(leafgl)
+library(sf)
+library(kableExtra)
+library(knitr)
+# 02
+library(lubridate)
+library(scales)
+```
+
+```{r source-helper-funcs}
+source('../code/00_northern_lats_helper_functions.R')
+```
+
+```{r load-cohort-1}
+source('../code/01_prep_turtle_data.R')
+
+```
+
+```{r rename-dfs-for-consistency}
+raw_df <- raw_data_cohort_1_w_names
+daily_df <- daily_avg_data_cohort_1
+
+# make historic df consistent with cohort df(s)
+hist_df <-  historic_tags %>% wrangleHistDF()
+
+```
+
+```{r table-daily-max-lats-cohort-1}
+daily_df %>%
+    group_by(id) %>%
+   slice(which.max(lat)) %>%
+    arrange(., desc(lat)) %>%
+     rename_with(str_to_title)
+```
+
+
+```{r plot-daily-lats-cohort-1}
+# color code by year - and animate
+p <- daily_df %>%
+    ggplot(aes(date, lat, group=id, text = str_c("Name: ", turtle_name,"\nID: ", id, "\n\nLat: ", round(lat,2), "°N", "\nDate: ", date))) +
+    geom_line(aes(group = id, colour = as.factor(id)), alpha = 0.9) +
+    scale_colour_manual(values = rainbow(25)) +
+    scale_x_date(breaks = "1 week", #minor_breaks = "1 day", 
+                 labels=date_format("%b-%d")) +
+
+    theme_bw() +
+    theme(legend.position = "none") +
+    labs(x = "Date", y="Latitude (°N) ")
+
+ggplotly(p,tooltip="text")
+
+```
+
+
+
+```{r combine-dfs}
+# combine cohort 1 & historic dfs
+df_all <- rbind(daily_df, hist_df)
+
+```
+
+
+```{r filter-historic-160W}
+df_160W <- df_all %>%
+    filter(lon > -160 & lon < 0) %>%
+    filter(month >=7 & month <= 9)
+
+```
+
+
+```{r calc-weekly-avg-lats}
+
+## DON"T REALLY NEED THIS CELL ANYMORE> JUST DO CALCS %>% GGPLOT NEXT CELL
+
+# df_split <- split(df_160W, df_160W$group)
+
+df_weekly_avgs <- df_all %>%
+        mutate(end_of_week = ceiling_date(date, "week") %>% as.Date(.),
+               week_idx = week(end_of_week)) 
+       
+
+# this creates a list of grouped dfs - grouped by common weekly index (# week of a year)
+l_weekly_by_idx_lats = df_weekly_avgs %>%
+    split(list(.$group)) %>%
+    map(~ .x %>% calcWeeklyStats(var=lat, by=week_idx))
+
+# this creates a list of grouped dfs - grouped by unique week of the year
+l_weekly_by_yr_lats = df_weekly_avgs %>%
+    split(list(.$group)) %>%
+    map(~ .x %>% calcWeeklyStats(var=lat, by=end_of_week))
+
+# convert list back to full df
+df_weekly_lats <- plyr::ldply(l_weekly_by_yr_lats) %>%
+    rename("group" = ".id") %>%
+    mutate(year = lubridate::year(end_of_week),
+           month = lubridate::month(end_of_week))
+
+# make sure df outputs are identical
+# daily_weekly_lats  <- calcWeeklyStats(daily_df, lat)
+# hist_160W_weekly_lats <- calcWeeklyStats(hist_df_160W, lat)
+# df_weekly_lats$cohort1 == daily_weekly_lats
+# df_weekly_lats$historic ==hist_160W_weekly_lats
+```
+
+
+```{r get-avg-monthly-lats-freqs}
+
+# Map function to each ptt
+weekly_avg_lat_freqs <- df_weekly_lats %>% 
+    filter(avg >= 35) %>%
+    mutate(year = lubridate::year(end_of_week),
+               month = lubridate::month(end_of_week),
+               day = lubridate::day(end_of_week)) %>%
+    group_by(group, month) %>%
+    group_modify(~binFreqTable(.$avg, seq(35,47, 1))) %>%
+    arrange(range) 
+
+
+weekly_avg_lat_freqs_wide <-  weekly_avg_lat_freqs %>%
+    pivot_wider(names_from = range, values_from = frequency, values_fill = 0) 
+
+# 
+
+```
+
+
+```{r plot-weekly-avg-lats-dfs-ts}
+
+df_160W %>%
+    mutate(
+    week_idx = week(date)) %>%
+    mutate(week_date = getWeekDate(week_idx)) %>%
+    group_by(group, week_date) %>%
+    summarize(
+        avg = mean(lat, na.rm=TRUE),
+        high = mean(lat, na.rm = T) + 0.2 * sd(lat, na.rm= T),
+        low  = mean(lat, na.rm = T) - 0.2 * sd(lat, na.rm= T), .groups = "drop")  %>%
+    
+    # filter(group == 'cohort1') %>%
+ ggplot() +
+  geom_point(aes(week_date, avg, color = group), size = 3) +
+  geom_line(aes(week_date, avg, color = group), size = 1.1) +
+  geom_ribbon(aes(x = week_date, ymax = high, ymin = low, color = group), alpha = 0.3) +
+  theme_bw() +
+    labs(x = "Month", y = "Latitude", subtitle = "Average Turtle Latitude by Week (July - Sept)")
+
+```
+
+
+
+
+
