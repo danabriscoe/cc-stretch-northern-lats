@@ -28,7 +28,7 @@ output:
 </style>
 ```
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, warning=FALSE}
 knitr::opts_chunk$set(
     echo = FALSE,
     eval = TRUE,
@@ -63,7 +63,7 @@ library(fields)
 library(colorRamps)
 require(latticeExtra)
 require(zoo)
-library(raster)
+suppressMessages(library(raster))
 ```
 
 ```{r source-helper-funcs}
@@ -84,15 +84,22 @@ hist_df <-  historic_tags %>% wrangleHistDF()
 
 ```
 
+```{r set-nc-path}
+nc_path = "/Users/briscoedk/dbriscoe@stanford.edu - Google Drive/My Drive/ncdf/npac"
+
+```
+
+
 ```{r set-spatial-extent}
-bbox <- c(make360(-170), make360(-110), 20, 50)
+# bbox <- c(make360(-170), make360(-110), 20, 50)
+bbox <- c(-170, -110, 20, 50)
 e <- extent(bbox[1], bbox[2], bbox[3], bbox[4])
 
 ```
 
 ```{r set-ras-params}
 params <- tibble(
-    eov = "ssta",
+    # eov = "ssta",
     timestep = "month",
     min_dt = '2023-07-16',
     max_dt = '2023-08-16')
@@ -101,63 +108,118 @@ params <- tibble(
 
 
 ```{r load ssta-monthly-ncdf}
+params$eov <- "ssta"
 
-nc_path = "/Users/briscoedk/dbriscoe@stanford.edu - Google Drive/My Drive/ncdf/npac"
-
-ncs <- list.files(nc_path, pattern = str_c(params$eov, "_"), full.names=T) %>%
+ssta_ncs <- list.files(nc_path, pattern = str_c(params$eov, "_"), full.names=T) %>%
     .[grep(params$timestep, .)]
 
 
-fdates <- ncs %>% 
+ssta_fdates <- ssta_ncs %>% 
     str_split(., "_") %>%
     purrr::map_chr(~ pluck(., 6)) %>%
     substr(., start=1, stop=10)
-       
 
-ras_stack <- ncs[fdates >= params$min_dt & fdates <= params$max_dt] %>%
+      
+```
+
+```{r load chl-monthly-ncdf}
+params$eov <- "chla"
+
+chla_ncs <- list.files(nc_path, pattern = str_c(params$eov, "_"), full.names=T) %>%
+    .[grep(params$timestep %>% str_to_title(), .)]
+
+
+chla_fdates <- chla_ncs %>% 
+    str_split(., "_") %>%
+    purrr::map_chr(~ pluck(., 3)) %>%
+    substr(., start=1, stop=10)
+
+
+```
+
+
+```{r stack-rasters, warning=FALSE,message=FALSE, results='hide'}
+dt_idx <- getDateRange(params$min_dt, params$max_dt, unit = params$timestep)
+
+## ssta
+ssta_ras_stack <- ssta_ncs[ssta_fdates >= params$min_dt & ssta_fdates <= params$max_dt] %>%
     raster::stack(.) %>%
-    crop(., e)
+    rotate(.) %>% # convert into -`180 to 180
+    crop(., e) %>%
+    prepRasterZ(., dt_idx) 
 
+## chla
+chla_ras_stack <- chla_ncs[chla_fdates >= params$min_dt & chla_fdates <= params$max_dt] %>%
+    raster::stack(., varname="chlor_a") %>%
+    crop(., e) %>% 
+    # shift(rotate(shift(., 180)), 180) %>% 
+    prepRasterZ(., dt_idx) %>%
+    invisible()
 ```
 
 
 ```{r set-ras-info}
 
-dt_idx <- getDateRange(params$min_dt, params$max_dt, unit = params$timestep)
-ras_names_yrmon <- as.yearmon(dt_idx)
-
-ras_stack <- setZ(ras_stack, ras_names_yrmon)
-# names(ssta_monthly_stack) <- as.character(ras_names_yrmon)  # mon-yr abbreb
-names(ras_stack) <- as.character(dt_idx) # full Xyr-mon-d 
+# dt_idx <- getDateRange(params$min_dt, params$max_dt, unit = params$timestep)
+# ras_names_yrmon <- as.yearmon(dt_idx)
+# 
+# ras_stack <- setZ(ras_stack, ras_names_yrmon)
+# # names(ssta_monthly_stack) <- as.character(ras_names_yrmon)  # mon-yr abbreb
+# names(ras_stack) <- as.character(dt_idx) # full Xyr-mon-d 
 
 ```
 
 
 ```{r calc-ras-mean-layer}
-ras_mean <- ras_stack %>%
+## ssta
+ssta_ras_mean <- ssta_ras_stack %>%
      calc(., mean, na.rm=TRUE)
 
-names(ras_mean) = as.character(dt_idx |> (\(x) { tail(x, n=1)})() )# assign dummy date for mean ras. use last date
-```
+names(ssta_ras_mean) = as.character(dt_idx |> (\(x) { tail(x, n=1)})() )# assign dummy date for mean ras. use last date
 
+## chla
+chla_ras_mean <- chla_ras_stack %>%
+     calc(., mean, na.rm=TRUE)
+
+names(chla_ras_mean) = as.character(dt_idx |> (\(x) { tail(x, n=1)})() )# assign dummy date for mean ras. use last date
+
+
+
+```
 
 ```{r convert-ras-to-df}
 # all-time mean df
-ras_mean_df <- ras_mean %>% 
+ssta_ras_mean_df <- ssta_ras_mean %>% 
     ras2df()
 
 # monthly df
-ras_monthly_df <- ras_stack %>% ras2df()
+ssta_ras_monthly_df <- ssta_ras_stack %>% ras2df()
+
+## chla
+# all-time mean df
+chla_ras_mean_df <- chla_ras_mean %>% 
+    ras2df()
+
+# monthly df
+chla_ras_monthly_df <- chla_ras_stack %>% ras2df()
+
     
 ```
 
 
 ```{r set-plot-params}
-mapdata <- map_data('world', wrap=c(-25,335), ylim=c(-55,75)) %>%
-    filter(long >= 120 & long <= 270 & lat >= 15 & lat <=80) 
+# mapdata <- map_data('world', wrap=c(-25,335), ylim=c(-55,75)) %>%
+#     filter(long >= 120 & long <= 270 & lat >= 15 & lat <=80) 
+mapdata <- map_data('world')
+
+grid_theme <- theme_bw() + theme(panel.ontop=TRUE, panel.background=element_blank())
 
 
 ssta_pal <- rev(c(rev(brewer.pal(9, "YlOrRd")),"white", brewer.pal(9, "Blues")))
+# chla_pal <- brewer.pal(9, "Greens")
+chla_pal <- oce::oceColorsChlorophyll(20)
+
+wc_pal   <- rainbow(25)
 
 ```
 
@@ -167,7 +229,10 @@ baseplot <- ggplot() +
         # add coast 
     geom_polygon(data = mapdata, aes(x=long, y = lat, group = group), color = "black", fill = "black") +
    
-    theme_minimal() + 
+    # # theme_minimal() +
+    grid_theme +
+    #   theme(panel.background = element_rect(fill = NA),
+    #   panel.grid.major = element_line(colour = 'snow', linetype = "solid", size = 0.5),panel.ontop = TRUE) +
     
     coord_sf(xlim = c(bbox[1], bbox[2]), ylim = c(bbox[3], bbox[4]), 
              expand = FALSE, crs = st_crs(4326)) +
@@ -175,61 +240,129 @@ labs(x = "Longitude", y = "Latitude")
 
 ```
 
-```{r plot-ssta-mean-cc-tracks}
-
-p_ssta_mean <- baseplot + 
-    # add ssta layer
-    geom_raster(data = ras_mean_df, aes(x = lon, y = lat, fill = val, interpolate = TRUE)) +
-        scale_fill_gradientn(colours = ssta_pal[6:length(ssta_pal)], 
-                         breaks=seq(-2,5,1),
-                         limits = c(-2,5), 
-                         na.value = 'snow',
-                         name = "SSTA (°C) \n") +
-    # add cohort 1 tracks
-    geom_sf(data = daily_df %>% makeSpatialLines(), 
-            aes(colour = as.factor(id)), alpha = 0.9,show.legend=FALSE) +
-        scale_colour_manual(values = rainbow(25)) +
-
-    # add tcms box
-    geom_rect(aes(xmin=225,xmax=243 ,ymin=25,ymax=35),colour="honeydew2",alpha=0, size=0.45)
-   
-
-# show plot with coord bbox
-p <- p_ssta_mean +
+```{r make-gglayers}
+add_baseplot <- function(bbox) {
+    list(
+    # add land
+    geom_polygon(data = mapdata, aes(x=long, y = lat, group = group), color = "black", fill = "black"),
+    # sest cbar height
+    guides(fill = guide_colourbar(barheight =12, ticks = TRUE,
+                  frame.colour = "black", ticks.colour = "black")),
+    # set map extent
     coord_sf(xlim = c(bbox[1], bbox[2]), ylim = c(bbox[3], bbox[4]), 
-             expand = FALSE, crs = st_crs(4326)) +
-    
-    guides(fill = guide_colourbar(
-            barheight =12, ticks = TRUE)
-            )
+             expand = FALSE, crs = st_crs(4326)), 
+    labs(x = "Longitude", y = "Latitude")
+    )
+}
 
-p
+update_map_extent <- function(xrange, yrange){
+    list(
+        coord_sf(xlim = c(xrange[1], xrange[2]), ylim = c(yrange[1], yrange[2]), 
+        expand = FALSE, crs = st_crs(4326))
+    )
+}
+
+add_track_spLines <- function(df, cpal, linewidth) {
+    list(
+    # add cohort 1 tracks
+    geom_sf(data = df %>% makeSpatialLines(lon360=FALSE), 
+        aes(colour = as.factor(id)),linewidth = linewidth, alpha = 0.9, show.legend=FALSE),
+        scale_colour_manual(values = cpal)
+    )
+}
+
+add_tcms_box <- function(){
+    list(
+    geom_rect(aes(xmin=make180(225),xmax=make180(243),ymin=25,ymax=35),
+          colour="honeydew3",alpha=0, size=0.45)
+    )
+}
+
+
+add_contour_lines <- function(df, contours){
+    list(
+        geom_contour(data=df, aes(x=lon, y=lat, z = val), 
+        colour = 'black', linewidth = 1.25, breaks = c(contours)) 
+    )
+}
+
+resize_cbar <- function(x){
+    list(
+        guides(fill = guide_colourbar(barheight =x, ticks = TRUE,
+        frame.colour = "black", ticks.colour = "black"))
+    )
+}
 
 ```
 
 
+
+```{r plot-ssta-mean-cc-tracks}
+
+p_ssta_mean <- ggplot() +
+    # add ssta layer
+    geom_raster(data = ssta_ras_mean_df, 
+                aes(x = lon, y = lat, fill = val, interpolate = TRUE)) +
+    scale_fill_gradientn(colours = ssta_pal[5:length(ssta_pal)],
+    # scale_colour_gradient2(high = "red", mid = "white", low = "blue", midpoint = 1, 
+
+                         breaks=seq(-2,4,1),
+                         limits = c(-2,4), 
+                         na.value="transparent",
+                         name = "SSTA (°C) \n") +
+    # add cohort 1 tracks
+    add_track_spLines(df=daily_df, cpal=wc_pal, linewidth=1) +
+
+    # add baselayers
+    add_baseplot(bbox) 
+ 
+# show plot with tcms box
+p_ssta_mean_tcms <- p_ssta_mean + add_tcms_box()
+p_ssta_mean_tcms
+
+```
+
+```{r plot-ssta-cohort-1-with-contour}
+p_ssta_mean_tcms + 
+    add_contour_lines(df=ssta_ras_mean_df, contours=c(1.5)) +
+    update_map_extent(xrange=c(-150, -130), yrange = c(35, 50))
+
+```
+
+
+```{r plot-chla-mean-cc-tracks}
+    
+p_chla_mean <- ggplot() +
+    # add ssta layer
+    geom_raster(data = chla_ras_mean_df, 
+                aes(x = lon, y = lat, fill = val, interpolate = TRUE)) +
+    scale_fill_gradientn(colours = rev(wc_pal[1:(length(wc_pal)-4)]), trans="log",
+    # scale_fill_gradientn(colours = chla_pal[1:length(chla_pal)], trans="log",
+
+    # scale_fill_continuous(type = "viridis", trans="log",
+                      # breaks=c(0.05, 0.1, 0.2, 0.4, 1, 2, 5, 10, 30),
+                          breaks=c(0.02, 0.05, 0.1, 0.2, 0.4, 1, 2, 5, 10, 30),
+    
+                      # breaks=c(0.02, 0.04, 0.1, 0.2, 0.4, 1, 2, 4, 10),
+                         limits = c(0.019,30),
+                         na.value="transparent",
+                         name = "Chla (mg/m^3) \n") +
+    # add cohort 1 tracks
+    add_track_spLines(daily_df, cpal=wc_pal, linewidth=1) +
+
+    # add baselayers
+    add_baseplot(bbox) 
+ 
+# show plot with tcms box
+p_chla_mean_tcms <- p_chla_mean + add_tcms_box()
+p_chla_mean_tcms +
+    resize_cbar(20)
+    #+ add_contour_lines(chla_ras_mean_df, contours = 0.20)
+
+```
+
 ```{r}
-# p_ssta_mean <- ras_mean_df %>%
-#     ggplot(data = ., aes(x = lon, y = lat, fill = val)) + 
-#     geom_raster(interpolate = TRUE) +
-#     # add coast 
-#     geom_polygon(data = mapdata, aes(x=long, y = lat, group = group), color = "black", fill = "black") +
-#    
-#     theme_minimal() + 
-#     
-#     coord_sf(xlim = c(bbox[1], bbox[2]), ylim = c(bbox[3], bbox[4]), 
-#              expand = FALSE, crs = st_crs(4326)) +
-#     scale_fill_gradientn(colours = ssta_pal[6:length(ssta_pal)], 
-#                          breaks=seq(-2,5,1),
-#                          limits = c(-2,5), 
-#                          na.value = 'snow',
-#                          name = "SSTA (°C) \n") + 
-#     labs(x = "Longitude", y = "Latitude") +
-#     
-#     guides(fill = guide_colourbar(
-#             barheight = 22, ticks = TRUE)
-#             )
-# 
-# p_ssta_mean 
+p_chla_mean_tcms +
+        update_map_extent(xrange=c(-155, -135), yrange = c(35, 50))
 ```
 

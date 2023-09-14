@@ -327,6 +327,15 @@ parseDT <- function(x, idx, start, stop, format){
 }
 
 
+## Prep rasterZ
+prepRasterZ <- function(rs = ras_stack, dt_idx){
+    ras_names_yrmon <- as.yearmon(dt_idx)
+    rs <- setZ(rs, ras_names_yrmon)
+    # names(ssta_monthly_stack) <- as.character(ras_names_yrmon)  # mon-yr abbreb
+    names(rs) <- as.character(dt_idx) # full Xyr-mon-d 
+    return(rs)
+}
+
 ## Raster to DF
 ras2df <- function(x){
     ret<- x %>%
