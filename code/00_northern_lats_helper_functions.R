@@ -205,6 +205,26 @@ getDateRange <- function(startdate, enddate, unit = "month", format = "%Y/%mm/%d
     return(ret)
 }
 
+## Get HovLon
+getHovLon <- function(r, idx){
+    dirLayer <- r %>% 
+        init(., v='y')            # spatial avg across lon (in this case, 20 deg chunks)
+    
+    z <- zonal(tmp_ras, dirLayer, FUN='mean', digits=2)
+    # # idx<-all.mons[1:length(rbextract.ECNP@layers)]
+    idx <- seq(as.Date('2023-01-16'), as.Date('2023-08-16'), by='month')
+    
+    # idx <- seq(as.Date('1997-01-16'), as.Date('2023-08-16'), by='month')
+    # idx <- as.Date(fdates)   
+    
+    dat <- expand.grid(y=z[,1], x=idx)
+    dat$z <- as.vector(z[,-1], mode='numeric')
+    
+    dat$x <- as.Date(dat$x)
+    
+    return(dat)
+}
+
 
 ## Get week date - convert week index back into a Date (ex uses 2023 as year)
 getWeekDate <- function(x){

@@ -1,0 +1,214 @@
+---
+title: "4 | TZCF Figs"
+subtitle: "Project STRETCH: Northern Latitudes - Exploratory Analyses"
+author: "Dana K Briscoe"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    code_folding: none
+    df_print: paged
+    highlight: tango
+    number_sections: no
+    theme: flatly
+    toc: no
+    toc_float: true
+    toc_collapsed: true
+  pdf_document:
+    toc: yes
+    toc_depth: '2'
+---
+
+```{=html}
+<style>
+.main-container {
+    max-width: 1180px;
+    margin-left: 10;
+    margin-right: 10;
+}
+</style>
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+    echo = FALSE,
+    eval = TRUE,
+    message = FALSE,
+    warning = FALSE,
+    dpi = 300,
+    fig.align = "center"
+    )
+
+# See Options: knitr::opts_chunk$get()
+```
+
+```{r load-libraries, message=FALSE}
+# 01
+library(tidyverse)
+library(data.table)
+library(ggplot2)
+library(plotly)
+library(leaflet)
+library(mapview)
+library(leafsync)
+library(leafgl)
+library(sf)
+library(kableExtra)
+library(knitr)
+# 02
+library(lubridate)
+library(scales)
+# 03 
+library(RColorBrewer)
+library(fields)
+library(colorRamps)
+require(latticeExtra)
+require(zoo)
+library(raster)
+```
+
+```{r source-helper-funcs}
+source('../code/00_northern_lats_helper_functions.R')
+```
+
+```{r load-cohort-1}
+source('../code/01_prep_turtle_data.R')
+
+```
+
+```{r rename-dfs-for-consistency}
+raw_df <- raw_data_cohort_1_w_names
+daily_df <- daily_avg_data_cohort_1
+
+# make historic df consistent with cohort df(s)
+hist_df <-  historic_tags %>% wrangleHistDF()
+
+```
+
+```{r set-spatial-extent}
+bbox <- c(make360(-170), make360(-110), 20, 50)
+e <- extent(bbox[1], bbox[2], bbox[3], bbox[4])
+
+tzcf_bbox <- c(make360(-160), make360(-130), 25, 50)
+e_tzcf <- extent(tzcf_bbox[1], tzcf_bbox[2], tzcf_bbox[3], tzcf_bbox[4])
+
+```
+
+```{r set-ras-params}
+params <- tibble(
+    eov = "sst",
+    timestep = "month",
+    min_dt = '1997-07-16',
+    max_dt = '2023-08-16')
+
+```
+
+
+```{r load ssta-monthly-ncdf}
+
+nc_path = "/Users/briscoedk/dbriscoe@stanford.edu - Google Drive/My Drive/ncdf/npac"
+
+ncs <- list.files(nc_path, pattern = str_c(params$eov, "_"), full.names=T) %>%
+    .[grep(params$timestep, .)]
+
+
+fdates <- ncs %>% 
+    str_split(., "_") %>%
+    purrr::map_chr(~ pluck(., 6)) %>%
+    substr(., start=1, stop=10)
+       
+
+ras_stack <- ncs[fdates >= params$min_dt & fdates <= params$max_dt] %>%
+    raster::stack(.) %>%
+    # crop(., e)
+    crop(., e_tzcf)
+
+```
+
+
+```{r set-ras-info}
+
+dt_idx <- getDateRange(params$min_dt, params$max_dt, unit = params$timestep)
+ras_names_yrmon <- as.yearmon(dt_idx)
+
+ras_stack <- setZ(ras_stack, ras_names_yrmon)
+# names(ssta_monthly_stack) <- as.character(ras_names_yrmon)  # mon-yr abbreb
+names(ras_stack) <- as.character(dt_idx) # full Xyr-mon-d 
+
+```
+
+```{r set-turtle-cpal}
+turtle_cpal <- c("#66CCC0", "#6D4C94") # cohort1, historic
+```
+
+
+```{r}
+ras_avg_1997_2022 <- subset(ras_stack, which(getZ(ras_stack) <= "2022-12-16"))
+
+ras_2023 <- subset(ras_stack, which(getZ(ras_stack) >= "2023-01-16"))
+
+# #get the date from the names of the layers and extract the month
+# indices <- format(as.Date(names(tmp_ras), format = "X%Y.%m.%d"), format = "%m")
+# indices <- as.numeric(indices)
+
+# dirLayer <- tmp_ras %>% 
+#     init(., v='y')            # spatial avg across lon (in this case, 20 deg chunks)
+# 
+#       z <- zonal(tmp_ras, dirLayer, FUN='mean', digits=2)
+#       # # idx<-all.mons[1:length(rbextract.ECNP@layers)]
+#        idx <- seq(as.Date('2023-01-16'), as.Date('2023-08-16'), by='month')
+# 
+#       # idx <- seq(as.Date('1997-01-16'), as.Date('2023-08-16'), by='month')
+#       # idx <- as.Date(fdates)   
+#       
+#       dat <- expand.grid(y=z[,1], x=idx)
+#       dat$z <- as.vector(z[,-1], mode='numeric')
+#       
+# dat$x <- as.Date(dat$x)
+# # head(dat)
+
+idx = seq(as.Date('2023-01-16'), as.Date('2023-08-16'), by='month')
+dat <- getHovLon(tmp_ras, idx)
+
+```
+
+
+```{r}
+# idx <- seq(as.Date('2012-01-15'),as.Date('2012-12-15'),by='1 month')
+idx_labs <- format(idx, format='%b')
+
+# plot by lat:
+levp <- levelplot(z ~ x*y, data=dat,
+                    # xlab='Month', ylab='Latitude',
+                    xlab=list('Month', cex=1.0), ylab=list('Latitude',cex=1.0),
+                    main = list(label=paste("",sep="")),
+                    # main = list(label=paste("Hovm- Monthly SSTa (deg C), 180W-130W",sep="")),
+                    panel=panel.levelplot.raster,     
+                    
+                  	interpolate=TRUE,
+                    scales=list(x=list(rot=30,at=idx, labels=idx_labs, cex=0.8), 
+                      y=list(cex=0.8), tck = c(1,0)), #colorkey=list(title ='°C', cex=1, side=3),
+            	  	at=seq(from=0,to=30,by=1),
+                  	col.regions = matlab.like2(255),
+                  	contour=T)
+  
+
+
+  # Contour TZCF 
+  mainCuts <- c(18)              # tzcf chla contour - as defined by Polovina et al. 2001
+  # mainCuts <- c(log(0.2))       # tzcf chla contour,  log-transformed
+  
+  mainCP <- contourplot(z ~ x*y, data=dat, 
+                        at = mainCuts, 
+                        lwd = 2.75,
+                        labels = NULL,#list(cex = 0.6), 
+                        label.style = 'align',
+                        xlab=list('Month', cex=1.0), ylab=list('Latitude',cex=1.0),
+                        scales=list(x=list(rot=30,at=idx, labels=idx_labs, cex=0.8), 
+                      y=list(cex=0.8), tck = c(1,0)),
+                        margin = FALSE, col = 'azure4')
+  
+  
+  finp <- levp+ mainCP
+  print(finp)
+```
+

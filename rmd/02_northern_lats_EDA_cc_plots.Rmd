@@ -162,12 +162,17 @@ weekly_avg_lat_freqs_wide <-  weekly_avg_lat_freqs %>%
     pivot_wider(names_from = range, values_from = frequency, values_fill = 0) 
 
 # 
+   # mutate(rel.freq = round(100 * nDepth/sum(nSpp), 0), 
+   #         freqs = if_else(spp=="Blue", rel.freq * -1, rel.freq),
+   #         pct = paste0(round(100 * nDepth/sum(nSpp), 0), "%")) 
 
 ```
 
 
 ```{r plot-weekly-avg-lats-dfs-ts}
+turtle_cpal <- c("#66CCC0", "#6D4C94")
 
+p_avg_turtle_lats_by_week <-   
 df_160W %>%
     mutate(
     week_idx = week(date)) %>%
@@ -177,14 +182,23 @@ df_160W %>%
         avg = mean(lat, na.rm=TRUE),
         high = mean(lat, na.rm = T) + 0.2 * sd(lat, na.rm= T),
         low  = mean(lat, na.rm = T) - 0.2 * sd(lat, na.rm= T), .groups = "drop")  %>%
-    
+    mutate(across(3:5, round, 2)) %>%
+    mutate(group = str_to_upper(group)) %>%
+
     # filter(group == 'cohort1') %>%
  ggplot() +
-  geom_point(aes(week_date, avg, color = group), size = 3) +
-  geom_line(aes(week_date, avg, color = group), size = 1.1) +
-  geom_ribbon(aes(x = week_date, ymax = high, ymin = low, color = group), alpha = 0.3) +
-  theme_bw() +
-    labs(x = "Month", y = "Latitude", subtitle = "Average Turtle Latitude by Week (July - Sept)")
+    geom_point(aes(week_date, avg, color = group, text = str_c("Week of: ", week_date, "\n \nAvg Turtle Lat: ", avg, "°N")), size = 3) +
+    geom_line(aes(week_date, avg, color = group), size = 1.1) +
+    geom_ribbon(aes(x = week_date, ymax = high, ymin = low, color = group), alpha = 0.3) +
+    
+    scale_color_manual(values=turtle_cpal, name = "Turtle Group \n") +
+    theme_bw() +
+    labs(x = "Month", y = "Latitude (°N)", subtitle = "Average Turtle Latitude by Week (July - Sept)")
+
+
+## turn into ggplotly obj
+gg_p_avg_turtle_lats_by_week <- 
+    ggplotly(p_avg_turtle_lats_by_week,tooltip = c("text"))
 
 ```
 
