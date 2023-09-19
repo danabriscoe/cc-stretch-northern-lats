@@ -47,3 +47,10 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# ignore folders
+scratch/
+
+# ignore data
+data/
+*.xlsx
