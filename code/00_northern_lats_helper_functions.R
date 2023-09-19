@@ -210,13 +210,10 @@ getHovLon <- function(r, idx){
     dirLayer <- r %>% 
         init(., v='y')            # spatial avg across lon (in this case, 20 deg chunks)
     
-    z <- zonal(tmp_ras, dirLayer, FUN='mean', digits=2)
-    # # idx<-all.mons[1:length(rbextract.ECNP@layers)]
-    idx <- seq(as.Date('2023-01-16'), as.Date('2023-08-16'), by='month')
-    
-    # idx <- seq(as.Date('1997-01-16'), as.Date('2023-08-16'), by='month')
-    # idx <- as.Date(fdates)   
-    
+    z <- zonal(r, dirLayer, FUN='mean', digits=2)
+
+    # idx <- seq(as.Date('2023-01-16'), as.Date('2023-08-16'), by='month')
+
     dat <- expand.grid(y=z[,1], x=idx)
     dat$z <- as.vector(z[,-1], mode='numeric')
     

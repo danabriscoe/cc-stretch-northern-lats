@@ -51,9 +51,9 @@ daily_avg_data_cohort_1 <- raw_data_cohort_1_w_names %>%
 historic_tags <- load_all_tags_historic()
 
 
-print('dataframes: ')
-print('raw_data_cohort_1_w_names') 
-print('daily_avg_data_cohort_1')
-print('historic_tags')
+# print('dataframes: ')
+# print('raw_data_cohort_1_w_names') 
+# print('daily_avg_data_cohort_1')
+# print('historic_tags')
 
 ## fin
