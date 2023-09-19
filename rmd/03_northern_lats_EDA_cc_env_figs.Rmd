@@ -28,7 +28,7 @@ output:
 </style>
 ```
 
-```{r setup, include=FALSE, warning=FALSE}
+```{r 03-setup, include=FALSE, warning=FALSE}
 knitr::opts_chunk$set(
     echo = FALSE,
     eval = TRUE,
@@ -41,7 +41,7 @@ knitr::opts_chunk$set(
 # See Options: knitr::opts_chunk$get()
 ```
 
-```{r load-libraries, message=FALSE}
+```{r 03-load-libraries, message=FALSE}
 # 01
 library(tidyverse)
 library(data.table)
@@ -66,16 +66,16 @@ require(zoo)
 suppressMessages(library(raster))
 ```
 
-```{r source-helper-funcs}
+```{r 03-source-helper-funcs}
 source('../code/00_northern_lats_helper_functions.R')
 ```
 
-```{r load-cohort-1}
+```{r 03-load-cohort-1}
 source('../code/01_prep_turtle_data.R')
 
 ```
 
-```{r rename-dfs-for-consistency}
+```{r 03-rename-dfs-for-consistency}
 raw_df <- raw_data_cohort_1_w_names
 daily_df <- daily_avg_data_cohort_1
 
@@ -84,20 +84,20 @@ hist_df <-  historic_tags %>% wrangleHistDF()
 
 ```
 
-```{r set-nc-path}
+```{r 03-set-nc-path}
 nc_path = "/Users/briscoedk/dbriscoe@stanford.edu - Google Drive/My Drive/ncdf/npac"
 
 ```
 
 
-```{r set-spatial-extent}
+```{r 03-set-spatial-extent}
 # bbox <- c(make360(-170), make360(-110), 20, 50)
 bbox <- c(-170, -110, 20, 50)
 e <- extent(bbox[1], bbox[2], bbox[3], bbox[4])
 
 ```
 
-```{r set-ras-params}
+```{r 03-set-ras-params}
 params <- tibble(
     # eov = "ssta",
     timestep = "month",
@@ -122,7 +122,7 @@ ssta_fdates <- ssta_ncs %>%
       
 ```
 
-```{r load chl-monthly-ncdf}
+```{r 03-load chl-monthly-ncdf}
 params$eov <- "chla"
 
 chla_ncs <- list.files(nc_path, pattern = str_c(params$eov, "_"), full.names=T) %>%
@@ -138,7 +138,7 @@ chla_fdates <- chla_ncs %>%
 ```
 
 
-```{r stack-rasters, warning=FALSE,message=FALSE, results='hide'}
+```{r 03-stack-rasters, warning=FALSE,message=FALSE, results='hide'}
 dt_idx <- getDateRange(params$min_dt, params$max_dt, unit = params$timestep)
 
 ## ssta
@@ -158,19 +158,19 @@ chla_ras_stack <- chla_ncs[chla_fdates >= params$min_dt & chla_fdates <= params$
 ```
 
 
-```{r set-ras-info}
+<!-- ```{r 03-set-ras-info} -->
 
-# dt_idx <- getDateRange(params$min_dt, params$max_dt, unit = params$timestep)
-# ras_names_yrmon <- as.yearmon(dt_idx)
-# 
-# ras_stack <- setZ(ras_stack, ras_names_yrmon)
-# # names(ssta_monthly_stack) <- as.character(ras_names_yrmon)  # mon-yr abbreb
-# names(ras_stack) <- as.character(dt_idx) # full Xyr-mon-d 
+<!-- # dt_idx <- getDateRange(params$min_dt, params$max_dt, unit = params$timestep) -->
+<!-- # ras_names_yrmon <- as.yearmon(dt_idx) -->
+<!-- #  -->
+<!-- # ras_stack <- setZ(ras_stack, ras_names_yrmon) -->
+<!-- # # names(ssta_monthly_stack) <- as.character(ras_names_yrmon)  # mon-yr abbreb -->
+<!-- # names(ras_stack) <- as.character(dt_idx) # full Xyr-mon-d  -->
 
-```
+<!-- ``` -->
 
 
-```{r calc-ras-mean-layer}
+```{r 03-calc-ras-mean-layer}
 ## ssta
 ssta_ras_mean <- ssta_ras_stack %>%
      calc(., mean, na.rm=TRUE)
@@ -187,7 +187,7 @@ names(chla_ras_mean) = as.character(dt_idx |> (\(x) { tail(x, n=1)})() )# assign
 
 ```
 
-```{r convert-ras-to-df}
+```{r 03-convert-ras-to-df}
 # all-time mean df
 ssta_ras_mean_df <- ssta_ras_mean %>% 
     ras2df()
@@ -207,7 +207,7 @@ chla_ras_monthly_df <- chla_ras_stack %>% ras2df()
 ```
 
 
-```{r set-plot-params}
+```{r 03-set-plot-params}
 # mapdata <- map_data('world', wrap=c(-25,335), ylim=c(-55,75)) %>%
 #     filter(long >= 120 & long <= 270 & lat >= 15 & lat <=80) 
 mapdata <- map_data('world')
@@ -224,7 +224,7 @@ wc_pal   <- rainbow(25)
 ```
 
 
-```{r make-baseplot}
+```{r 03-make-baseplot}
 baseplot <- ggplot() + 
         # add coast 
     geom_polygon(data = mapdata, aes(x=long, y = lat, group = group), color = "black", fill = "black") +
@@ -240,7 +240,7 @@ labs(x = "Longitude", y = "Latitude")
 
 ```
 
-```{r make-gglayers}
+```{r 03-make-gglayers}
 add_baseplot <- function(bbox) {
     list(
     # add land
@@ -297,7 +297,7 @@ resize_cbar <- function(x){
 
 
 
-```{r plot-ssta-mean-cc-tracks}
+```{r 03-plot-ssta-mean-cc-tracks}
 
 p_ssta_mean <- ggplot() +
     # add ssta layer
@@ -318,11 +318,12 @@ p_ssta_mean <- ggplot() +
  
 # show plot with tcms box
 p_ssta_mean_tcms <- p_ssta_mean + add_tcms_box()
-p_ssta_mean_tcms
+# p_ssta_mean_tcms
 
 ```
 
-```{r plot-ssta-cohort-1-with-contour}
+```{r 03-plot-ssta-cohort-1-with-contour}
+p_ssta_mean_tcms_w_contour <- 
 p_ssta_mean_tcms + 
     add_contour_lines(df=ssta_ras_mean_df, contours=c(1.5)) +
     update_map_extent(xrange=c(-150, -130), yrange = c(35, 50))
@@ -330,7 +331,7 @@ p_ssta_mean_tcms +
 ```
 
 
-```{r plot-chla-mean-cc-tracks}
+```{r 03-plot-chla-mean-cc-tracks}
     
 p_chla_mean <- ggplot() +
     # add ssta layer
@@ -354,14 +355,14 @@ p_chla_mean <- ggplot() +
     add_baseplot(bbox) 
  
 # show plot with tcms box
-p_chla_mean_tcms <- p_chla_mean + add_tcms_box()
-p_chla_mean_tcms +
+p_chla_mean_tcms <- p_chla_mean + add_tcms_box() +
     resize_cbar(20)
     #+ add_contour_lines(chla_ras_mean_df, contours = 0.20)
 
 ```
 
 ```{r}
+p_chla_mean_tcms_zoom <- 
 p_chla_mean_tcms +
         update_map_extent(xrange=c(-155, -135), yrange = c(35, 50))
 ```

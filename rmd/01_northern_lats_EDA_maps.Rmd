@@ -10,7 +10,7 @@ output:
     highlight: tango
     number_sections: no
     theme: flatly
-    toc: yes
+    toc: no
     toc_float: true
     toc_collapsed: true
   pdf_document:
@@ -18,7 +18,7 @@ output:
     toc_depth: '2'
 ---
 
-```{r setup, include=FALSE}
+```{r 01-setup, include=FALSE}
 knitr::opts_chunk$set(
     echo = FALSE,
     eval = TRUE,
@@ -31,7 +31,7 @@ knitr::opts_chunk$set(
 # See Options: knitr::opts_chunk$get()
 ```
 
-```{r load-libraries, message=FALSE}
+```{r 01-load-libraries, message=FALSE}
 library(tidyverse)
 library(data.table)
 library(ggplot2)
@@ -48,16 +48,16 @@ library(knitr)
 
 ```
 
-```{r source-helper-funcs}
+```{r 01-source-helper-funcs}
 source('../code/00_northern_lats_helper_functions.R')
 ```
 
-```{r load-cohort-1}
+```{r 01-load-cohort-1}
 source('../code/01_prep_turtle_data.R')
 
 ```
 
-```{r rename dfs}
+```{r 01-rename dfs}
 raw_df <- raw_data_cohort_1_w_names
 daily_df <- daily_avg_data_cohort_1
 
@@ -66,9 +66,8 @@ hist_df <- historic_tags %>% wrangleHistDF()
 
 ```
 
-## 1) Cohort 1
 
-```{r set-plot-params}
+```{r 01-set-plot-params}
 # wildlife computers color pal
 # wc_pal <- colorFactor(rainbow(n), unique(daily_df$id))
 
@@ -89,7 +88,9 @@ wc_pal <-  n |>
 
 ```
 
-```{r make-leaflet-basemap}
+
+
+```{r 01-make-leaflet-basemap}
 
 # create basemap
 m <- leaflet( options = leafletOptions(preferCanvas = TRUE), width = 900, height = 600) %>% addTiles() %>% 
@@ -104,7 +105,7 @@ m360 <- leaflet(options = leafletOptions(preferCanvas = TRUE), width = 900, heig
 
 ```
 
-```{r map-all-cohort-1}
+```{r 01-map-all-cohort-1}
 
 # #plot the map
 # # map_all_cohort_1 <- 
@@ -115,8 +116,7 @@ m360 <- leaflet(options = leafletOptions(preferCanvas = TRUE), width = 900, heig
 
 
 ### use this instead:
-
-m %>% 
+m <- m %>% 
     addTrackLines(df=daily_df, cpal=wc_pal, .indiv=FALSE) %>%
     addTrackLines(df=daily_df, cpal=wc_pal) %>%
 
@@ -131,7 +131,7 @@ m %>%
 
 ```
 
-```{r map-indiv-cohort-1}
+```{r 01-map-indiv-cohort-1}
 
 #plot the map
 map_indiv_cohort_1 <-
@@ -142,17 +142,17 @@ map_indiv_cohort_1 <-
 ```
 
 
-```{r get-historic-nlats}
+```{r 01-get-historic-nlats}
 
 hist_df_lon <- hist_df %>% 
     subsetByLatLon(lon_min = -160, lon_max = 0, lat_min = 0, lat_max = 43)
 
 length(unique(hist_df_lon$id))
 
-hist_df_lon %>% getMaxLat()
+hist_df_max_lons <- hist_df_lon %>% getMaxLat()
 ```
 
-```{r subset-hist-df_latlon}
+```{r 01-subset-hist-df_latlon}
 
 hist_subset <- hist_df %>% 
     # filter(lon > -179 & lon < 0) %>%
@@ -163,18 +163,18 @@ hist_ids <- unique(hist_subset$id)
 
 ```
 
-```{r map-hist-subset}
+```{r 01-map-hist-subset}
 base_pal <- makePal('honeydew', col=unique(hist_subset$id))
 
-m %>%
+m <- m %>%
     addMapTracks(df=hist_subset, cpal=base_pal, .indiv=TRUE, .addLines=TRUE, .addMarkers=FALSE)
 
 
 ```
 
 
-```{r map-hist-df-gl}
-m360 %>%
+```{r 01-map-hist-df-gl}
+m360 <- m360 %>%
     addGlPolylines(data = hist_subset %>% makeSpatialLines(), group = "id", color='gray')  %>%
         addLayersControl(
             baseGroups = c("ESRI World Imagery", "ESRI OpenStreetMap"
@@ -192,3 +192,29 @@ m360 %>%
                         updateWhenIdle = TRUE)
         )
 ```
+
+
+```{r 01-Section-2-Tables-Figs}
+### Print Tables & Figures ------------------------------
+```
+
+```{r table-max-lats-by-id}
+
+daily_avg_data_cohort_1_table <- 
+daily_avg_data_cohort_1 %>%
+    group_by(id) %>%
+    slice(which.max(lat)) %>%
+    arrange(., desc(lat)) %>%
+    dplyr::select(id, turtle_num, turtle_name, date, lat, lon) %>%
+    select_all(~gsub("_", " ", str_to_title(.))) %>%
+    rename_at(vars(c("Id", "Lat")), ~ c("ID", "Max Lat")) 
+
+daily_avg_data_cohort_1_table %>%
+kbl(caption = "Table 1. Cohort 1 Max Latitudes by Turtle ID") %>%
+    kable_paper("hover", full_width = T) %>%
+    kable_styling(bootstrap_options = c("condensed", "responsive")) %>%
+    kable_styling(fixed_thead = T) %>%
+    kable_minimal() %>%
+scroll_box(width = "100%", height = "300px")
+```
+

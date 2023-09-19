@@ -1,0 +1,50 @@
+---
+title: "Northern Latitudes MS: Draft Figures"
+subtitle: "Project STRETCH: Northern Latitudes - Exploratory Analyses"
+author: "Dana K Briscoe"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    code_folding: none
+    df_print: paged
+    highlight: tango
+    number_sections: no
+    theme: flatly
+    toc: yes
+    toc_float: true
+    toc_collapsed: true
+  pdf_document:
+    toc: yes
+    toc_depth: '2'
+---
+
+
+
+## Figure 1. Cohort 1 & Average SST
+
+Text here. This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+
+
+```{r 01, child=c('01_northern_lats_EDA_maps.Rmd')}
+
+```
+
+
+```{r 02, child=c('02_northern_lats_EDA_cc_plots.Rmd')}
+
+```
+
+```{r 03, child=c('03_northern_lats_EDA_cc_env_figs.Rmd')}
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

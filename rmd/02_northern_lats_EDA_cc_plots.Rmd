@@ -10,7 +10,7 @@ output:
     highlight: tango
     number_sections: no
     theme: flatly
-    toc: yes
+    toc: no
     toc_float: true
     toc_collapsed: true
   pdf_document:
@@ -18,7 +18,7 @@ output:
     toc_depth: '2'
 ---
 
-```{r setup, include=FALSE}
+```{r 02-setup, include=FALSE}
 knitr::opts_chunk$set(
     echo = FALSE,
     eval = TRUE,
@@ -31,7 +31,7 @@ knitr::opts_chunk$set(
 # See Options: knitr::opts_chunk$get()
 ```
 
-```{r load-libraries, message=FALSE}
+```{r 02-load-libraries, message=FALSE}
 # 01
 library(tidyverse)
 library(data.table)
@@ -49,16 +49,16 @@ library(lubridate)
 library(scales)
 ```
 
-```{r source-helper-funcs}
+```{r 02-source-helper-funcs}
 source('../code/00_northern_lats_helper_functions.R')
 ```
 
-```{r load-cohort-1}
+```{r 02-load-cohort-1}
 source('../code/01_prep_turtle_data.R')
 
 ```
 
-```{r rename-dfs-for-consistency}
+```{r 02-rename-dfs-for-consistency}
 raw_df <- raw_data_cohort_1_w_names
 daily_df <- daily_avg_data_cohort_1
 
@@ -67,13 +67,14 @@ hist_df <-  historic_tags %>% wrangleHistDF()
 
 ```
 
-```{r table-daily-max-lats-cohort-1}
-daily_df %>%
-    group_by(id) %>%
-   slice(which.max(lat)) %>%
-    arrange(., desc(lat)) %>%
-     rename_with(str_to_title)
-```
+
+<!-- ```{r table-daily-max-lats-cohort-1} -->
+<!-- daily_df %>% -->
+<!--     group_by(id) %>% -->
+<!--    slice(which.max(lat)) %>% -->
+<!--     arrange(., desc(lat)) %>% -->
+<!--      rename_with(str_to_title) -->
+<!-- ``` -->
 
 
 ```{r plot-daily-lats-cohort-1}
@@ -89,7 +90,7 @@ p <- daily_df %>%
     theme(legend.position = "none") +
     labs(x = "Date", y="Latitude (°N) ")
 
-ggplotly(p,tooltip="text")
+gg_daily_avg_cohort1_max_lats <- ggplotly(p,tooltip="text")
 
 ```
 
