@@ -205,23 +205,50 @@ getDateRange <- function(startdate, enddate, unit = "month", format = "%Y/%mm/%d
     return(ret)
 }
 
-## Get HovLon
-getHovLon <- function(r, idx){
-    dirLayer <- r %>% 
-        init(., v='y')            # spatial avg across lon (in this case, 20 deg chunks)
+# ## Get HovLon
+# getHovLon <- function(r, idx){
+#     dirLayer <- r %>% 
+#         init(., v='y')            # spatial avg across lon (in this case, 20 deg chunks)
+#     
+#     z <- zonal(r, dirLayer, FUN='mean', digits=2)
+# 
+#     # idx <- seq(as.Date('2023-01-16'), as.Date('2023-08-16'), by='month')
+# 
+#     dat <- expand.grid(y=z[,1], x=idx)
+#     dat$z <- as.vector(z[,-1], mode='numeric')
+#     
+#     dat$x <- as.Date(dat$x)
+#     
+#     return(dat)
+# }
+
+# getHovLon function by month year
+# getHovLon <- function(subset_r, year) {
+#     dirLayer <- subset_r %>% init(., v = 'y') # spatial avg across lon (in this case, 20 deg chunks)
+#     
+#     z <- zonal(subset_r, dirLayer, FUN = 'mean', digits = 2)
+#     
+#     dat <- expand.grid(y = z[, 1], x = as.Date(paste0(year, "-01-01")))
+#     dat$z <- as.vector(z[, -1], mode = 'numeric')
+#     
+#     dat$x <- as.Date(dat$x)
+#     
+#     return(dat)
+# }
+
+# Define your modified getHovLon function
+getHovLon <- function(subset_r, year, month) {
+    dirLayer <- subset_r %>% init(., v = 'y') # spatial avg across lon (in this case, 20 deg chunks)
     
-    z <- zonal(r, dirLayer, FUN='mean', digits=2)
-
-    # idx <- seq(as.Date('2023-01-16'), as.Date('2023-08-16'), by='month')
-
-    dat <- expand.grid(y=z[,1], x=idx)
-    dat$z <- as.vector(z[,-1], mode='numeric')
+    z <- zonal(subset_r, dirLayer, FUN = 'mean', digits = 2)
+    
+    dat <- expand.grid(y = z[, 1], x = as.Date(paste0(year, "-", sprintf("%02d", month), "-01")))
+    dat$z <- as.vector(z[, -1], mode = 'numeric')
     
     dat$x <- as.Date(dat$x)
     
     return(dat)
 }
-
 
 ## Get week date - convert week index back into a Date (ex uses 2023 as year)
 getWeekDate <- function(x){

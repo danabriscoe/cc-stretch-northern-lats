@@ -64,6 +64,8 @@ library(colorRamps)
 require(latticeExtra)
 require(zoo)
 library(raster)
+#04
+library(plotly)
 ```
 
 ```{r 04-source-helper-funcs}
@@ -191,56 +193,8 @@ ras_stack_by_year_list <- lapply(years, subset_by_year, stack = ras_stack)
 
 ```{r 04-get-Hov-Lon-MonYr}
 raster_stack <- ras_stack
-# Extract year and month from layer names
-layer_names <- names(raster_stack)
-year_month_info <- strsplit(layer_names, "_")
-years <- as.integer(sapply(year_month_info, function(x) as.integer(x[2])))
-months <- as.integer(sapply(year_month_info, function(x) as.integer(x[3])))
 
-# Define your modified getHovLon function
-getHovLon <- function(subset_r, year, month) {
-  dirLayer <- subset_r %>% init(., v = 'y') # spatial avg across lon (in this case, 20 deg chunks)
-
-  z <- zonal(subset_r, dirLayer, FUN = 'mean', digits = 2)
-
-  dat <- expand.grid(y = z[, 1], x = as.Date(paste0(year, "-", sprintf("%02d", month), "-01")))
-  dat$z <- as.vector(z[, -1], mode = 'numeric')
-
-  dat$x <- as.Date(dat$x)
-
-  return(dat)
-}
-
-# Use purrr's map2 function to apply getHovLon to each month and year combination
-result_list <- map2(years, months, ~ {
-  year <- .x
-  month <- .y
-  subset_layers <- grep(paste0("^layer_", year, "_", sprintf("%02d", month)), layer_names, value = TRUE)
-  subset_raster <- raster_stack[[subset_layers]]
-  getHovLon(subset_raster, year, month)
-})
-
-# Combine the list of data frames into one large data frame
-combined_df <- do.call(rbind, result_list)
-
-# Group the combined data frame by year and month
-grouped_by_year_month <- combined_df %>%
-  group_by(year, month)
-
-# idx_2023 = seq(as.Date('2023-01-16'), as.Date('2023-08-16'), by='month')
-# dat_2023 <- getHovLon(ras_2023, idx_2023)
-
-# idx = idx_2023
-# dat = dat_2023
-# 
-# year = years[2]
-# idx = seq(as.Date(str_c(year, '-01-16')), as.Date(str_c(year, '-12-16')), by='month')
-# 
-# raster_stack = subset_list[[2]]
-# result_list <- lapply(idx, getHovLon, r = raster_stack)
-# 
-# test <- getHovLon(r=subset_list[[2]], idx)
-
+# DO THIS!
 # Define the start and end year and month
 start_date <- as.Date("1997-07-01")
 end_date <- as.Date("2023-08-01")
@@ -252,25 +206,30 @@ year_month_df <- data.frame(
   month = month(date_seq)
 )
 
-
-names(ras_stack) <- apply(year_month_df, 1, function(row) {
+# reset names for raser stack to run getHovLon
+names(raster_stack) <- apply(year_month_df, 1, function(row) {
   sprintf("layer_%04d_%02d", row["year"], row["month"])
 })
 
-# Extract the unique years from layer names
-unique_years <- unique(year_month_df$year)
-unique_months <- unique(year_month_df$month)
+# Extract year and month from layer names
+layer_names <- names(raster_stack)
+year_month_info <- strsplit(layer_names, "_")
+years <- as.integer(sapply(year_month_info, function(x) as.integer(x[2])))
+months <- as.integer(sapply(year_month_info, function(x) as.integer(x[3])))
 
-# Use purrr's map function to apply getHovLon to each year and month combination
-result_list <- map2(unique_years, unique_months, ~ {
+
+# Use purrr's map2 function to apply getHovLon to each month and year combination
+result_list <- map2(years, months, ~ {
   year <- .x
   month <- .y
-  subset_layers <- grep(paste0("^layer_", year, "_", sprintf("%02d", month)), names(ras_stack), value = TRUE)
-  subset_raster <- ras_stack[[subset_layers]]
-  getHovLon(subset_raster, year)
+  subset_layers <- grep(paste0("^layer_", year, "_", sprintf("%02d", month)), layer_names, value = TRUE)
+  subset_raster <- raster_stack[[subset_layers]]
+  getHovLon(subset_raster, year, month)
 })
 
+```
 
+```{r convert-hov-mon-yr-to-df}
 # Combine the list of data frames into one large data frame
 combined_df <- do.call(rbind, result_list)
 
@@ -281,143 +240,260 @@ grouped_by_year_month <- combined_df %>%
            day = lubridate::day(x)) %>%
     mutate(month_abb = month.abb[as.numeric(format(x, "%m"))]) %>%
   group_by(year, month)
-
-
 ```
 
 
-```{r 04-levelplot}
-# idx <- seq(as.Date('2012-01-15'),as.Date('2012-12-15'),by='1 month')
-dat = grouped_by_year_month %>% filter(year == '2023') 
-idx_labs <- format(unique(dat$month), format='%b')
-dat <- dat[,1:3]
-# plot by lat:
-levp <- levelplot(z ~ x*y, data=dat,
-                    # xlab='Month', ylab='Latitude',
-                    xlab=list('Month', cex=1.0), ylab=list('Latitude',cex=1.0),
-                    main = list(label=paste("",sep="")),
-                    # main = list(label=paste("Hovm- Monthly SSTa (deg C), 180W-130W",sep="")),
-                    panel=panel.levelplot.raster,     
-                    
-                  	interpolate=TRUE,
-                    scales=list(x=list(rot=30,at=idx, labels=idx_labs, cex=0.8), 
-                      y=list(cex=0.8), tck = c(1,0)), #colorkey=list(title ='°C', cex=1, side=3),
-            	  	at=seq(from=0,to=30,by=1),
-                  	col.regions = matlab.like2(255),
-                  	contour=T)
-  
+<!-- ```{r 04-levelplot} -->
+<!-- # idx <- seq(as.Date('2012-01-15'),as.Date('2012-12-15'),by='1 month') -->
+<!-- dat = grouped_by_year_month %>% filter(year == '2023')  -->
+<!-- idx_labs <- format(unique(dat$month), format='%b') -->
+<!-- dat <- dat[,1:3] -->
+<!-- # plot by lat: -->
+<!-- levp <- levelplot(z ~ x*y, data=dat, -->
+<!--                     # xlab='Month', ylab='Latitude', -->
+<!--                     xlab=list('Month', cex=1.0), ylab=list('Latitude',cex=1.0), -->
+<!--                     main = list(label=paste("",sep="")), -->
+<!--                     # main = list(label=paste("Hovm- Monthly SSTa (deg C), 180W-130W",sep="")), -->
+<!--                     panel=panel.levelplot.raster,      -->
+
+<!--                   	interpolate=TRUE, -->
+<!--                     scales=list(x=list(rot=30,at=idx, labels=idx_labs, cex=0.8),  -->
+<!--                       y=list(cex=0.8), tck = c(1,0)), #colorkey=list(title ='°C', cex=1, side=3), -->
+<!--             	  	at=seq(from=0,to=30,by=1), -->
+<!--                   	col.regions = matlab.like2(255), -->
+<!--                   	contour=T) -->
 
 
-  # Contour TZCF 
-  mainCuts <- c(18)              # tzcf chla contour - as defined by Polovina et al. 2001
-  # mainCuts <- c(log(0.2))       # tzcf chla contour,  log-transformed
-  
-  # mainCP <- contourplot(z ~ x*y, data=dat, 
-  #                       at = mainCuts, 
-  #                       lwd = 2.75,
-  #                       labels = NULL,#list(cex = 0.6), 
-  #                       label.style = 'align',
-  #                       xlab=list('Month', cex=1.0), ylab=list('Latitude',cex=1.0),
-  #                       scales=list(x=list(rot=30,at=idx, labels=idx_labs, cex=0.8), 
-  #                     y=list(cex=0.8), tck = c(1,0)),
-  #                       margin = FALSE, col = 'azure4')
-  
-  mainCP <- contourplot(
-  z ~ x * y, 
-  data = dat, 
-  at = mainCuts, 
-  lwd = 2.75,
-  labels = NULL,  # You can define labels if needed
-  label.style = 'align',
-  xlab = list('Month', cex = 1.0), 
-  ylab = list('Latitude', cex = 1.0),
-  scales = list(
-    x = list(
-      rot = 30, 
-      at = unique(dat$x),  # Use unique dates from your data
-      labels = idx_labs, 
-      cex = 0.8
-    ), 
-    y = list(cex = 0.8), 
-    tck = c(1, 0)
-  ),
-  margin = FALSE, 
-  col = 'azure4'
-)
-  finp <- levp+ mainCP
-  # print(finp)
+
+<!--   # Contour TZCF  -->
+<!--   mainCuts <- c(18)              # tzcf chla contour - as defined by Polovina et al. 2001 -->
+<!--   # mainCuts <- c(log(0.2))       # tzcf chla contour,  log-transformed -->
+
+<!--   # mainCP <- contourplot(z ~ x*y, data=dat,  -->
+<!--   #                       at = mainCuts,  -->
+<!--   #                       lwd = 2.75, -->
+<!--   #                       labels = NULL,#list(cex = 0.6),  -->
+<!--   #                       label.style = 'align', -->
+<!--   #                       xlab=list('Month', cex=1.0), ylab=list('Latitude',cex=1.0), -->
+<!--   #                       scales=list(x=list(rot=30,at=idx, labels=idx_labs, cex=0.8),  -->
+<!--   #                     y=list(cex=0.8), tck = c(1,0)), -->
+<!--   #                       margin = FALSE, col = 'azure4') -->
+
+<!--   mainCP <- contourplot( -->
+<!--   z ~ x * y,  -->
+<!--   data = dat,  -->
+<!--   at = mainCuts,  -->
+<!--   lwd = 2.75, -->
+<!--   labels = NULL,  # You can define labels if needed -->
+<!--   label.style = 'align', -->
+<!--   xlab = list('Month', cex = 1.0),  -->
+<!--   ylab = list('Latitude', cex = 1.0), -->
+<!--   scales = list( -->
+<!--     x = list( -->
+<!--       rot = 30,  -->
+<!--       at = unique(dat$x),  # Use unique dates from your data -->
+<!--       labels = idx_labs,  -->
+<!--       cex = 0.8 -->
+<!--     ),  -->
+<!--     y = list(cex = 0.8),  -->
+<!--     tck = c(1, 0) -->
+<!--   ), -->
+<!--   margin = FALSE,  -->
+<!--   col = 'azure4' -->
+<!-- ) -->
+<!--   finp <- levp+ mainCP -->
+<!--   # print(finp) -->
+<!-- ``` -->
+
+<!-- ```{r 04-contourplot-func} -->
+<!-- # Define the contourplot function with the required settings -->
+<!-- contourplot_function <- function(dat) { -->
+<!--   # Create a contour plot with specific settings -->
+<!--   p <- contourplot( -->
+<!--     z ~ x * y,  -->
+<!--     data = dat,  -->
+<!--     at = mainCuts,  -->
+<!--     lwd = 2.75, -->
+<!--     labels = NULL,  # You can define labels if needed -->
+<!--     label.style = 'align', -->
+<!--     xlab = list('Month', cex = 1.0),  -->
+<!--     ylab = list('Latitude', cex = 1.0), -->
+<!--     scales = list( -->
+<!--       x = list( -->
+<!--         rot = 30,  -->
+<!--         at = unique(dat$x),  # Use unique dates from your data -->
+<!--         labels = format(unique(dat$month), format='%b'),  -->
+<!--         cex = 0.8 -->
+<!--       ),  -->
+<!--       y = list(cex = 0.8),  -->
+<!--       tck = c(1, 0) -->
+<!--     ), -->
+<!--     margin = FALSE,  -->
+<!--     col = 'azure4' -->
+<!--   ) -->
+<!--   print(p)  # You can choose to print or save the plots here -->
+<!-- } -->
+
+<!-- # # Use purrr's map function to create a contour plot for each year -->
+<!-- # plots <- grouped_by_year_month %>% -->
+<!-- #   split(.$year) %>% -->
+<!-- #   map(contourplot_function) -->
+<!-- #  -->
+<!-- # # Combine the contour plots into one plot with months on the x-axis -->
+<!-- # combined_plot <- levelplot( -->
+<!-- #   do.call(c, lapply(plots, `[[`, "plot")), -->
+<!-- #   layout = c(length(plots), 1), -->
+<!-- #   xlab = list('Month', cex = 1.0),  -->
+<!-- #   ylab = list('Latitude', cex = 1.0) -->
+<!-- # ) -->
+
+<!-- # Print the combined plot -->
+
+<!-- ``` -->
+
+```{r 04-calc-avg-tzcf-1997-2013}
+grouped_by_year_tzcf_1997_2013 <- grouped_by_year_month %>%
+    filter(x <= '2013-12-31') %>%
+    group_by(month, y) %>%
+     summarise(
+               z = mean(z)) %>%
+    mutate(x = as.Date(paste0("2013-", month, "-01"))) %>%
+    mutate(year = lubridate::year(x),
+           month = lubridate::month(x),
+           day = lubridate::day(x)) %>%
+    mutate(month_abb = month.abb[as.numeric(format(x, "%m"))]) 
 ```
 
-```{r 04-contourplot-func}
-# Define the contourplot function with the required settings
-contourplot_function <- function(dat) {
-  # Create a contour plot with specific settings
-  p <- contourplot(
-    z ~ x * y, 
-    data = dat, 
-    at = mainCuts, 
-    lwd = 2.75,
-    labels = NULL,  # You can define labels if needed
-    label.style = 'align',
-    xlab = list('Month', cex = 1.0), 
-    ylab = list('Latitude', cex = 1.0),
-    scales = list(
-      x = list(
-        rot = 30, 
-        at = unique(dat$x),  # Use unique dates from your data
-        labels = format(unique(dat$month), format='%b'), 
-        cex = 0.8
-      ), 
-      y = list(cex = 0.8), 
-      tck = c(1, 0)
-    ),
-    margin = FALSE, 
-    col = 'azure4'
-  )
-  print(p)  # You can choose to print or save the plots here
+```{r 04-set-ggplot-layers}
+
+add_baseplot_theme <- function(){
+    list(
+        labs(x = "Month", y = "Latitude (°N)"),
+        scale_x_continuous(
+        breaks = 1:12,  # Specify the breaks for months (1 to 12)
+        labels = month.abb  # Use the built-in month abbreviation vector
+        ),
+        theme_minimal()
+    )
 }
 
-# # Use purrr's map function to create a contour plot for each year
-# plots <- grouped_by_year_month %>%
-#   split(.$year) %>%
-#   map(contourplot_function)
-# 
-# # Combine the contour plots into one plot with months on the x-axis
-# combined_plot <- levelplot(
-#   do.call(c, lapply(plots, `[[`, "plot")),
-#   layout = c(length(plots), 1),
-#   xlab = list('Month', cex = 1.0), 
-#   ylab = list('Latitude', cex = 1.0)
-# )
+add_tzcf_contour <- function(df, col='gray70'){
+    list(
+        geom_contour(data=df,
+        aes(x=month, y=y, z = z, text = paste("Avg location "), colour = col),
+        linewidth = 1.25, breaks = c(18))
+    )
+}
 
-# Print the combined plot
+add_tzcf_indiv_contours <- function(df, col='gray70'){
+    list(
+        geom_contour(data=df,
+        aes(x=month, y=y, z = z, text = paste("Year: ", year), colour = col),
+        linewidth = 1.25, breaks = c(18))
+    )
+}
+
+add_tzcf_contour_2023 <- function(col='dodgerblue'){
+    list(
+        geom_contour(data=grouped_by_year_month %>% filter(year == 2023),
+        aes(x=month, y=y, z = z, group = as.factor(year), text = paste("Year: ", year), colour = col),
+        linewidth = 1.25, breaks = c(18))
+    )
+}
 
 
+add_historic_mlats <- function(col="#6D4C94"){
+    list(
+        # geom_point(data=mlats_historic, aes(x = month, y = avgs, text = str_c("Avg Lat: ", round(avgs, 2)), color=col), size = 3),
+        geom_line(data=mlats_historic, aes(x = month, y = avgs, colour = col), linewidth = 1.25)
+    )
+}
 
+add_cohort1_mlats <- function(col="#66CCC0"){
+    list(
+        # geom_point(data=mlats_cohort1, aes(x = month, y = avgs, text = str_c("Avg Lat: ", round(avgs, 2)), color=col), size = 3),
+        geom_line(data=mlats_cohort1, aes(x = month, y = avgs, colour = col), linewidth = 1.25)
+    )
+}
+
+```
+
+```{r 04-plot-tzcf-all-yrs}
 p_tzcf_all_yrs <-  ggplot() +
     # Create additional contour layers (replace with your data and aesthetics)
-        geom_contour(data=grouped_by_year_month %>% filter(year != 2023),
-                     aes(x=month, y=y, z = z, group = as.factor(year), text = paste("Year: ", year)), colour = 'gray',
-            linewidth = 1.25, breaks = c(18)) +
+       add_tzcf_indiv_contours(grouped_by_year_month %>% filter(year != 2023), col="Individual Years (1997-2022)") +
     
-
-        geom_contour(data=grouped_by_year_month %>% filter(year == 2023),
-                     aes(x=month, y=y, z = z, group = as.factor(year), text = paste("Year: ", year)), colour = 'dodgerblue',
-            linewidth = 1.25, breaks = c(18)) +
+        add_tzcf_indiv_contours(grouped_by_year_month %>% filter(year == 2015), col="2015") +
+         add_tzcf_indiv_contours(grouped_by_year_month %>% filter(year == 2019), col="2019") +
+         add_tzcf_indiv_contours(grouped_by_year_month %>% filter(year == 2020), col="2020") +
     
-        geom_contour(data=grouped_by_year_month %>% filter(year == 2015), 
-                     aes(x=month, y=y, z = z, group = as.factor(year), text = paste("Year: ", year)), colour = 'orange',
-            linewidth = 1.25, breaks = c(18)) + 
+        add_tzcf_contour_2023(col="2023") + 
     
-  # scale_color_discrete(guide = TRUE) 
-    labs(x = "Month", y = "Latitude (°N)") +
-  scale_x_continuous(
-    breaks = 1:12,  # Specify the breaks for months (1 to 12)
-    labels = month.abb  # Use the built-in month abbreviation vector
-  ) +
-  theme_minimal()
+        add_baseplot_theme() +
 
-gg_tzcf_all_yrs <- ggplotly(p_tzcf_all_yrs, tooltip = c("text"))
+        scale_color_manual(
+        name = "18°C Isotherm \n ",
+        values = c("#E4938B", "#EFC1BD","#F8C08C", "#952C23", "gray80")#,  # Specify colors - don't know why this is backwards from labels....
+        # labels = c("Individual Years (1997-2022)", "2015","2023")  # Specify labels
+        )
 
+
+gg_tzcf_all_yrs <- ggplotly(p_tzcf_all_yrs, tooltip = c("text")) %>% layout(xaxis = list(title = "Month"), yaxis = list(title = "Latitude (°N)"))
+
+```
+
+
+
+
+```{r 04-calc-mlat-avgs-cc}
+mlats_historic <- hist_df %>%
+    filter(lon >= -160 & lon <= -130) %>%
+    dplyr::select(-c(date)) %>%
+    group_by(month) %>%
+    summarise(avgs = mean(lat)) #%>%
+  	# mutate(mons = idx)
+
+mlats_cohort1 <- daily_avg_data_cohort_1 %>%
+    dplyr::select(-c(date)) %>%
+    group_by(month) %>%
+    summarise(avgs = mean(lat)) #%>%
+```
+
+
+```{r}
+p_tzcf_hist_yrs_cohort_yr <-  ggplot() +
+ 
+        add_tzcf_contour(grouped_by_year_tzcf_1997_2013, col="1997-2013: 18°C Isotherm") +
+    
+        add_tzcf_contour_2023(col='2023: 18°C Isotherm') +
+        
+        add_baseplot_theme() +
+    
+        scale_color_manual(
+        name = "18°C Isotherm \n ",
+        values = c("gray80","#952C23")#,  # Specify colors - don't know why this is backwards from labels....
+        # labels = c("1997-2022", "2023")  # Specify labels
+        )
+
+
+gg_tzcf_hist_yrs_cohort_yr <- ggplotly(p_tzcf_hist_yrs_cohort_yr, tooltip = c("text")) %>% layout(xaxis = list(title = "Month"), yaxis = list(title = "Latitude (°N)"))
+
+```
+
+
+```{r}
+p_tzcf_hist_cohort <- 
+p_tzcf_hist_yrs_cohort_yr + 
+    add_historic_mlats(col="Historic Tracks") + 
+    add_cohort1_mlats(col="Cohort 1 Tracks") +
+    
+    scale_color_manual(
+        name = "Avg Monthly Lat \n ",
+        values = c("gray80","#952C23","#66CCC0","#6D4C94")#,  # Specify colors - don't know why this is backwards from labels....
+        # labels = c("2023: 18°C Isotherm", "1997-2022: 18°C Isotherm","Historic Tracks", "Cohort 1 Tracks")  # Specify labels
+        )
+
+ gg_tzcf_hist_cohort <- ggplotly(p_tzcf_hist_cohort, tooltip = c("text")) %>% layout(xaxis = list(title = "Month"), yaxis = list(title = "Latitude (°N)"))
+    
 ```
 

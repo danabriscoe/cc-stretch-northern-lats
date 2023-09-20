@@ -323,15 +323,20 @@ p_ssta_mean_tcms <- p_ssta_mean + add_tcms_box()
 ```
 
 ```{r 03-plot-ssta-cohort-1-with-contour}
-p_ssta_mean_tcms_w_contour <- 
-p_ssta_mean_tcms + 
-    add_contour_lines(df=ssta_ras_mean_df, contours=c(1.5)) +
-    update_map_extent(xrange=c(-150, -130), yrange = c(35, 50))
+p_ssta_mean_tcms_w_contour <- p_ssta_mean_tcms + 
+    add_contour_lines(df=ssta_ras_mean_df, contours=c(1.5)) + 
+    resize_cbar(14)
+
+```
+
+```{r 03-plot-ssta-cohort-1-with-contour-zoomed}
+p_ssta_mean_tcms_w_contour_zoom <- p_ssta_mean_tcms_w_contour +
+    update_map_extent(xrange=c(-155, -130), yrange = c(35, 50))
 
 ```
 
 
-```{r 03-plot-chla-mean-cc-tracks}
+```{r 03-plot-chla-mean-tcms-cohort1}
     
 p_chla_mean <- ggplot() +
     # add ssta layer
@@ -356,14 +361,14 @@ p_chla_mean <- ggplot() +
  
 # show plot with tcms box
 p_chla_mean_tcms <- p_chla_mean + add_tcms_box() +
-    resize_cbar(20)
+    resize_cbar(13)
     #+ add_contour_lines(chla_ras_mean_df, contours = 0.20)
 
 ```
 
-```{r}
+```{r plot-chla-mean-tcms-cohort1-zoomed}
 p_chla_mean_tcms_zoom <- 
 p_chla_mean_tcms +
-        update_map_extent(xrange=c(-155, -135), yrange = c(35, 50))
+        update_map_extent(xrange=c(-155, -130), yrange = c(35, 50))
 ```
 

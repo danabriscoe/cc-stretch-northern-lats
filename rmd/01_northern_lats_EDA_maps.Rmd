@@ -83,9 +83,6 @@ wc_pal <-  n |>
 
 # base_pal <- makePal('honeydew', col=unique(test$id))
 
-
-
-
 ```
 
 
@@ -147,7 +144,7 @@ map_indiv_cohort_1 <-
 hist_df_lon <- hist_df %>% 
     subsetByLatLon(lon_min = -160, lon_max = 0, lat_min = 0, lat_max = 43)
 
-length(unique(hist_df_lon$id))
+# length(unique(hist_df_lon$id))
 
 hist_df_max_lons <- hist_df_lon %>% getMaxLat()
 ```
@@ -162,6 +159,7 @@ hist_subset <- hist_df %>%
 hist_ids <- unique(hist_subset$id)
 
 ```
+
 
 ```{r 01-map-hist-subset}
 base_pal <- makePal('honeydew', col=unique(hist_subset$id))
@@ -204,12 +202,14 @@ daily_avg_data_cohort_1_table <-
 daily_avg_data_cohort_1 %>%
     group_by(id) %>%
     slice(which.max(lat)) %>%
+    mutate(lon = round(lon, 3),
+           lat = round(lat, 3)) %>%
     arrange(., desc(lat)) %>%
     dplyr::select(id, turtle_num, turtle_name, date, lat, lon) %>%
     select_all(~gsub("_", " ", str_to_title(.))) %>%
     rename_at(vars(c("Id", "Lat")), ~ c("ID", "Max Lat")) 
 
-daily_avg_data_cohort_1_table %>%
+daily_avg_data_cohort_1_kbl <- daily_avg_data_cohort_1_table %>%
 kbl(caption = "Table 1. Cohort 1 Max Latitudes by Turtle ID") %>%
     kable_paper("hover", full_width = T) %>%
     kable_styling(bootstrap_options = c("condensed", "responsive")) %>%

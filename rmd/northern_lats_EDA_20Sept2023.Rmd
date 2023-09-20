@@ -1,6 +1,6 @@
 ---
-title: "Northern Latitudes MS: Draft Figures"
-subtitle: "Project STRETCH: Northern Latitudes - Exploratory Analyses"
+title: "Northern Latitudes - Exploratory Data Analysis"
+subtitle: "Project STRETCH"
 author: "Dana K Briscoe"
 date: "`r Sys.Date()`"
 output:
@@ -15,21 +15,30 @@ output:
     toc_collapsed: true
   pdf_document:
     toc: yes
-    toc_depth: '2'
+    toc_depth: '3'
 ---
 
+```{=html}
+<style>
+.main-container {
+    max-width: 1400px !important;
+    margin-left: 0;
+    margin-right: 5;
+}
 
+</style>
 
-## Figure 1. Cohort 1 & Average SST
-
-Text here. This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-
+<style type="text/css">
+  body{
+  font-size: 12.5pt;
+}
+</style>
+```
+<!-- Load rmd files -->
 
 ```{r 01, child=c('01_northern_lats_EDA_maps.Rmd')}
 
 ```
-
 
 ```{r 02, child=c('02_northern_lats_EDA_cc_plots.Rmd')}
 
@@ -39,12 +48,135 @@ Text here. This is an R Markdown document. Markdown is a simple formatting synta
 
 ```
 
-## Including Plots
+```{r 04, child=c('04_northern_lats_EDA_tzcf_figs.Rmd')}
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+<br>
+
+## 1 \| Env-Cohort 1
+
+------------------------------------------------------------------------
+
+<span style="font-size:14pt">
+
+### Fig 1. Turtles & SSTa {.tabset .tabset-pills}
+
+Figure 1 shows the average monthly SST anomalies (SSTa) from July - Aug, 2023. Turtles deployed in July 2023 (n=25) are referred to as 'Cohort 1'. The tracks from 11 July - 20 Sept 2023 are shown in colors corresponding to the Wildlife Computers [map](https://my.wildlifecomputers.com/data/map/?id=646c14fae9b3514a9430a544). <br>
+
+The 1.5°C contour is shown in black. The Thermal Corridor study area is outlined in gray. 
+SSTa source: [NOAA Coral Reef Watch, Monthly 5km](https://coralreefwatch.noaa.gov/product/5km/index_5km_sst.php).
+
+
+The tabs can be clicked to change the spatial extent.
+</span>
+
+#### Full Extent
+
+```{r fig-1-ssta-cohort-1-map-full,out.height="110%"}
+p_ssta_mean_tcms_w_contour
+
+```
+
+#### Zoomed
+
+```{r fig-1-ssta-cohort-1-map-zoom, out.height="90%"}
+p_ssta_mean_tcms_w_contour_zoom
+```
+
+### Fig 2. Turtles & Chla {.tabset .tabset-pills}
+
+Figure 2 shows the average monthly chlorophyll-a (Chla) from July - Aug, 2023 and cohort 1 turtle tracks (n=25, July-Sept 2023). <br>
+
+The Thermal Corridor study area is outlined in gray. Chla source: [NOAA S-NPP VIIRS, Monthly 4km](https://coastwatch.pfeg.noaa.gov/erddap/info/nesdisVHNSQchlaMonthly/index.html).
+
+The tabs can be clicked to change the spatial extent.
+
+#### Full Extent
+
+```{r fig-1-chl-cohort-1-map-full, out.height="120%"}
+p_chla_mean_tcms
+```
+
+#### Zoomed
+
+```{r fig-1-chl-cohort-1-map-zoom, out.height="90%"}
+p_chla_mean_tcms_zoom
+```
+
+<br>
+
+## 2 \| Max Lats-Cohort 1
+
+------------------------------------------------------------------------
+
+### Table 1. Max Lats by Turtle ID
+
+```{r table-1-max-lats-cohort-1, echo=FALSE}
+daily_avg_data_cohort_1_table %>%
+   # relocate(c(`Max Lat`, Date), .before = ID) %>%
+kbl(caption = " Northernmost latitude reached by each individual turtle, ranked in descending order.") %>%
+    kable_paper("hover", full_width = T) %>%
+    kable_styling(bootstrap_options = c("condensed", "responsive")) %>%
+    kable_styling(fixed_thead = T) %>%
+    kable_minimal() %>%
+scroll_box(width = "100%", height = "300px")
+```
+
+<br>
+
+
+### Fig 3. Cohort 1 Max Lats by Date
+
+Figure 3 shows the northern progression of each turtle from Cohort 1, since their release date (11 July 2023).
+
+Use the mouse to show tag information for each line.
+```{r fig-daily-avg-cohort-1-max-lats-date, out.height="80%", out.width="80%"}
+gg_daily_avg_cohort1_max_lats
+```
+
+<br>
+<br>
+
+### Fig 4. Historic vs Cohort Max Lats
+
+Figure 4 compares the average latitudes experienced by 2023's Cohort 1 turtles (green line) and turtles from the historic data set 
+('Historic' 1997-2013, purple line). 
+Latitudes were spatially averaged eastern North Pacific region, between 160°W to 130°W longitude. 
+The gray bands represent ± 2 standard deviations. 
+
+Use the mouse to show tag information for each line.
+
+```{r fig-gg-avg-cc-lats-by-week, out.height="80%", out.width="90%"}
+gg_p_avg_turtle_lats_by_week
+```
+
+<br>
+
+## 3 \| TZCF Locations
+
+------------------------------------------------------------------------
+
+### Fig 5. Seasonal TZCF 
+Figure 5 shows the seasonal position of the 18°C SST isotherm between 160°W and 130°W longitude. This isotherm is a common proxy for the Transition Zone Chlorophyll Front. 
+
+For each year between 1997-2023 (which encompasses both the historic tags and current, 'Cohort 1'), the annual isotherm trend is plotted as a gray line.
+The years 2015, 2019, 2020 (light reds) and 2023 (dark red) are highlighted as they were anomalously warm years. 
+
+```{r fig-gg-tzcf-all-yrs, out.height="80%", out.width="95%"}
+gg_tzcf_all_yrs
+
+```
+
+<br>
+
+### Fig 6. TZCF & Turtles
+
+The average latitudinal movements of loggerheads from the Historic data set (purple line, 1997-2013, n=69) and Cohort 1 (green line, 2023, n=25) between 160°W and 130°W are shown in relation to the 18°C SST isotherm. 
+The all-time monthly average of isotherm position is shown in gray (1997-2022); the 2023 monthly position is shown in red.
+
+```{r fig-gg_tzcf_hist_cohort, out.height="80%", out.width="95%"}
+gg_tzcf_hist_cohort
+
+```
+
