@@ -27,7 +27,6 @@ output:
 }
 </style>
 ```
-
 ```{r 03-setup, include=FALSE, warning=FALSE}
 knitr::opts_chunk$set(
     echo = FALSE,
@@ -75,6 +74,8 @@ source('../code/01_prep_turtle_data.R')
 
 ```
 
+
+## Load Data
 ```{r 03-rename-dfs-for-consistency}
 raw_df <- raw_data_cohort_1_w_names
 daily_df <- daily_avg_data_cohort_1
@@ -84,11 +85,11 @@ hist_df <-  historic_tags %>% wrangleHistDF()
 
 ```
 
+
 ```{r 03-set-nc-path}
 nc_path = "/Users/briscoedk/dbriscoe@stanford.edu - Google Drive/My Drive/ncdf/npac"
 
 ```
-
 
 ```{r 03-set-spatial-extent}
 # bbox <- c(make360(-170), make360(-110), 20, 50)
@@ -106,8 +107,7 @@ params <- tibble(
 
 ```
 
-
-```{r load ssta-monthly-ncdf}
+```{r 03-load ssta-monthly-ncdf}
 params$eov <- "ssta"
 
 ssta_ncs <- list.files(nc_path, pattern = str_c(params$eov, "_"), full.names=T) %>%
@@ -137,8 +137,22 @@ chla_fdates <- chla_ncs %>%
 
 ```
 
+```{r 03-load sst-monthly-ncdf}
+params$eov <- "sst"
 
-```{r 03-stack-rasters, warning=FALSE,message=FALSE, results='hide'}
+sst_ncs <- list.files(nc_path, pattern = str_c(params$eov, "_"), full.names=T) %>%
+    .[grep(params$timestep, .)]
+
+
+sst_fdates <- sst_ncs %>% 
+    str_split(., "_") %>%
+    purrr::map_chr(~ pluck(., 6)) %>%
+    substr(., start=1, stop=10)
+
+      
+```
+
+```{r 03-stack-rasters-2023-only, warning=FALSE,message=FALSE, results='hide'}
 dt_idx <- getDateRange(params$min_dt, params$max_dt, unit = params$timestep)
 
 ## ssta
@@ -157,18 +171,36 @@ chla_ras_stack <- chla_ncs[chla_fdates >= params$min_dt & chla_fdates <= params$
     invisible()
 ```
 
+```{r 03-stack-rasters-1997-2023, warning=FALSE,message=FALSE, results='hide'}
+
+# fyi, since getting full nc range, don't need to subset dates
+
+sst_dt_idx <- sst_fdates #getDateRange(params$min_dt, params$max_dt, unit = params$timestep)
+
+## ssta
+sst_ras_stack <- sst_ncs %>% #. [sst_fdates >= params$min_dt & sst_fdates <= params$max_dt] %>%
+    raster::stack(.) %>%
+    rotate(.) %>% # convert into -`180 to 180
+    crop(., e) %>%
+    prepRasterZ(., sst_dt_idx) 
+
+```
 
 <!-- ```{r 03-set-ras-info} -->
 
 <!-- # dt_idx <- getDateRange(params$min_dt, params$max_dt, unit = params$timestep) -->
+
 <!-- # ras_names_yrmon <- as.yearmon(dt_idx) -->
+
 <!-- #  -->
+
 <!-- # ras_stack <- setZ(ras_stack, ras_names_yrmon) -->
+
 <!-- # # names(ssta_monthly_stack) <- as.character(ras_names_yrmon)  # mon-yr abbreb -->
+
 <!-- # names(ras_stack) <- as.character(dt_idx) # full Xyr-mon-d  -->
 
 <!-- ``` -->
-
 
 ```{r 03-calc-ras-mean-layer}
 ## ssta
@@ -184,6 +216,10 @@ chla_ras_mean <- chla_ras_stack %>%
 names(chla_ras_mean) = as.character(dt_idx |> (\(x) { tail(x, n=1)})() )# assign dummy date for mean ras. use last date
 
 
+sst_ras_mean <- sst_ras_stack %>%
+    calc(., mean, na.rm=TRUE)
+
+names(sst_ras_mean) = as.character(dt_idx |> (\(x) { tail(x, n=1)})() )# assign dummy date for mean ras. use last date
 
 ```
 
@@ -203,9 +239,12 @@ chla_ras_mean_df <- chla_ras_mean %>%
 # monthly df
 chla_ras_monthly_df <- chla_ras_stack %>% ras2df()
 
+
+# sst_ras_mean_df <- sst_ras_stack %>% ras2df() ## dkb note: memory exceeded
     
 ```
 
+## Set Plot Params
 
 ```{r 03-set-plot-params}
 # mapdata <- map_data('world', wrap=c(-25,335), ylim=c(-55,75)) %>%
@@ -221,8 +260,11 @@ chla_pal <- oce::oceColorsChlorophyll(20)
 
 wc_pal   <- rainbow(25)
 
-```
+smooth_rainbow <- khroma::colour("smooth rainbow")
 
+sst_cpal <- c(smooth_rainbow(length(seq(floor(8), ceiling(32), 1)), range = c(0, 0.9)), "#9e2a2b", "firebrick4", "#540b0e")
+
+```
 
 ```{r 03-make-baseplot}
 baseplot <- ggplot() + 
@@ -262,6 +304,12 @@ update_map_extent <- function(xrange, yrange){
     )
 }
 
+add_turtle_pts <- function(df, col="#66CCC0", size=3){
+    list(
+        geom_point(data=df, aes(x = lon, y = lat, colour = col), size = size)
+    )
+}
+
 add_track_spLines <- function(df, cpal, linewidth) {
     list(
     # add cohort 1 tracks
@@ -279,10 +327,10 @@ add_tcms_box <- function(){
 }
 
 
-add_contour_lines <- function(df, contours){
+add_contour_lines <- function(df, contours, col='black'){
     list(
         geom_contour(data=df, aes(x=lon, y=lat, z = val), 
-        colour = 'black', linewidth = 1.25, breaks = c(contours)) 
+        colour = col, linewidth = 1.25, breaks = c(contours)) 
     )
 }
 
@@ -295,7 +343,9 @@ resize_cbar <- function(x){
 
 ```
 
+------------------------------------------------------------------------
 
+## Part 1: SSTA Map with Tracks
 
 ```{r 03-plot-ssta-mean-cc-tracks}
 
@@ -335,6 +385,9 @@ p_ssta_mean_tcms_w_contour_zoom <- p_ssta_mean_tcms_w_contour +
 
 ```
 
+------------------------------------------------------------------------
+
+## Part 2: Chla Map with Tracks
 
 ```{r 03-plot-chla-mean-tcms-cohort1}
     
@@ -366,9 +419,220 @@ p_chla_mean_tcms <- p_chla_mean + add_tcms_box() +
 
 ```
 
-```{r plot-chla-mean-tcms-cohort1-zoomed}
+```{r 03-plot-chla-mean-tcms-cohort1-zoomed}
 p_chla_mean_tcms_zoom <- 
 p_chla_mean_tcms +
         update_map_extent(xrange=c(-155, -130), yrange = c(35, 50))
 ```
+
+------------------------------------------------------------------------
+
+## Part 3: Map TZCF isotherm location [Historic (1997-2013) vs 2023] across eastern NPac
+
+```{r 03-get-sept-ras-cc}
+
+names(sst_ras_stack) <- getZ(sst_ras_stack)
+
+yrs <- getZ(sst_ras_stack) |> format("%Y") |> unique()
+mons <- getZ(sst_ras_stack) |> format("%b") |> unique()
+
+dte <- getZ(sst_ras_stack)
+m <- format(dte, "%b")
+y <- format(dte, "%Y")
+
+# 1) get historic Sept months: 1997-2013
+i_hist <- dte[(m == "Sep" & y <= "2013")] %>% gsub(" ", ".", .)
+ras_sept_1997_2013 <- sst_ras_stack[[i_hist]]
+
+
+# # 2) get cohort 1 Sept month: 2023 ----~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FILL IN WHEN HAVE SEPT 2023 LAYER!!! 
+# i_cohort1 <- dte[(m == "Sep" & y == "2023")] %>% gsub(" ", ".", .)
+# ras_sept_2023 <- sst_ras_stack[[i_cohort1]]
+
+# 3) all time septs (1997-2023). ----~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ UPDATE WHEN HAVE SEPT 2023 LAYER!!! 
+i <- dte[(m == "Sep")] %>% gsub(" ", ".", .)
+ras_sept_1997_2023 <- sst_ras_stack[[i]]
+
+```
+
+```{r 03-calc-sept-ras-means}
+
+# historic septs only
+ras_mean_sept_1997_2013 <- calc(ras_sept_1997_2013, fun = mean, na.rm = T)
+
+# 2023 sept mean only 
+# ras_sept_2023 ----~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FILL IN WHEN HAVE SEPT 2023 LAYER!!! 
+
+# # alltime mean (sept 1997 - 2023) -----------~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ UPDATE WHEN HAVE SEPT 2023 LAYER!!! 
+ras_mean_sept_1997_2023 <- calc(ras_sept_1997_2023, fun = mean, na.rm = T)
+
+```
+
+```{r intermediate-step-calc-sept2023-from-dailys}
+nc_path <- "/Users/briscoedk/dbriscoe@stanford.edu - Google Drive/My Drive/ncdf/deploy_reports"
+daily_sst_ncs <- list.files(nc_path, pattern =  "sst_", full.names=T)
+daily_sst_fdates <- daily_sst_ncs %>% 
+        str_split(., "_") %>%
+        purrr::map_chr(~ pluck(., 5)) %>%
+        substr(., start=1, stop=10)
+
+daily_sst_dt_idx <- getDateRange('2023-09-01', '2023-09-19', unit = 'daily')
+
+## ssta
+daily_sst_ras_stack <- daily_sst_ncs[daily_sst_fdates >= min(daily_sst_dt_idx) & daily_sst_fdates <= max(daily_sst_dt_idx)] %>%
+    raster::stack(.) %>%
+    rotate(.) %>% # convert into -`180 to 180
+    crop(., e) %>%
+    prepRasterZ(., daily_sst_dt_idx) 
+
+# calc temp ras sept 2023
+ras_sept_2023 <- calc(daily_sst_ras_stack, fun = mean, na.rm = T)
+
+names(ras_sept_2023) <- c('X2023-09-16')
+```
+
+
+```{r 03-ras-sept-means-to-df}
+
+## 1) sept 1997-2013
+names(ras_mean_sept_1997_2013) <- c('X2013-09-16')
+
+ras_mean_sept_1997_2013_df <- ras_mean_sept_1997_2013 %>% ras2df()
+
+## 2) sept 2023 ----~~~~~~~~~~~~~~~~~~~~~~~~~~~~~----------------------- UPDATE WHEN HAVE SEPT 2023 LAYER!!! 
+ras_sept_2023_df <- ras_sept_2023 %>% ras2df()
+
+# 3) all septs 1997-2023
+names(ras_mean_sept_1997_2023) <- c('X2023-09-16')
+ras_mean_sept_1997_2023_df <- ras_mean_sept_1997_2023 %>% ras2df()
+
+```
+
+```{r 03-plot-sept-mean-clim}
+
+p_sept_mean <- ggplot() +
+    # add sst sept all-time clim layer
+    geom_raster(data = ras_mean_sept_1997_2023_df, 
+                aes(x = lon, y = lat, fill = val, interpolate = TRUE)) +
+    scale_fill_gradientn(colours = sst_cpal[6:length(sst_cpal)],
+
+                         breaks=seq(8,32,2),
+                         limits = c(8,32), 
+                         na.value="transparent",
+                         name = "SST (°C) \n") +
+    # add baselayers
+    add_baseplot(bbox) 
+ 
+# # show plot with tcms box
+# p_tzcf_sept_mean_tcms <- p_tzcf_sept_mean + add_tcms_box()
+
+
+```
+
+```{r 03-plot-sept-clim-w-tzcfs}
+p_sept_mean_w_tzcfs <- p_sept_mean +
+    add_contour_lines(df=ras_mean_sept_1997_2013_df, contours=c(18), col='gray80') + 
+    add_contour_lines(df=ras_sept_2023_df, contours=c(18), col='snow') + 
+    resize_cbar(12)
+
+```
+
+```{r 03-calc-mlat-avgs-cc-sept}
+max_lats_historic <- hist_df %>%
+    filter(lon >= -160 & lon <= -130) %>%
+    filter(month == 9) %>%
+    group_by(id) %>%
+    slice(which.max(lat)) %>%
+    mutate(lon = round(lon, 3),
+           lat = round(lat, 3)) %>%
+    mutate(group = 'historic') %>%
+    as_tibble()
+
+max_lats_cohort1 <- daily_avg_data_cohort_1 %>%
+    filter(month == 9) %>%
+    group_by(id) %>%
+    slice(which.max(lat)) %>%
+    mutate(lon = round(lon, 3),
+           lat = round(lat, 3)) %>%
+    mutate(group = 'cohort1') %>%
+    as_tibble()
+
+max_lats_all <- rbind(max_lats_historic, max_lats_cohort1)
+```
+
+
+```{r 03-plot-sept-clim-w-tzcfs_cc-pts}
+p_sept_mean_w_tzcfs_cc_max_lats <- p_sept_mean_w_tzcfs + 
+    add_turtle_pts(df=max_lats_historic, col="Sept 1997-2013", size=4) +
+    add_turtle_pts(df=max_lats_cohort1, col="Sept 2023", size=4) +
+    
+    scale_color_manual(
+        name = "Max Turtle Latitudes",
+        values = c("#6D4C94","#14FCE1")
+    ) +
+    resize_cbar(24) 
+
+p_sept_mean_w_tzcfs_cc_max_lats_w_text <- 
+    p_sept_mean_w_tzcfs_cc_max_lats + 
+    labs(title = "Long-term Average of SST for September (1997-2023) with Max Turtle Latitudes and TZCF Location",
+    subtitle = "\nMaximum turtle latitudes are shown for historic turtle tracks in September between 1997-2013 (n=31, purple circles) and the STRETCH Cohort 1 turtle tracks for September 2023 (as of 9/19/23, n=25, bright green circles). \n\nThe 18°C isotherm is a reference for the seasonal location of the TZCF. The gray line represents the average September TZCF location from 1997-2013. The white line represents the TZCF location for September 2023. \n")
+    
+```
+
+
+<!-- ```{r} -->
+
+<!-- p_sept_mean_w_tzcfs_cc_max_lats + -->
+<!--     geom_point(data = max_lats_historic, aes(x = lon, y = lat, color = "#6D4C94"), size = 3, shape = 16, stroke = 1) + -->
+
+<!--   # Add points from the second dataset -->
+<!--   geom_point(data = max_lats_cohort1, aes(x = lon, y = lat), color = "#66CCC0", size = 3, shape = 16, stroke = 1) + -->
+
+<!--   # Customize the legend -->
+<!--   scale_color_identity(guide = "legend", labels = c("Dataset 1", "Dataset 2")) -->
+
+
+<!-- geom_point(data = max_lats_historic, aes(x = lon, y = lat), size = 3, shape = 16, stroke = 1, color = "black") + -->
+<!-- geom_point(data = max_lats_cohort1, aes(x = lon, y = lat), size = 3, shape = 16, stroke = 1, color = "black") -->
+
+
+
+<!-- p_sept_mean_w_tzcfs +  -->
+<!--     add_turtle_pts(df=max_lats_historic, col="Sept 1997-2013") + -->
+<!--     add_turtle_pts(df=max_lats_cohort1, col="Sept 2023") + -->
+<!--       # geom_point(data = g1, aes(colour = "Point 15", shape = "Point 15"), size = 4) + -->
+<!--      scale_shape_manual(values = c(16, 21) ) + -->
+<!--     # scale_fill_manual(values = c("pink", "turquoise") ) + -->
+<!--      scale_color_manual(values = c("white", "white") ) + -->
+<!--      guides(color = guide_legend( override.aes = list(size = c(3,3) ) ) ) -->
+
+
+
+<!--     # ggplot() + -->
+<!--     geom_point(data=max_lats_all, aes(x = lon, y = lat), fill="green",  -->
+<!--                color = "white", -->
+<!--                 stroke = 1, -->
+<!--                 shape = 21, -->
+<!--                 size=3) + -->
+
+<!--      geom_point(data = grid_data, aes(x = grid_data$long, y = grid_data$lat), size = 3,  -->
+<!--         shape = 23, fill = "orange") -->
+
+<!--     scale_fill_manual( -->
+<!--         name = "Max Turtle Latitudes", -->
+<!--         values = c("#66CCC0", "#6D4C94") -->
+<!--     ) + -->
+
+<!--     resize_cbar(16)  -->
+
+<!-- p_sept_mean_w_tzcfs +  -->
+<!--  geom_point(color='black', shape=21, size=4, aes(fill=factor(group))) +  -->
+<!--   scale_fill_manual(values=c('pink', 'lightgreen')) -->
+
+
+<!-- scale_color_manual( -->
+<!--                      values=c("black", "black")) + -->
+<!--   scale_fill_manual(values=c("#6D4C94","#66CCC0")) -->
+
+<!-- ``` -->
 

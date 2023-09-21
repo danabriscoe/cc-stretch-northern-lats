@@ -105,7 +105,7 @@ params <- tibble(
 ```
 
 
-```{r 04-load ssta-monthly-ncdf}
+```{r 04-load sst-monthly-ncdf}
 
 nc_path = "/Users/briscoedk/dbriscoe@stanford.edu - Google Drive/My Drive/ncdf/npac"
 
@@ -243,113 +243,6 @@ grouped_by_year_month <- combined_df %>%
 ```
 
 
-<!-- ```{r 04-levelplot} -->
-<!-- # idx <- seq(as.Date('2012-01-15'),as.Date('2012-12-15'),by='1 month') -->
-<!-- dat = grouped_by_year_month %>% filter(year == '2023')  -->
-<!-- idx_labs <- format(unique(dat$month), format='%b') -->
-<!-- dat <- dat[,1:3] -->
-<!-- # plot by lat: -->
-<!-- levp <- levelplot(z ~ x*y, data=dat, -->
-<!--                     # xlab='Month', ylab='Latitude', -->
-<!--                     xlab=list('Month', cex=1.0), ylab=list('Latitude',cex=1.0), -->
-<!--                     main = list(label=paste("",sep="")), -->
-<!--                     # main = list(label=paste("Hovm- Monthly SSTa (deg C), 180W-130W",sep="")), -->
-<!--                     panel=panel.levelplot.raster,      -->
-
-<!--                   	interpolate=TRUE, -->
-<!--                     scales=list(x=list(rot=30,at=idx, labels=idx_labs, cex=0.8),  -->
-<!--                       y=list(cex=0.8), tck = c(1,0)), #colorkey=list(title ='°C', cex=1, side=3), -->
-<!--             	  	at=seq(from=0,to=30,by=1), -->
-<!--                   	col.regions = matlab.like2(255), -->
-<!--                   	contour=T) -->
-
-
-
-<!--   # Contour TZCF  -->
-<!--   mainCuts <- c(18)              # tzcf chla contour - as defined by Polovina et al. 2001 -->
-<!--   # mainCuts <- c(log(0.2))       # tzcf chla contour,  log-transformed -->
-
-<!--   # mainCP <- contourplot(z ~ x*y, data=dat,  -->
-<!--   #                       at = mainCuts,  -->
-<!--   #                       lwd = 2.75, -->
-<!--   #                       labels = NULL,#list(cex = 0.6),  -->
-<!--   #                       label.style = 'align', -->
-<!--   #                       xlab=list('Month', cex=1.0), ylab=list('Latitude',cex=1.0), -->
-<!--   #                       scales=list(x=list(rot=30,at=idx, labels=idx_labs, cex=0.8),  -->
-<!--   #                     y=list(cex=0.8), tck = c(1,0)), -->
-<!--   #                       margin = FALSE, col = 'azure4') -->
-
-<!--   mainCP <- contourplot( -->
-<!--   z ~ x * y,  -->
-<!--   data = dat,  -->
-<!--   at = mainCuts,  -->
-<!--   lwd = 2.75, -->
-<!--   labels = NULL,  # You can define labels if needed -->
-<!--   label.style = 'align', -->
-<!--   xlab = list('Month', cex = 1.0),  -->
-<!--   ylab = list('Latitude', cex = 1.0), -->
-<!--   scales = list( -->
-<!--     x = list( -->
-<!--       rot = 30,  -->
-<!--       at = unique(dat$x),  # Use unique dates from your data -->
-<!--       labels = idx_labs,  -->
-<!--       cex = 0.8 -->
-<!--     ),  -->
-<!--     y = list(cex = 0.8),  -->
-<!--     tck = c(1, 0) -->
-<!--   ), -->
-<!--   margin = FALSE,  -->
-<!--   col = 'azure4' -->
-<!-- ) -->
-<!--   finp <- levp+ mainCP -->
-<!--   # print(finp) -->
-<!-- ``` -->
-
-<!-- ```{r 04-contourplot-func} -->
-<!-- # Define the contourplot function with the required settings -->
-<!-- contourplot_function <- function(dat) { -->
-<!--   # Create a contour plot with specific settings -->
-<!--   p <- contourplot( -->
-<!--     z ~ x * y,  -->
-<!--     data = dat,  -->
-<!--     at = mainCuts,  -->
-<!--     lwd = 2.75, -->
-<!--     labels = NULL,  # You can define labels if needed -->
-<!--     label.style = 'align', -->
-<!--     xlab = list('Month', cex = 1.0),  -->
-<!--     ylab = list('Latitude', cex = 1.0), -->
-<!--     scales = list( -->
-<!--       x = list( -->
-<!--         rot = 30,  -->
-<!--         at = unique(dat$x),  # Use unique dates from your data -->
-<!--         labels = format(unique(dat$month), format='%b'),  -->
-<!--         cex = 0.8 -->
-<!--       ),  -->
-<!--       y = list(cex = 0.8),  -->
-<!--       tck = c(1, 0) -->
-<!--     ), -->
-<!--     margin = FALSE,  -->
-<!--     col = 'azure4' -->
-<!--   ) -->
-<!--   print(p)  # You can choose to print or save the plots here -->
-<!-- } -->
-
-<!-- # # Use purrr's map function to create a contour plot for each year -->
-<!-- # plots <- grouped_by_year_month %>% -->
-<!-- #   split(.$year) %>% -->
-<!-- #   map(contourplot_function) -->
-<!-- #  -->
-<!-- # # Combine the contour plots into one plot with months on the x-axis -->
-<!-- # combined_plot <- levelplot( -->
-<!-- #   do.call(c, lapply(plots, `[[`, "plot")), -->
-<!-- #   layout = c(length(plots), 1), -->
-<!-- #   xlab = list('Month', cex = 1.0),  -->
-<!-- #   ylab = list('Latitude', cex = 1.0) -->
-<!-- # ) -->
-
-<!-- # Print the combined plot -->
-
-<!-- ``` -->
 
 ```{r 04-calc-avg-tzcf-1997-2013}
 grouped_by_year_tzcf_1997_2013 <- grouped_by_year_month %>%
@@ -460,7 +353,7 @@ mlats_cohort1 <- daily_avg_data_cohort_1 %>%
 ```
 
 
-```{r}
+```{r 04-gg-seasonal-tzcf-yrs-only}
 p_tzcf_hist_yrs_cohort_yr <-  ggplot() +
  
         add_tzcf_contour(grouped_by_year_tzcf_1997_2013, col="1997-2013: 18°C Isotherm") +
@@ -481,7 +374,7 @@ gg_tzcf_hist_yrs_cohort_yr <- ggplotly(p_tzcf_hist_yrs_cohort_yr, tooltip = c("t
 ```
 
 
-```{r}
+```{r 04-gg-seasonal-tzcf-yrs-with-cc}
 p_tzcf_hist_cohort <- 
 p_tzcf_hist_yrs_cohort_yr + 
     add_historic_mlats(col="Historic Tracks") + 
@@ -497,3 +390,10 @@ p_tzcf_hist_yrs_cohort_yr +
     
 ```
 
+
+```{r 03-plot-ssta-cohort-1-with-contour}
+p_ssta_mean_tcms_w_contour <- p_ssta_mean_tcms + 
+    add_contour_lines(df=ssta_ras_mean_df, contours=c(1.5)) + 
+    resize_cbar(14)
+
+```
