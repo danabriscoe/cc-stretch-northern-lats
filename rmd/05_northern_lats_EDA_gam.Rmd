@@ -1,0 +1,295 @@
+---
+title: "5 | Fit GAM"
+subtitle: "Project STRETCH: Northern Latitudes - Exploratory Analyses"
+author: "Dana K Briscoe"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    code_folding: none
+    df_print: paged
+    highlight: tango
+    number_sections: no
+    theme: flatly
+    toc: no
+    toc_float: true
+    toc_collapsed: true
+  pdf_document:
+    toc: yes
+    toc_depth: '2'
+---
+
+```{=html}
+<style>
+.main-container {
+    max-width: 1180px;
+    margin-left: 10;
+    margin-right: 10;
+}
+</style>
+```
+
+```{r 05-setup, include=FALSE}
+knitr::opts_chunk$set(
+    echo = FALSE,
+    eval = TRUE,
+    message = FALSE,
+    warning = FALSE,
+    dpi = 300,
+    fig.align = "center"
+    )
+
+# See Options: knitr::opts_chunk$get()
+```
+
+```{r 05-load-libraries, message=FALSE}
+# 01
+library(tidyverse)
+library(data.table)
+library(mgcv)
+library(ggalt)
+library(scales)
+library(plotly)
+library("gratia")
+```
+
+```{r 05-source-helper-funcs}
+source('../code/00_northern_lats_helper_functions.R')
+```
+
+```{r 05-load-cohort-1}
+source('../code/01_prep_turtle_data.R')
+
+```
+
+```{r 05-rename-dfs-for-consistency}
+raw_df <- raw_data_cohort_1_w_names
+daily_df <- daily_avg_data_cohort_1
+
+# make historic df consistent with cohort df(s)
+hist_df <-  historic_tags %>% wrangleHistDF()
+
+```
+
+```{r 05-subset-hist-df-septs}
+hist_df_subset <- hist_df %>%
+    filter(lon >= -160 & lon <= -130) %>%
+    mutate(mon_yr = str_c(month, "-",year))
+
+# length(unique(hist_df_subset$id))
+
+hist_df_subset_septs <- hist_df_subset %>% filter(month == 9)
+# length(unique(hist_df_subset_septs$id))
+
+```
+
+
+<!-- ```{r} -->
+
+<!-- test =  -->
+<!-- hist_df %>% -->
+<!--     filter(lon >= -160 & lon <= -130) %>% -->
+<!--     group_by(id) %>% -->
+<!--     group_modify(~binFreqTable(.$lon, seq(-160,-130, 5))) %>% -->
+<!--     # group_by(range) -->
+<!--     ungroup() -->
+
+<!-- test |> summarise(id |> unique() |> length(), .by = range) -->
+<!-- ``` -->
+
+
+
+```{r 05-ntags-160W-130W-per-month}
+ntags_hist_tags_160W_130W_per_month <- hist_df %>%
+    filter(lon >= -160 & lon <= -130) %>%
+    group_by(month) %>%
+    summarize(count=n_distinct(id)) %>%
+    # mutate(month = month.abb[month]) %>%
+    spread(month, count)
+
+colnames(ntags_hist_tags_160W_130W_per_month) <- month.abb
+```
+
+
+```{r 05-ntags-160W-130W-per-year}
+ntags_hist_tags_160W_130W_per_year <- hist_df %>%
+    filter(lon >= -160 & lon <= -130) %>%
+    # filter(month == 9) %>%
+    group_by(year) %>%
+    summarize(count=n_distinct(id)) %>%
+    spread(year, count)
+
+```
+
+```{r 05-ntags-160W-130W-per-year-month}
+ntags_hist_tags_160W_130W_per_year_month <- hist_df %>%
+    filter(lon >= -160 & lon <= -130) %>%
+    group_by(year, month) %>%
+    summarize(count=n_distinct(id)) %>%
+    spread(month, count)
+
+colnames(ntags_hist_tags_160W_130W_per_year_month) <- c("Year", month.abb)
+```
+
+
+```{r 05-calc-mlat-avgs-cc-sept}
+max_lats_historic <- hist_df %>%
+    filter(lon >= -160 & lon <= -130) %>%
+    filter(month == 9) %>%
+    # group_by(year) %>%
+    # summarize(count=n_distinct(id)) %>%
+    group_by(id) %>%
+    slice(which.max(lat)) %>%
+    mutate(lon = round(lon, 3),
+           lat = round(lat, 3)) %>%
+    mutate(group = as.character(id)) %>%
+    ungroup() %>%
+    as_tibble()
+
+max_lats_cohort1 <- daily_avg_data_cohort_1 %>%
+    filter(month == 9) %>%
+    group_by(id) %>%
+    slice(which.max(lat)) %>%
+    mutate(lon = round(lon, 3),
+           lat = round(lat, 3)) %>%
+    mutate(group = as.character(id)) %>%
+    ungroup() %>%
+    as_tibble()
+
+max_lats_all <- rbind(max_lats_historic, max_lats_cohort1)
+```
+
+```{r 05-gg-graph-hist-id-yrmon}
+
+# slice into 2 plots, since there are 69 ids
+
+p_graph_hist_id_by_yrmon <- ggplot() +
+  geom_line(data = hist_df_subset, aes(x=date, y=id, group=id)) +
+    geom_line(data = hist_df_subset %>% filter(month == 9), aes(x=date, y=id, group=id, color='September'), lwd=2) +
+    scale_color_manual(values=c("#952C23")) +
+    guides(color=guide_legend(title="Tracks 160W-130W Long")) +
+    scale_x_date(breaks = "3 month", labels=date_format("%b-%Y")) +
+   theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1))
+
+gg_graph_hist_id_by_yrmon<- ggplotly(p_graph_hist_id_by_yrmon, tooltip = c("text")) %>% layout(xaxis = list(title = "Date"), yaxis = list(title = "Historic Turtle Data ID Number"))
+
+```
+
+
+```{r 05-max-lat-yr-avg-meds}
+max_lat_yr_w2023 <- max_lats_all %>%
+    filter(lon <= -135) %>%
+    # filter(year != 2023) %>%
+    group_by(year) %>% 
+    summarise(avg_lon = mean(lon, na.rm=T),
+              avg_lat = mean(lat, na.rm=T),
+              med_lon = median(lon, na.rm=T),
+              med_lat = median(lat, na.rm=T))
+
+max_lat_yr_wo_2023 <- max_lats_all %>%
+    filter(lon <= -135) %>%
+    filter(year != 2023) %>%
+    group_by(year) %>% 
+    summarise(avg_lon = mean(lon, na.rm=T),
+              avg_lat = mean(lat, na.rm=T),
+              med_lon = median(lon, na.rm=T),
+              med_lat = median(lat, na.rm=T))
+
+
+```
+
+
+```{r 05-p-histogram-hist-df-septs-avg-medians}
+hist_all_stats <- hist_df %>%
+    filter(lon >= -160 & lon <= -130) %>%
+    filter(month == 9) %>%
+    summarise(mean = round(mean(lat, na.rm=T),2),
+              med = round(median(lat, na.rm=T),2)) %>%
+    gather(., 'stat', value)
+
+p_hist_df_avg_vs_med <- 
+hist_df %>%
+    filter(lon >= -160 & lon <= -130) %>%
+    filter(month == 9) %>%
+ggplot(aes(lat)) +    
+geom_histogram(binwidth = 0.5, fill = "steelblue", colour = "navy", alpha = 0.6) + 
+    geom_vline(data = hist_all_stats, aes(xintercept = value, color = stat),  linewidth=0.9) +
+    scale_color_manual(values = c("red", "orange"), labels = c("Mean", "Median"), name = "Statistic")  +
+    labs(x = 'Latitude (°N)', y= "Count") +
+    theme_bw()
+
+```
+
+
+
+```{r try-gams}
+
+
+## RUN MODELS
+# mean
+gam_model_w2023_mean <- gam(avg_lat ~ s(avg_lon, k = 3) + s(year, k = 3), data = max_lat_yr_w2023)
+gam_model_wo_2023_mean <- gam(avg_lat ~ s(avg_lon, k = 3) + s(year, k = 3), data = max_lat_yr_wo_2023)
+
+# median
+gam_model_w2023 <- gam(med_lat ~ s(med_lon, k = 3) + s(year, k = 3), data = max_lat_yr_w2023)
+gam_model_wo_2023 <- gam(med_lat ~ s(med_lon, k = 3) + s(year, k = 3), data = max_lat_yr_wo_2023)
+
+
+# # # # gam_model <- gam_model_w2023
+# # # # Summary of the GAM model
+# summary(gam_model_w2023_mean)
+# summary(gam_model_wo_2023_mean)
+# 
+# summary(gam_model_w2023)
+# summary(gam_model_wo_2023)
+# # # 
+# # # # Display partial plots for "lon" and "year"
+# # # par(mfrow=c(2, 2))  # Set up a grid for two plots side by side
+# # # plot(gam_model_w2023, select = 1, shade = TRUE, col = "blue", main = "Partial Plot for Lon (incl 2023)")
+# # # plot(gam_model_w2023, select = 2, shade = TRUE, col = "red", main = "Partial Plot for Year (incl 2023)")
+# # # 
+# # # plot(gam_model_wo_2023, select = 1, shade = TRUE, col = "blue", main = "Partial Plot for Lon (without 2023)")
+# # # plot(gam_model_wo_2023, select = 2, shade = TRUE, col = "red", main = "Partial Plot for Year (without 2023)")
+# # 
+# ## MEAN
+# draw(gam_model_w2023_mean, residuals = TRUE)
+# draw(gam_model_wo_2023_mean, residuals = TRUE)
+# 
+# # par(mfrow=c(1, 2))  # Set up a grid for two plots side by side
+# draw(gam_model_w2023, residuals = TRUE)
+# draw(gam_model_wo_2023, residuals = TRUE)
+
+```
+
+```{r}
+
+# Create the GAM model
+gam_model <-  gam(avg_lat ~ s(avg_lon, k = 3) + s(year, k = 3), data = max_lat_yr_w2023)
+
+# Initialize a vector to store cross-validation results
+cv_results <- numeric(nrow(max_lat_yr_w2023))
+
+# Perform leave-one-out cross-validation
+for (i in 1:nrow(max_lat_yr_w2023)) {
+  # Exclude the i-th observation
+  data_subset <- max_lat_yr_w2023[-i, ]
+  
+  # Fit the model on the subset
+  model_subset <-  gam(avg_lat ~ s(avg_lon, k = 4) + s(year, k = 4), data = max_lat_yr_w2023)
+  
+  # Predict the excluded observation
+  prediction <- predict(model_subset, newdata = max_lat_yr_w2023[i, ])
+  
+  # Calculate and store the squared prediction error
+  cv_results[i] <- (max_lat_yr_w2023[i, "avg_lat"] - prediction)^2
+}
+
+# Calculate the mean squared prediction error (MSE) for LOOCV
+cv_results_df <- do.call(rbind, cv_results)
+
+mse_cv <- mean(cv_results_df, na.rm=TRUE)
+
+# # View the LOOCV MSE
+# print(mse_cv)
+
+```
+

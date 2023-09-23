@@ -229,7 +229,7 @@ result_list <- map2(years, months, ~ {
 
 ```
 
-```{r convert-hov-mon-yr-to-df}
+```{r 04-convert-hov-mon-yr-to-df}
 # Combine the list of data frames into one large data frame
 combined_df <- do.call(rbind, result_list)
 
@@ -340,16 +340,17 @@ gg_tzcf_all_yrs <- ggplotly(p_tzcf_all_yrs, tooltip = c("text")) %>% layout(xaxi
 
 ```{r 04-calc-mlat-avgs-cc}
 mlats_historic <- hist_df %>%
-    filter(lon >= -160 & lon <= -130) %>%
+    filter(lon >= -160 & lon <= -135) %>%
     dplyr::select(-c(date)) %>%
     group_by(month) %>%
-    summarise(avgs = mean(lat)) #%>%
-  	# mutate(mons = idx)
-
+    summarise(avgs = mean(lat))
+    # summarise(avgs = median(lat))
+    
 mlats_cohort1 <- daily_avg_data_cohort_1 %>%
     dplyr::select(-c(date)) %>%
     group_by(month) %>%
-    summarise(avgs = mean(lat)) #%>%
+    summarise(avgs = mean(lat))
+    # summarise(avgs = median(lat)) 
 ```
 
 
@@ -391,7 +392,7 @@ p_tzcf_hist_yrs_cohort_yr +
 ```
 
 
-```{r 03-plot-ssta-cohort-1-with-contour}
+```{r 04-plot-ssta-cohort-1-with-contour}
 p_ssta_mean_tcms_w_contour <- p_ssta_mean_tcms + 
     add_contour_lines(df=ssta_ras_mean_df, contours=c(1.5)) + 
     resize_cbar(14)

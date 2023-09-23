@@ -52,6 +52,10 @@ output:
 
 ```
 
+```{r 05, child=c('05_northern_lats_EDA_gam.Rmd')}
+
+```
+
 <br>
 
 ## 1 \| Env-Cohort 1
@@ -64,12 +68,9 @@ output:
 
 Figure 1 shows the average monthly SST anomalies (SSTa) from July - Aug, 2023. Turtles deployed in July 2023 (n=25) are referred to as 'Cohort 1'. The tracks from 11 July - 20 Sept 2023 are shown in colors corresponding to the Wildlife Computers [map](https://my.wildlifecomputers.com/data/map/?id=646c14fae9b3514a9430a544). <br>
 
-The 1.5°C contour is shown in black. The Thermal Corridor study area is outlined in gray. 
-SSTa source: [NOAA Coral Reef Watch, Monthly 5km](https://coralreefwatch.noaa.gov/product/5km/index_5km_sst.php).
+The 1.5°C contour is shown in black. The Thermal Corridor study area is outlined in gray. SSTa source: [NOAA Coral Reef Watch, Monthly 5km](https://coralreefwatch.noaa.gov/product/5km/index_5km_sst.php).
 
-
-The tabs can be clicked to change the spatial extent.
-</span>
+The tabs can be clicked to change the spatial extent. </span>
 
 #### Full Extent
 
@@ -125,25 +126,21 @@ scroll_box(width = "100%", height = "300px")
 
 <br>
 
-
 ### Fig 3. Cohort 1 Max Lats by Date
 
 Figure 3 shows the northern progression of each turtle from Cohort 1, since their release date (11 July 2023).
 
 Use the mouse to show tag information for each line.
+
 ```{r fig-daily-avg-cohort-1-max-lats-date, out.height="80%", out.width="80%"}
 gg_daily_avg_cohort1_max_lats
 ```
 
-<br>
-<br>
+<br> <br>
 
 ### Fig 4. Historic vs Cohort Max Lats
 
-Figure 4 compares the average latitudes experienced by 2023's Cohort 1 turtles (green line) and turtles from the historic data set 
-('Historic' 1997-2013, purple line). 
-Latitudes were spatially averaged eastern North Pacific region, between 160°W to 130°W longitude. 
-The gray bands represent ± 2 standard deviations. 
+Figure 4 compares the average latitudes experienced by 2023's Cohort 1 turtles (green line) and turtles from the historic data set ('Historic' 1997-2013, purple line). Latitudes were spatially averaged eastern North Pacific region, between 160°W to 130°W longitude. The gray bands represent ± 2 standard deviations.
 
 Use the mouse to show tag information for each line.
 
@@ -157,11 +154,11 @@ gg_p_avg_turtle_lats_by_week
 
 ------------------------------------------------------------------------
 
-### Fig 5. Seasonal TZCF 
-Figure 5 shows the seasonal position of the 18°C SST isotherm between 160°W and 130°W longitude. This isotherm is a common proxy for the Transition Zone Chlorophyll Front. 
+### Fig 5. Seasonal TZCF
 
-For each year between 1997-2023 (which encompasses both the historic tags and current, 'Cohort 1'), the annual isotherm trend is plotted as a gray line.
-The years 2015, 2019, 2020 (light reds) and 2023 (dark red) are highlighted as they were anomalously warm years. 
+Figure 5 shows the seasonal position of the 18°C SST isotherm between 160°W and 130°W longitude. This isotherm is a common proxy for the Transition Zone Chlorophyll Front.
+
+For each year between 1997-2023 (which encompasses both the historic tags and current, 'Cohort 1'), the annual isotherm trend is plotted as a gray line. The years 2015, 2019, 2020 (light reds) and 2023 (dark red) are highlighted as they were anomalously warm years.
 
 ```{r fig-gg-tzcf-all-yrs, out.height="80%", out.width="95%"}
 gg_tzcf_all_yrs
@@ -172,11 +169,108 @@ gg_tzcf_all_yrs
 
 ### Fig 6. TZCF & Turtles
 
-The average latitudinal movements of loggerheads from the Historic data set (purple line, 1997-2013, n=69) and Cohort 1 (green line, 2023, n=25) between 160°W and 130°W are shown in relation to the 18°C SST isotherm. 
-The all-time monthly average of isotherm position is shown in gray (1997-2022); the 2023 monthly position is shown in red.
+The average latitudinal movements of loggerheads from the Historic data set (purple line, 1997-2013, n=69) and Cohort 1 (green line, 2023, n=25) between 160°W and 130°W are shown in relation to the 18°C SST isotherm. The all-time monthly average of isotherm position is shown in gray (1997-2022); the 2023 monthly position is shown in red.
 
 ```{r fig-gg_tzcf_hist_cohort, out.height="80%", out.width="95%"}
 gg_tzcf_hist_cohort
 
 ```
 
+## 4 \| Historic Summary Stats
+
+------------------------------------------------------------------------
+
+### Table 2. n Tags 160°W-130°W
+
+Between 1997-2013, there were `r length(unique(hist_df_subset$id))` turtles that transmitted between 160W and 130W. Of these, `r length(unique(hist_df_subset_septs$id))` transmitted during the month of September.
+
+<br>
+
+The table below shows the number of turtles that transmitted data (160°W-130°W), across individual months and years (1997-2013). Note that a few individuals transmitted for multiple years, which is reflected in the monthly column totals.
+
+<!-- ### Table 2. n Tags per Year, Month -->
+
+```{r hist-freq-tags-per-year-month}
+ntags_hist_tags_160W_130W_per_year_month 
+
+```
+
+<!-- ### Fig 7. Historic Tags in Sept -->
+
+<!-- Of the 69 tags (160W-130W), this figure shows the length of each track over time, and which tags transmitted during the month of September (n=31 out of 69).  -->
+
+<!-- September transmissions for each individual track are shown in red. -->
+
+<!-- ```{r fig-gg-graph-hist-id-by-yrmon, out.height="150%", out.width="100%"} -->
+
+<!-- gg_graph_hist_id_by_yrmon -->
+
+<!-- ``` -->
+
+<br>
+
+### Fig 7. Sept Lats: Mean vs Median
+
+Summary statistics for the historic data set show there is a negative skew to the distribution of September latitudes. <br> **The mean of September latitudes: `r hist_all_stats$value[1]`** <br> **The median of September latitudes: `r hist_all_stats$value[2]`**
+
+```{r}
+p_hist_df_avg_vs_med
+```
+
+### 
+
+## 5 \| GAM Results
+
+------------------------------------------------------------------------
+
+The following GAM model explores evidence that turtle latitude has increased over time.
+
+For the Historic & Cohort 1 data sets, the median latitude and longitudes were calculated for each year that data was available.
+
+The table below shows the input data:
+
+<br>
+
+### Table 3. Median September Turtle Latitude & Longitude By Year
+
+Table shows the median September latitude and longitudes for turtles (160°W-130°W).
+
+```{r}
+max_lat_yr_w2023 %>%
+    mutate(med_lat = round(med_lat,2),
+            med_lon = round(med_lon,2)) %>%
+    dplyr::select(c(year, med_lat, med_lon)) %>%
+    rename("Year"="year", "Median \nLatitude (°N)"="med_lat", "Median \nLongitude (°W)" = "med_lon")
+    
+```
+
+<br>
+
+### Model Outputs
+
+The following models were run (with and without the year 2023):
+
+<br>
+
+**Median September Latitude** \~ **Median September Longitude** + **Year**
+
+<br>
+
+### Fig 8. Model Summary (with 2023)
+
+```{r summary-gam_model_w2023, out.height="40%", out.width="95%"}
+summary(gam_model_w2023)
+
+draw(gam_model_w2023, residuals = TRUE)
+
+```
+
+------------------------------------------------------------------------
+
+### Fig. 9 Model Summary (without 2023)
+
+```{r summary-gam_model_wo-2023, out.height="40%", out.width="95%"}
+summary(gam_model_wo_2023)
+
+draw(gam_model_wo_2023, residuals = TRUE)
+```

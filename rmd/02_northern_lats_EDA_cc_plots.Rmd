@@ -105,7 +105,7 @@ df_all <- rbind(daily_df, hist_df)
 
 ```{r filter-historic-160W}
 df_160W <- df_all %>%
-    filter(lon > -160 & lon < 0) %>%
+    filter(lon > -160 & lon < 135) %>%
     filter(month >=7 & month <= 9)
 
 ```
