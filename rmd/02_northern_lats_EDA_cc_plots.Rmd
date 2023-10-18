@@ -103,9 +103,9 @@ df_all <- rbind(daily_df, hist_df)
 ```
 
 
-```{r filter-historic-160W}
-df_160W <- df_all %>%
-    filter(lon > -160 & lon < 135) %>%
+```{r filter-historic-165W}
+df_165W <- df_all %>%
+    filter(lon > -165 & lon < 140) %>%
     filter(month >=7 & month <= 9)
 
 ```
@@ -115,7 +115,7 @@ df_160W <- df_all %>%
 
 ## DON"T REALLY NEED THIS CELL ANYMORE> JUST DO CALCS %>% GGPLOT NEXT CELL
 
-# df_split <- split(df_160W, df_160W$group)
+# df_split <- split(df_165W, df_165W$group)
 
 df_weekly_avgs <- df_all %>%
         mutate(end_of_week = ceiling_date(date, "week") %>% as.Date(.),
@@ -140,9 +140,9 @@ df_weekly_lats <- plyr::ldply(l_weekly_by_yr_lats) %>%
 
 # make sure df outputs are identical
 # daily_weekly_lats  <- calcWeeklyStats(daily_df, lat)
-# hist_160W_weekly_lats <- calcWeeklyStats(hist_df_160W, lat)
+# hist_165W_weekly_lats <- calcWeeklyStats(hist_df_165W, lat)
 # df_weekly_lats$cohort1 == daily_weekly_lats
-# df_weekly_lats$historic ==hist_160W_weekly_lats
+# df_weekly_lats$historic ==hist_165W_weekly_lats
 ```
 
 
@@ -174,7 +174,7 @@ weekly_avg_lat_freqs_wide <-  weekly_avg_lat_freqs %>%
 turtle_cpal <- c("#66CCC0", "#6D4C94")
 
 p_avg_turtle_lats_by_week <-   
-df_160W %>%
+df_165W %>%
     mutate(
     week_idx = week(date)) %>%
     mutate(week_date = getWeekDate(week_idx)) %>%
