@@ -63,6 +63,7 @@ library(colorRamps)
 require(latticeExtra)
 require(zoo)
 suppressMessages(library(raster))
+library(glue)
 ```
 
 ```{r 03-source-helper-funcs}
@@ -113,7 +114,7 @@ params <- tibble(
     # eov = "ssta",
     timestep = "month",
     min_dt = '2023-07-16',
-    max_dt = '2023-08-16')
+    max_dt = '2023-09-16')
 
 ```
 
@@ -207,51 +208,35 @@ sst_ras_stack <- sst_ncs %>% #. [sst_fdates >= params$min_dt & sst_fdates <= par
 ```
 
 
-```{r intermediate-step-calc-sept2023-from-dailys}
+<!-- ```{r intermediate-step-calc-sept2023-from-dailys} -->
 
-if(!exists("daily_sst_ras_stack")){
-    
-nc_path <- "/Users/briscoedk/dbriscoe@stanford.edu - Google Drive/My Drive/ncdf/deploy_reports"
-daily_sst_ncs <- list.files(nc_path, pattern =  "sst_", full.names=T)
-daily_sst_fdates <- daily_sst_ncs %>% 
-        str_split(., "_") %>%
-        purrr::map_chr(~ pluck(., 5)) %>%
-        substr(., start=1, stop=10)
+<!-- if(!exists("daily_sst_ras_stack")){ -->
 
-daily_sst_dt_idx <- getDateRange('2023-09-01', '2023-09-19', unit = 'daily')
+<!-- nc_path <- "/Users/briscoedk/dbriscoe@stanford.edu - Google Drive/My Drive/ncdf/deploy_reports" -->
+<!-- daily_sst_ncs <- list.files(nc_path, pattern =  "sst_", full.names=T) -->
+<!-- daily_sst_fdates <- daily_sst_ncs %>%  -->
+<!--         str_split(., "_") %>% -->
+<!--         purrr::map_chr(~ pluck(., 5)) %>% -->
+<!--         substr(., start=1, stop=10) -->
 
-## ssta
-daily_sst_ras_stack <- daily_sst_ncs[daily_sst_fdates >= min(daily_sst_dt_idx) & daily_sst_fdates <= max(daily_sst_dt_idx)] %>%
-    raster::stack(.) %>%
-    rotate(.) %>% # convert into -`180 to 180
-    crop(., e) %>%
-    prepRasterZ(., daily_sst_dt_idx) 
+<!-- daily_sst_dt_idx <- getDateRange('2023-09-01', '2023-09-19', unit = 'daily') -->
 
-# calc temp ras sept 2023
-ras_sept_2023 <- calc(daily_sst_ras_stack, fun = mean, na.rm = T)
+<!-- ## ssta -->
+<!-- daily_sst_ras_stack <- daily_sst_ncs[daily_sst_fdates >= min(daily_sst_dt_idx) & daily_sst_fdates <= max(daily_sst_dt_idx)] %>% -->
+<!--     raster::stack(.) %>% -->
+<!--     rotate(.) %>% # convert into -`180 to 180 -->
+<!--     crop(., e) %>% -->
+<!--     prepRasterZ(., daily_sst_dt_idx)  -->
 
-names(ras_sept_2023) <- c('X2023-09-16')
+<!-- # calc temp ras sept 2023 -->
+<!-- ras_sept_2023 <- calc(daily_sst_ras_stack, fun = mean, na.rm = T) -->
 
-}
-```
+<!-- names(ras_sept_2023) <- c('X2023-09-16') -->
 
-
-
-<!-- ```{r 03-set-ras-info} -->
-
-<!-- # dt_idx <- getDateRange(params$min_dt, params$max_dt, unit = params$timestep) -->
-
-<!-- # ras_names_yrmon <- as.yearmon(dt_idx) -->
-
-<!-- #  -->
-
-<!-- # ras_stack <- setZ(ras_stack, ras_names_yrmon) -->
-
-<!-- # # names(ssta_monthly_stack) <- as.character(ras_names_yrmon)  # mon-yr abbreb -->
-
-<!-- # names(ras_stack) <- as.character(dt_idx) # full Xyr-mon-d  -->
-
+<!-- } -->
 <!-- ``` -->
+
+
 
 ```{r 03-calc-ras-mean-layer}
 ## ssta
@@ -361,6 +346,12 @@ add_turtle_pts <- function(df, col="#66CCC0", size=3){
     )
 }
 
+# add_turtle_pts <- function(df, size=3){
+#     list(
+#         geom_point(data=df, aes(x = lon, y = lat, colour = as.factor(group)), size = size)
+#     )
+# }
+
 add_track_spLines <- function(df, cpal, linewidth) {
     list(
     # add cohort 1 tracks
@@ -406,7 +397,6 @@ p_ssta_mean <- ggplot() +
                 aes(x = lon, y = lat, fill = val, interpolate = TRUE)) +
     scale_fill_gradientn(colours = ssta_pal[5:length(ssta_pal)],
     # scale_colour_gradient2(high = "red", mid = "white", low = "blue", midpoint = 1, 
-
                          breaks=seq(-2,4,1),
                          limits = c(-2,4), 
                          na.value="transparent",
@@ -478,9 +468,9 @@ p_chla_mean_tcms +
 
 <!-- ------------------------------------------------------------------------ -->
 
-<!-- ## Part 3: Map TZCF isotherm location [Historic (1997-2013) vs 2023] across eastern NPac -->
+<!-- ## Part 3: Map TZCF isotherm location [Historic (1997-2012) vs 2023] across eastern NPac -->
 
-```{r 03-get-sept-ras-cc}
+```{r 03-pull-yr-mon-from-ras}
 
 names(sst_ras_stack) <- getZ(sst_ras_stack)
 
@@ -491,30 +481,63 @@ dte <- getZ(sst_ras_stack)
 m <- format(dte, "%b")
 y <- format(dte, "%Y")
 
-# 1) get historic Sept months: 1997-2013
-i_hist <- dte[(m == "Sep" & y <= "2013")] %>% gsub(" ", ".", .)
-ras_sept_1997_2013 <- sst_ras_stack[[i_hist]]
+```
 
 
-# # 2) get cohort 1 Sept month: 2023 ----~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FILL IN WHEN HAVE SEPT 2023 LAYER!!! 
-# i_cohort1 <- dte[(m == "Sep" & y == "2023")] %>% gsub(" ", ".", .)
-# ras_sept_2023 <- sst_ras_stack[[i_cohort1]]
+```{r 03-get-sept-ras-cc}
 
-# 3) all time septs (1997-2023). ----~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ UPDATE WHEN HAVE SEPT 2023 LAYER!!! 
-i <- dte[(m == "Sep")] %>% gsub(" ", ".", .)
-ras_sept_1997_2023 <- sst_ras_stack[[i]]
+# 1) get historic Sept months: 1997-2012
+i_hist_sept <- dte[(m == "Sep" & y <= "2012")] %>% gsub(" ", ".", .)
+ras_sept_1997_2012 <- sst_ras_stack[[i_hist_sept]]
+
+# 2) get historic subset Sept months: 2005-2006
+i_hist_sept_2005_2006 <- dte[(m == "Sep" & y >= "2005" & y <= "2006")] %>% gsub(" ", ".", .)
+ras_sept_2005_2006 <- sst_ras_stack[[i_hist_sept_2005_2006]]
+
+
+# 3) get cohort 1 Sept month: 2023
+i_cohort1_sept <- dte[(m == "Sep" & y == "2023")] %>% gsub(" ", ".", .)
+ras_sept_2023 <- sst_ras_stack[[i_cohort1_sept]]
+
+# 4) all time septs (1997-2023)
+i_sept <- dte[(m == "Sep")] %>% gsub(" ", ".", .)
+ras_sept_1997_2023 <- sst_ras_stack[[i_sept]]
 
 ```
+
+```{r 03-get-march-ras-cc}
+# 1) get historic March months: 1997-2012
+i_hist_march <- dte[(m == "Mar" & y <= "2012")] %>% gsub(" ", ".", .)
+ras_march_1997_2012 <- sst_ras_stack[[i_hist_march]]
+
+# 2) get historic subset March months: 2005-2006
+i_hist_march_2005_2006 <- dte[(m == "Mar" & y >= "2005" & y <= "2006")] %>% gsub(" ", ".", .)
+ras_march_2005_2006 <- sst_ras_stack[[i_hist_march_2005_2006]]
+
+
+# 3) get cohort 1 Sept month: 2023
+i_march_2023 <- dte[(m == "Mar" & y == "2023")] %>% gsub(" ", ".", .)
+ras_march_2023 <- sst_ras_stack[[i_march_2023]]
+
+# 4) all time March (1997-2023)
+i_march <- dte[(m == "Mar")] %>% gsub(" ", ".", .)
+ras_march_1997_2023 <- sst_ras_stack[[i_march]]
+
+```
+
 
 ```{r 03-calc-sept-ras-means}
 
 # historic septs only
-ras_mean_sept_1997_2013 <- calc(ras_sept_1997_2013, fun = mean, na.rm = T)
+ras_mean_sept_1997_2012 <- calc(ras_sept_1997_2012, fun = mean, na.rm = T)
+
+# historic subset septs only
+ras_mean_sept_2005_2006 <- calc(ras_sept_2005_2006, fun = mean, na.rm = T)
 
 # 2023 sept mean only 
-# ras_sept_2023 ----~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FILL IN WHEN HAVE SEPT 2023 LAYER!!! 
+# ras_sept_2023 
 
-# # alltime mean (sept 1997 - 2023) -----------~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ UPDATE WHEN HAVE SEPT 2023 LAYER!!! 
+# # alltime mean (sept 1997 - 2023)  
 ras_mean_sept_1997_2023 <- calc(ras_sept_1997_2023, fun = mean, na.rm = T)
 
 ```
@@ -553,22 +576,67 @@ ras_mean_sept_1997_2023 <- calc(ras_sept_1997_2023, fun = mean, na.rm = T)
 
 <!-- ``` -->
 
+```{r 03-calc-march-ras-means}
+
+# historic septs only
+ras_mean_march_1997_2012 <- calc(ras_march_1997_2012, fun = mean, na.rm = T)
+
+# historic subset septs only
+ras_mean_march_2005_2006 <- calc(ras_march_2005_2006, fun = mean, na.rm = T)
+
+# 2023 march mean only 
+# ras_march_2023 
+
+# # alltime mean (sept 1997 - 2023)  
+ras_mean_march_1997_2023 <- calc(ras_march_1997_2023, fun = mean, na.rm = T)
+
+```
+
+
 
 ```{r 03-ras-sept-means-to-df}
 
-## 1) sept 1997-2013
-names(ras_mean_sept_1997_2013) <- c('X2013-09-16')
+## 1) sept 1997-2012 -- DKB NOTE: Changed from 2013 to 2012, since there are no sept tracks in 2013
+names(ras_mean_sept_1997_2012) <- c('X2012-09-16')
 
-ras_mean_sept_1997_2013_df <- ras_mean_sept_1997_2013 %>% ras2df()
+ras_mean_sept_1997_2012_df <- ras_mean_sept_1997_2012 %>% ras2df()
 
-## 2) sept 2023 ----~~~~~~~~~~~~~~~~~~~~~~~~~~~~~----------------------- UPDATE WHEN HAVE SEPT 2023 LAYER!!! 
+## 2) sept 2023 
+names(ras_sept_2023) <- c('X2023-09-16')
 ras_sept_2023_df <- ras_sept_2023 %>% ras2df()
 
 # 3) all septs 1997-2023
 names(ras_mean_sept_1997_2023) <- c('X2023-09-16')
 ras_mean_sept_1997_2023_df <- ras_mean_sept_1997_2023 %>% ras2df()
 
+# 4) sept 2005 - 2006 --- added this one in for tracks subset exploration
+names(ras_mean_sept_2005_2006) <- c('X2006-09-16')
+ras_mean_sept_2005_2006_df <- ras_mean_sept_2005_2006 %>% ras2df()
+
 ```
+
+```{r 03-ras-march-means-to-df}
+
+## 1) march 1997-2012 
+names(ras_mean_march_1997_2012) <- c('X2012-03-16')
+
+ras_mean_march_1997_2012_df <- ras_mean_march_1997_2012 %>% ras2df()
+
+## 2) march 2023 
+names(ras_march_2023) <- c('X2023-03-16')
+ras_march_2023_df <- ras_march_2023 %>% ras2df()
+
+# 3) all march 1997-2023
+names(ras_mean_march_1997_2023) <- c('X2023-03-16')
+ras_mean_march_1997_2023_df <- ras_mean_march_1997_2023 %>% ras2df()
+
+# 4) march 2005 - 2006 --- added this one in for tracks subset exploration
+names(ras_mean_march_2005_2006) <- c('X2006-03-16')
+ras_mean_march_2005_2006_df <- ras_mean_march_2005_2006 %>% ras2df()
+
+```
+
+
 
 ```{r 03-plot-sept-mean-clim}
 
@@ -576,10 +644,13 @@ p_sept_mean <- ggplot() +
     # add sst sept all-time clim layer
     geom_raster(data = ras_mean_sept_1997_2023_df, 
                 aes(x = lon, y = lat, fill = val, interpolate = TRUE)) +
-    scale_fill_gradientn(colours = sst_cpal[6:length(sst_cpal)],
+    # scale_fill_gradientn(colours = sst_cpal[6:length(sst_cpal)],
+                         # breaks=seq(8,32,2),
+                         # limits = c(8,32), 
+    scale_fill_gradientn(colours = sst_cpal[2:length(sst_cpal)], # FYI - use this if comparing mar/septs. Otherwise uncomment lines above and use that for ms fig
+                         breaks=seq(4,30,2),
+                         limits = c(3,31), 
 
-                         breaks=seq(8,32,2),
-                         limits = c(8,32), 
                          na.value="transparent",
                          name = "SST (°C) \n") +
     # add baselayers
@@ -593,17 +664,67 @@ p_sept_mean <- ggplot() +
 
 ```{r 03-plot-sept-clim-w-tzcfs}
 p_sept_mean_w_tzcfs <- p_sept_mean +
-    add_contour_lines(df=ras_mean_sept_1997_2013_df, contours=c(18), col='gray80') + 
+    add_contour_lines(df=ras_mean_sept_1997_2012_df, contours=c(18), col='gray80') + 
     add_contour_lines(df=ras_sept_2023_df, contours=c(18), col='snow') + 
     resize_cbar(12)
 
 ```
 
-```{r 03-calc-mlat-avgs-cc-sept}
+
+```{r 03-plot-sept-march-clim-w-tzcfs}
+p_sept_march_mean_w_tzcfs <- p_sept_mean +
+    # add sept isotherms
+    add_contour_lines(df=ras_mean_sept_1997_2012_df, contours=c(18), col='gray80') + 
+    add_contour_lines(df=ras_sept_2023_df, contours=c(18), col='snow') + 
+    
+    # add march isotherms
+    add_contour_lines(df=ras_mean_march_1997_2012_df, contours=c(18), col='gray40') + 
+    add_contour_lines(df=ras_march_2023_df, contours=c(18), col='gray20') + 
+
+    resize_cbar(12)
+
+```
+
+
+```{r 03-plot-mar-mean-clim}
+
+p_march_mean <- ggplot() +
+    # add sst sept all-time clim layer
+    geom_raster(data = ras_mean_march_1997_2023_df, 
+                aes(x = lon, y = lat, fill = val, interpolate = TRUE)) +
+    # scale_fill_gradientn(colours = sst_cpal[6:length(sst_cpal)],
+                         # breaks=seq(8,32,2),
+                         # limits = c(8,32), 
+    scale_fill_gradientn(colours = sst_cpal[2:length(sst_cpal)],
+                         breaks=seq(4,30,2),
+                         limits = c(3,31), 
+
+                         na.value="transparent",
+                         name = "SST (°C) \n") +
+    # add baselayers
+    add_baseplot(bbox) 
+ 
+# # show plot with tcms box
+# p_tzcf_sept_mean_tcms <- p_tzcf_sept_mean + add_tcms_box()
+
+
+```
+```{r 03-plot-march-clim-w-tzcfs}
+p_march_mean_w_tzcfs <- p_march_mean +
+    add_contour_lines(df=ras_mean_march_1997_2012_df, contours=c(18), col='gray80') + 
+    add_contour_lines(df=ras_march_2023_df, contours=c(18), col='snow') + 
+    resize_cbar(12)
+
+```
+
+
+
+```{r 03-calc-max-lat-avgs-cc-sept}
 max_lats_historic <- hist_df %>%
-    filter(lon >= -160 & lon <= -130) %>%
+    filter(lon >= -165 & lon <= -140) %>%
     filter(month == 9) %>%
-    group_by(id) %>%
+    # group_by(id) %>%
+    group_by(id, month, year) %>%
     slice(which.max(lat)) %>%
     mutate(lon = round(lon, 3),
            lat = round(lat, 3)) %>%
@@ -612,32 +733,158 @@ max_lats_historic <- hist_df %>%
 
 max_lats_cohort1 <- daily_avg_data_cohort_1 %>%
     filter(month == 9) %>%
-    group_by(id) %>%
+    # group_by(id) %>%
+    group_by(id, month, year) %>%
     slice(which.max(lat)) %>%
     mutate(lon = round(lon, 3),
            lat = round(lat, 3)) %>%
     mutate(group = 'cohort1') %>%
+    mutate(id = as.factor(id)) %>%
     as_tibble()
 
 max_lats_all <- rbind(max_lats_historic, max_lats_cohort1)
+
+```
+
+```{r 03-calc-mean-lat-avgs-cc-sept}
+mean_lats_historic <- hist_df %>%
+    filter(lon >= -165 & lon <= -140) %>%
+    filter(month == 9) %>%
+    group_by(id, month, year) %>% # fyi - grouping to include month and year, for means so that it's easy to pull out 2005-2006 subset
+    # slice(which.max(lat)) %>%
+    summarise(lat = mean(lat, na.rm=TRUE),
+              lon = mean(lon, na.rm=TRUE)) %>%
+    mutate(lon = round(lon, 3),
+           lat = round(lat, 3)) %>%
+    mutate(group = 'historic') %>%
+    as_tibble()
+
+mean_lats_cohort1 <- daily_avg_data_cohort_1 %>%
+    filter(month == 9) %>%
+    group_by(id, month, year) %>% # fyi - grouping to include month and year, for means so that it's consistent for rbind'ing
+    # slice(which.max(lat)) %>%
+    summarise(lat = mean(lat, na.rm=TRUE),
+              lon = mean(lon, na.rm=TRUE)) %>%
+    mutate(lon = round(lon, 3),
+           lat = round(lat, 3)) %>%
+    mutate(group = 'cohort1') %>%
+    mutate(id = as.factor(id)) %>%
+    as_tibble()
+
+mean_lats_all <- rbind(mean_lats_historic, mean_lats_cohort1)
+
 ```
 
 
-```{r 03-plot-sept-clim-w-tzcfs_cc-pts}
+
+```{r 03-plot-sept-clim-w-tzcfs-max-cc-pts}
 p_sept_mean_w_tzcfs_cc_max_lats <- p_sept_mean_w_tzcfs + 
-    add_turtle_pts(df=max_lats_historic, col="Sept 1997-2013", size=4) +
+    add_turtle_pts(df=max_lats_historic, col="Sept 1997-2012", size=4) +
     add_turtle_pts(df=max_lats_cohort1, col="Sept 2023", size=4) +
     
-    scale_color_manual(
-        name = "Max Turtle Latitudes",
-        values = c("#6D4C94","#14FCE1")
-    ) +
+   scale_color_manual("Maximum Turtle Location in September", 
+                  breaks = c("Max Sept 1997-2012 (Historic)", 
+                             "Max Sept 1997-2012 (Cohort 1)"#,
+                             # "Max Sept 2005-2006 (Historic)", "Mean Sept 2005-2006 (Historic)"
+                             ),
+                  values = c("Max Sept 1997-2012 (Historic)"="#6D4C94",
+                             "Max Sept 1997-2012 (Cohort 1)"="#276961"#,
+                             # "Max Sept 2005-2006 (Historic)"="red", "Mean Sept 2005-2006 (Historic)"="pink"
+                             )) +
     resize_cbar(24) 
 
 p_sept_mean_w_tzcfs_cc_max_lats_w_text <- 
     p_sept_mean_w_tzcfs_cc_max_lats + 
     labs(title = "Long-term Average of SST for September (1997-2023) with Max Turtle Latitudes and TZCF Location",
-    subtitle = "\nMaximum turtle latitudes are shown for historic turtle tracks in September between 1997-2013 (n=31, purple circles) and the STRETCH Cohort 1 turtle tracks for September 2023 (as of 9/19/23, n=24, bright green circles). \n\nThe 18°C isotherm is a reference for the seasonal location of the TZCF. The gray line represents the average September TZCF location from 1997-2013. The white line represents the TZCF location for September 2023. \n")
+    subtitle = glue("\n\nFor each turtle located between (160°W-140°W longitude), their maximum lat and long locations are shown for September. \n\nThe historic tracks (1997-2012, n={nrow(mean_lats_historic)}) are shown as the purle circles. The STRETCH Cohort 1 turtle locations (September 2023, n={nrow(mean_lats_historic)}), are shown as the green circles. \n\nThe 18°C isotherm is a reference for the seasonal location of the TZCF. The gray line represents the average September TZCF location from 1997-2012. The white line represents the TZCF location for September 2023. \n\n"))
+    
+```
+
+
+```{r 03-plot-sept-clim-w-tzcfs-mean-cc-pts}
+p_sept_mean_w_tzcfs_cc_mean_lats <- p_sept_mean_w_tzcfs + 
+    add_turtle_pts(df=mean_lats_historic, col="Mean Sept 1997-2012 (Historic)", size=4) +
+    add_turtle_pts(df=mean_lats_cohort1, col="Mean Sept 2023 (Cohort 1)", size=4) +
+        
+   scale_color_manual("Average Turtle Location in September", 
+                      breaks = c("Mean Sept 1997-2012 (Historic)", 
+                                 "Mean Sept 2023 (Cohort 1)"#,
+                                 # "Max Sept 2005-2006 (Historic)", "Mean Sept 2005-2006 (Historic)"
+                                 ),
+                      values = c("Mean Sept 1997-2012 (Historic)"="mediumorchid", 
+                                 "Mean Sept 2023 (Cohort 1)"="#14FCE1"
+                                 )) +
+    resize_cbar(24) 
+
+p_sept_mean_w_tzcfs_cc_mean_lats_w_text <- 
+    p_sept_mean_w_tzcfs_cc_mean_lats + 
+    labs(title = "Long-term Average of SST for September (1997-2023) with Monthly Average of Turtle Location and TZCF Location",
+    subtitle = glue("\n\nFor each turtle located between (160°W-140°W longitude), their average lat and long locations are shown for September. \n\nThe historic tracks (1997-2012, n={nrow(mean_lats_historic)}) are shown as the purle circles. The STRETCH Cohort 1 turtle locations (September 2023, n={nrow(mean_lats_historic)}), are shown as the green circles. \n\nThe 18°C isotherm is a reference for the seasonal location of the TZCF. The gray line represents the average September TZCF location from 1997-2012. The white line represents the TZCF location for September 2023. \n\n"))
+    
+```
+
+
+```{r 03-plot-sept-clim-w-tzcfs-mean-cc-pts}
+
+p_sept_mean_w_tzcfs_cc_mean_vs_max_lats <- p_sept_mean_w_tzcfs + 
+    add_turtle_pts(df=mean_lats_historic, col="Mean Sept 1997-2012 (Historic)", size=4) +
+    add_turtle_pts(df=mean_lats_cohort1, col="Mean Sept 2023 (Cohort 1)", size=4) +
+
+    add_turtle_pts(df=max_lats_historic, col="Max Sept 1997-2012 (Historic)", size=4) +
+    add_turtle_pts(df=max_lats_cohort1, col="Max Sept 1997-2012 (Cohort 1)", size=4) +
+
+    # add_turtle_pts(df=mean_lats_historic %>% filter(year >=2005 & year <= 2006), col="Mean Sept 2005-2006 (Historic)", size=4) +
+    # add_turtle_pts(df=max_lats_historic %>% filter(year >=2005 & year <= 2006), col="Max Sept 2005-2006 (Historic)", size=4) +
+    
+   scale_color_manual("Max vs Avg Turtle Location in September", 
+                      breaks = c("Max Sept 1997-2012 (Historic)", "Mean Sept 1997-2012 (Historic)", 
+                                 "Max Sept 1997-2012 (Cohort 1)","Mean Sept 2023 (Cohort 1)"#,
+                                 # "Max Sept 2005-2006 (Historic)", "Mean Sept 2005-2006 (Historic)"
+                                 ),
+                      values = c("Max Sept 1997-2012 (Historic)"="#6D4C94", "Mean Sept 1997-2012 (Historic)"="mediumorchid", 
+                                 "Max Sept 1997-2012 (Cohort 1)"="#276961","Mean Sept 2023 (Cohort 1)"="#14FCE1"#,
+                                 # "Max Sept 2005-2006 (Historic)"="red", "Mean Sept 2005-2006 (Historic)"="pink"
+                                 )) +
+    
+    resize_cbar(24) 
+
+p_sept_mean_w_tzcfs_cc_mean_vs_max_lats_w_text <- 
+    p_sept_mean_w_tzcfs_cc_mean_vs_max_lats + 
+    labs(title = "Long-term Average of SST for September (1997-2023) with Monthly Average of Turtle Location and TZCF Location",
+    subtitle = glue("\n\nFor each turtle located between (160°W-140°W longitude), the their maximum and average lat and long locations are shown for September. \n\nThe historic tracks (1997-2012, n={nrow(mean_lats_historic)}) are shown as the purle circles (dark purple = max, light purple = average monthly location). The STRETCH Cohort 1 turtle locations (September 2023, n={nrow(mean_lats_historic)}), are shown as the green circles (dark green = max, light green = average monthly location). \n\nThe 18°C isotherm is a reference for the seasonal location of the TZCF. The gray line represents the average September TZCF location from 1997-2012. The white line represents the TZCF location for September 2023. \n\n"))
+    
+```
+
+```{r 03-plot-sept-clim-w-tzcfs-2005-2006-cc-pts}
+
+df_historic_2005_2006 <- max_lats_historic %>% filter(year >=2005 & year <= 2006)
+
+p_sept_mean_w_tzcfs_cc_2005_2006_lats <- p_sept_mean_w_tzcfs + 
+    # add_turtle_pts(df=mean_lats_historic, col="Mean Sept 1997-2012 (Historic)", size=4) +
+    add_turtle_pts(df=mean_lats_cohort1, col="Mean Sept 2023 (Cohort 1)", size=4) +
+
+    # add_turtle_pts(df=max_lats_historic, col="Max Sept 1997-2012 (Historic)", size=4) +
+    add_turtle_pts(df=max_lats_cohort1, col="Max Sept 1997-2012 (Cohort 1)", size=4) +
+
+    add_turtle_pts(df=mean_lats_historic %>% filter(year >=2005 & year <= 2006), col="Mean Sept 2005-2006 (Historic)", size=4) +
+    add_turtle_pts(df=max_lats_historic %>% filter(year >=2005 & year <= 2006), col="Max Sept 2005-2006 (Historic)", size=4) +
+    
+       scale_color_manual("Max vs Avg Turtle Location in September", 
+                          breaks = c(#"Max Sept 1997-2012 (Historic)", "Mean Sept 1997-2012 (Historic)", 
+                                     "Max Sept 1997-2012 (Cohort 1)","Mean Sept 2023 (Cohort 1)",
+                                     "Max Sept 2005-2006 (Historic)", "Mean Sept 2005-2006 (Historic)"
+                                     ),
+                          values = c(#"Max Sept 1997-2012 (Historic)"="#6D4C94", "Mean Sept 1997-2012 (Historic)"="mediumorchid", 
+                                     "Max Sept 1997-2012 (Cohort 1)"="#276961","Mean Sept 2023 (Cohort 1)"="#14FCE1",
+                                     "Max Sept 2005-2006 (Historic)"="darkred", "Mean Sept 2005-2006 (Historic)"="pink"
+                                     )) +
+    
+    resize_cbar(24) 
+
+p_sept_mean_w_tzcfs_cc_2005_2006_lats_w_text <- 
+    p_sept_mean_w_tzcfs_cc_2005_2006_lats + 
+    labs(title = "Long-term Average of SST for September (1997-2023) with Monthly Average of Turtle Location and TZCF Location",
+    subtitle = glue("\n\nFor each turtle located between (160°W-140°W longitude), their maximum and average lat and long locations are shown for September. \n\nThe historic tracks (2005-2006, n={nrow(df_historic_2005_2006)}) are shown as the red circles (dark red = max, light red = average monthly location). The STRETCH Cohort 1 turtle locations (September 2023, n={nrow(mean_lats_cohort1)}), are shown as the green circles (dark green = max, light green = average monthly location). \n\nThe 18°C isotherm is a reference for the seasonal location of the TZCF. The gray line represents the average September TZCF location from 1997-2012. The white line represents the TZCF location for September 2023. \n\n"))
     
 ```
 
