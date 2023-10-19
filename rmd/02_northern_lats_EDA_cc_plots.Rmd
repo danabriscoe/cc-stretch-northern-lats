@@ -204,6 +204,16 @@ gg_p_avg_turtle_lats_by_week <-
 ```
 
 
+```{r 02-interim-rdata-save}
+
+## INTERIM SAVE 
+f <- "../data/interim/02_northern_lats_EDA_interim_data.RData"
+if (file.exists(f)){
+    invisible()
+} else{
+    save.image(file = "../data/interim/02_northern_lats_EDA_interim_data.RData")
+}
+```
 
 
 

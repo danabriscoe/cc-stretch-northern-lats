@@ -72,7 +72,7 @@ hist_df <-  historic_tags %>% wrangleHistDF()
 
 ```{r 05-subset-hist-df-septs}
 hist_df_subset <- hist_df %>%
-    filter(lon >= -160 & lon <= -130) %>%
+    filter(lon >= -165 & lon <= -140) %>%
     mutate(mon_yr = str_c(month, "-",year))
 
 # length(unique(hist_df_subset$id))
@@ -87,9 +87,9 @@ hist_df_subset_septs <- hist_df_subset %>% filter(month == 9)
 
 <!-- test =  -->
 <!-- hist_df %>% -->
-<!--     filter(lon >= -160 & lon <= -130) %>% -->
+<!--     filter(lon >= -165 & lon <= -140) %>% -->
 <!--     group_by(id) %>% -->
-<!--     group_modify(~binFreqTable(.$lon, seq(-160,-130, 5))) %>% -->
+<!--     group_modify(~binFreqTable(.$lon, seq(-165,-140, 5))) %>% -->
 <!--     # group_by(range) -->
 <!--     ungroup() -->
 
@@ -98,21 +98,21 @@ hist_df_subset_septs <- hist_df_subset %>% filter(month == 9)
 
 
 
-```{r 05-ntags-160W-130W-per-month}
-ntags_hist_tags_160W_130W_per_month <- hist_df %>%
-    filter(lon >= -160 & lon <= -130) %>%
+```{r 05-ntags-165W-140W-per-month}
+ntags_hist_tags_165W_140W_per_month <- hist_df %>%
+    filter(lon >= -165 & lon <= -140) %>%
     group_by(month) %>%
     summarize(count=n_distinct(id)) %>%
     # mutate(month = month.abb[month]) %>%
     spread(month, count)
 
-colnames(ntags_hist_tags_160W_130W_per_month) <- month.abb
+colnames(ntags_hist_tags_165W_140W_per_month) <- month.abb
 ```
 
 
-```{r 05-ntags-160W-130W-per-year}
-ntags_hist_tags_160W_130W_per_year <- hist_df %>%
-    filter(lon >= -160 & lon <= -130) %>%
+```{r 05-ntags-165W-140W-per-year}
+ntags_hist_tags_165W_140W_per_year <- hist_df %>%
+    filter(lon >= -165 & lon <= -140) %>%
     # filter(month == 9) %>%
     group_by(year) %>%
     summarize(count=n_distinct(id)) %>%
@@ -120,20 +120,20 @@ ntags_hist_tags_160W_130W_per_year <- hist_df %>%
 
 ```
 
-```{r 05-ntags-160W-130W-per-year-month}
-ntags_hist_tags_160W_130W_per_year_month <- hist_df %>%
-    filter(lon >= -160 & lon <= -130) %>%
+```{r 05-ntags-165W-140W-per-year-month}
+ntags_hist_tags_165W_140W_per_year_month <- hist_df %>%
+    filter(lon >= -165 & lon <= -140) %>%
     group_by(year, month) %>%
     summarize(count=n_distinct(id)) %>%
     spread(month, count)
 
-colnames(ntags_hist_tags_160W_130W_per_year_month) <- c("Year", month.abb)
+colnames(ntags_hist_tags_165W_140W_per_year_month) <- c("Year", month.abb)
 ```
 
 
 ```{r 05-calc-mlat-avgs-cc-sept}
 max_lats_historic <- hist_df %>%
-    filter(lon >= -160 & lon <= -130) %>%
+    filter(lon >= -165 & lon <= -140) %>%
     filter(month == 9) %>%
     # group_by(year) %>%
     # summarize(count=n_distinct(id)) %>%
@@ -166,7 +166,7 @@ p_graph_hist_id_by_yrmon <- ggplot() +
   geom_line(data = hist_df_subset, aes(x=date, y=id, group=id)) +
     geom_line(data = hist_df_subset %>% filter(month == 9), aes(x=date, y=id, group=id, color='September'), lwd=2) +
     scale_color_manual(values=c("#952C23")) +
-    guides(color=guide_legend(title="Tracks 160W-130W Long")) +
+    guides(color=guide_legend(title="Tracks 165W-140W Long")) +
     scale_x_date(breaks = "3 month", labels=date_format("%b-%Y")) +
    theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1))
 
@@ -177,7 +177,7 @@ gg_graph_hist_id_by_yrmon<- ggplotly(p_graph_hist_id_by_yrmon, tooltip = c("text
 
 ```{r 05-max-lat-yr-avg-meds}
 max_lat_yr_w2023 <- max_lats_all %>%
-    filter(lon <= -135) %>%
+    filter(lon <= -140) %>%
     # filter(year != 2023) %>%
     group_by(year) %>% 
     summarise(avg_lon = mean(lon, na.rm=T),
@@ -186,7 +186,7 @@ max_lat_yr_w2023 <- max_lats_all %>%
               med_lat = median(lat, na.rm=T))
 
 max_lat_yr_wo_2023 <- max_lats_all %>%
-    filter(lon <= -135) %>%
+    filter(lon <= -140) %>%
     filter(year != 2023) %>%
     group_by(year) %>% 
     summarise(avg_lon = mean(lon, na.rm=T),
@@ -200,7 +200,7 @@ max_lat_yr_wo_2023 <- max_lats_all %>%
 
 ```{r 05-p-histogram-hist-df-septs-avg-medians}
 hist_all_stats <- hist_df %>%
-    filter(lon >= -160 & lon <= -130) %>%
+    filter(lon >= -165 & lon <= -140) %>%
     filter(month == 9) %>%
     summarise(mean = round(mean(lat, na.rm=T),2),
               med = round(median(lat, na.rm=T),2)) %>%
@@ -208,7 +208,7 @@ hist_all_stats <- hist_df %>%
 
 p_hist_df_avg_vs_med <- 
 hist_df %>%
-    filter(lon >= -160 & lon <= -130) %>%
+    filter(lon >= -165 & lon <= -140) %>%
     filter(month == 9) %>%
 ggplot(aes(lat)) +    
 geom_histogram(binwidth = 0.5, fill = "steelblue", colour = "navy", alpha = 0.6) + 
@@ -290,6 +290,18 @@ mse_cv <- mean(cv_results_df, na.rm=TRUE)
 
 # # View the LOOCV MSE
 # print(mse_cv)
+
+```
+
+```{r 05-interim-rdata-save}
+
+## INTERIM SAVE 
+f <- "../data/interim/05_northern_lats_EDA_interim_data.RData"
+if (file.exists(f)){
+    invisible()
+} else{
+    save.image(file = "../data/interim/05_northern_lats_EDA_interim_data.RData")
+}
 
 ```
 

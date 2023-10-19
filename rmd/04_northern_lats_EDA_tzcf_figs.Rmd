@@ -100,7 +100,7 @@ params <- tibble(
     eov = "sst",
     timestep = "month",
     min_dt = '1997-07-16',
-    max_dt = '2023-08-16')
+    max_dt = '2023-09-16')
 
 ```
 
@@ -197,7 +197,7 @@ raster_stack <- ras_stack
 # DO THIS!
 # Define the start and end year and month
 start_date <- as.Date("1997-07-01")
-end_date <- as.Date("2023-08-01")
+end_date <- as.Date("2023-09-01")
 date_seq <- seq(start_date, end_date, by = "1 month")
 
 # Create a data frame of year-month combinations for every month between the specified period
@@ -244,13 +244,13 @@ grouped_by_year_month <- combined_df %>%
 
 
 
-```{r 04-calc-avg-tzcf-1997-2013}
-grouped_by_year_tzcf_1997_2013 <- grouped_by_year_month %>%
-    filter(x <= '2013-12-31') %>%
+```{r 04-calc-avg-tzcf-1997-2012}
+grouped_by_year_tzcf_1997_2012 <- grouped_by_year_month %>%
+    filter(x <= '2012-12-31') %>%
     group_by(month, y) %>%
      summarise(
                z = mean(z)) %>%
-    mutate(x = as.Date(paste0("2013-", month, "-01"))) %>%
+    mutate(x = as.Date(paste0("2012-", month, "-01"))) %>%
     mutate(year = lubridate::year(x),
            month = lubridate::month(x),
            day = lubridate::day(x)) %>%
@@ -340,7 +340,7 @@ gg_tzcf_all_yrs <- ggplotly(p_tzcf_all_yrs, tooltip = c("text")) %>% layout(xaxi
 
 ```{r 04-calc-mlat-avgs-cc}
 mlats_historic <- hist_df %>%
-    filter(lon >= -160 & lon <= -135) %>%
+    filter(lon >= -165 & lon <= -140) %>%
     dplyr::select(-c(date)) %>%
     group_by(month) %>%
     summarise(avgs = mean(lat))
@@ -357,9 +357,9 @@ mlats_cohort1 <- daily_avg_data_cohort_1 %>%
 ```{r 04-gg-seasonal-tzcf-yrs-only}
 p_tzcf_hist_yrs_cohort_yr <-  ggplot() +
  
-        add_tzcf_contour(grouped_by_year_tzcf_1997_2013, col="1997-2013: 18°C Isotherm") +
+        add_tzcf_contour(grouped_by_year_tzcf_1997_2012, col="18°C Isotherm (1997-2012)") +
     
-        add_tzcf_contour_2023(col='2023: 18°C Isotherm') +
+        add_tzcf_contour_2023(col='18°C Isotherm (2023)') +
         
         add_baseplot_theme() +
     
@@ -378,8 +378,8 @@ gg_tzcf_hist_yrs_cohort_yr <- ggplotly(p_tzcf_hist_yrs_cohort_yr, tooltip = c("t
 ```{r 04-gg-seasonal-tzcf-yrs-with-cc}
 p_tzcf_hist_cohort <- 
 p_tzcf_hist_yrs_cohort_yr + 
-    add_historic_mlats(col="Historic Tracks") + 
-    add_cohort1_mlats(col="Cohort 1 Tracks") +
+    add_historic_mlats(col="Historic Tracks (1997-2012") + 
+    add_cohort1_mlats(col="Cohort 1 Tracks (2023)") +
     
     scale_color_manual(
         name = "Avg Monthly Lat \n ",
@@ -392,9 +392,22 @@ p_tzcf_hist_yrs_cohort_yr +
 ```
 
 
-```{r 04-plot-ssta-cohort-1-with-contour}
-p_ssta_mean_tcms_w_contour <- p_ssta_mean_tcms + 
-    add_contour_lines(df=ssta_ras_mean_df, contours=c(1.5)) + 
-    resize_cbar(14)
+<!-- ```{r 04-plot-ssta-cohort-1-with-contour} -->
+<!-- p_ssta_mean_tcms_w_contour <- p_ssta_mean_tcms +  -->
+<!--     add_contour_lines(df=ssta_ras_mean_df, contours=c(1.5)) +  -->
+<!--     resize_cbar(14) -->
+
+<!-- ``` -->
+
+```{r 04-interim-rdata-save}
+
+## INTERIM SAVE 
+f <- "../data/interim/04_northern_lats_EDA_interim_data.RData"
+if (file.exists(f)){
+    invisible()
+} else{
+    save.image(file = "../data/interim/04_northern_lats_EDA_interim_data.RData")
+}
 
 ```
+

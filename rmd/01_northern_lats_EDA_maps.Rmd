@@ -218,3 +218,15 @@ kbl(caption = "Table 1. Cohort 1 Max Latitudes by Turtle ID") %>%
 scroll_box(width = "100%", height = "300px")
 ```
 
+```{r 01-interim-rdata-save}
+
+## INTERIM SAVE 
+f <- "../data/interim/01_northern_lats_EDA_interim_data.RData"
+if (file.exists(f)){
+    invisible()
+} else{
+    save.image(file = "../data/interim/01_northern_lats_EDA_interim_data.RData")
+}
+```
+
+

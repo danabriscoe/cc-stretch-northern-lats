@@ -665,11 +665,20 @@ p_sept_mean <- ggplot() +
 ```{r 03-plot-sept-clim-w-tzcfs}
 p_sept_mean_w_tzcfs <- p_sept_mean +
     add_contour_lines(df=ras_mean_sept_1997_2012_df, contours=c(18), col='gray80') + 
+    # add_contour_lines(df=ras_mean_sept_2005_2006_df, contours=c(18), col='#FFC2D4') + 
     add_contour_lines(df=ras_sept_2023_df, contours=c(18), col='snow') + 
     resize_cbar(12)
 
 ```
 
+```{r 03-plot-sept-clim-w-tzcfs-2005-2006}
+p_sept_mean_w_tzcfs_2005_2006 <- p_sept_mean +
+    # add_contour_lines(df=ras_mean_sept_1997_2012_df, contours=c(18), col='gray80') + 
+    add_contour_lines(df=ras_mean_sept_2005_2006_df, contours=c(18), col='#FFC2D4') + 
+    add_contour_lines(df=ras_sept_2023_df, contours=c(18), col='snow') + 
+    resize_cbar(12)
+
+```
 
 ```{r 03-plot-sept-march-clim-w-tzcfs}
 p_sept_march_mean_w_tzcfs <- p_sept_mean +
@@ -712,11 +721,20 @@ p_march_mean <- ggplot() +
 ```{r 03-plot-march-clim-w-tzcfs}
 p_march_mean_w_tzcfs <- p_march_mean +
     add_contour_lines(df=ras_mean_march_1997_2012_df, contours=c(18), col='gray80') + 
+    # add_contour_lines(df=ras_mean_march_2005_2006_df, contours=c(18), col='#FFC2D4') + 
     add_contour_lines(df=ras_march_2023_df, contours=c(18), col='snow') + 
     resize_cbar(12)
 
 ```
 
+```{r 03-plot-march-clim-w-tzcfs-2005-2006}
+p_march_mean_w_tzcfs_2005_2006 <- p_march_mean +
+    # add_contour_lines(df=ras_mean_march_1997_2012_df, contours=c(18), col='gray80') + 
+    add_contour_lines(df=ras_mean_march_2005_2006_df, contours=c(18), col='#FFC2D4') + 
+    add_contour_lines(df=ras_march_2023_df, contours=c(18), col='snow') + 
+    resize_cbar(12)
+
+```
 
 
 ```{r 03-calc-max-lat-avgs-cc-sept}
@@ -777,115 +795,252 @@ mean_lats_all <- rbind(mean_lats_historic, mean_lats_cohort1)
 
 
 
-```{r 03-plot-sept-clim-w-tzcfs-max-cc-pts}
+```{r 03-plot-sept-clim-w-tzcfs-max-lats-cc-pts}
 p_sept_mean_w_tzcfs_cc_max_lats <- p_sept_mean_w_tzcfs + 
-    add_turtle_pts(df=max_lats_historic, col="Sept 1997-2012", size=4) +
-    add_turtle_pts(df=max_lats_cohort1, col="Sept 2023", size=4) +
+    add_turtle_pts(df=max_lats_historic, col="Max Sept 1997-2012 (Historic)", size=3) +
+    add_turtle_pts(df=max_lats_cohort1, col="Max Sept 2023 (Cohort 1)", size=3) +
     
-   scale_color_manual("Maximum Turtle Location in September", 
+   scale_color_manual("Max Turtle Location in September", 
                   breaks = c("Max Sept 1997-2012 (Historic)", 
-                             "Max Sept 1997-2012 (Cohort 1)"#,
+                             "Max Sept 2023 (Cohort 1)"#,
                              # "Max Sept 2005-2006 (Historic)", "Mean Sept 2005-2006 (Historic)"
                              ),
                   values = c("Max Sept 1997-2012 (Historic)"="#6D4C94",
-                             "Max Sept 1997-2012 (Cohort 1)"="#276961"#,
+                             "Max Sept 2023 (Cohort 1)"="#276961"#,
                              # "Max Sept 2005-2006 (Historic)"="red", "Mean Sept 2005-2006 (Historic)"="pink"
                              )) +
-    resize_cbar(24) 
+    theme(legend.direction = "vertical", legend.box = "vertical") +
+    resize_cbar(18) 
+        # resize_cbar(24) 
 
 p_sept_mean_w_tzcfs_cc_max_lats_w_text <- 
     p_sept_mean_w_tzcfs_cc_max_lats + 
     labs(title = "Long-term Average of SST for September (1997-2023) with Max Turtle Latitudes and TZCF Location",
-    subtitle = glue("\n\nFor each turtle located between (160°W-140°W longitude), their maximum lat and long locations are shown for September. \n\nThe historic tracks (1997-2012, n={nrow(mean_lats_historic)}) are shown as the purle circles. The STRETCH Cohort 1 turtle locations (September 2023, n={nrow(mean_lats_historic)}), are shown as the green circles. \n\nThe 18°C isotherm is a reference for the seasonal location of the TZCF. The gray line represents the average September TZCF location from 1997-2012. The white line represents the TZCF location for September 2023. \n\n"))
+    subtitle = glue("\n\nFor each turtle located between (165°W-140°W longitude), their maximum lat and long locations are shown for September. \n\nThe historic tracks (1997-2012, n={nrow(mean_lats_historic)}) are shown as the purle circles. The STRETCH Cohort 1 turtle locations (September 2023, n={nrow(mean_lats_historic)}), are shown as the green circles. \n\nThe 18°C isotherm is a reference for the seasonal location of the TZCF. The gray line represents the average September TZCF location from 1997-2012. The white line represents the TZCF location for September 2023. \n\n"))
     
+### Save plot ----
+ggsave(filename = str_c('03rmd-Fig2-plot-sept-clim-w-tzcfs-max-lats-cc-pts.png'), plot = p_sept_mean_w_tzcfs_cc_max_lats, 
+       # height=9,
+       width=11, bg='white',
+       path = '../figs/')
 ```
 
 
-```{r 03-plot-sept-clim-w-tzcfs-mean-cc-pts}
+```{r 03-plot-sept-clim-w-tzcfs-mean-lats-cc-pts}
 p_sept_mean_w_tzcfs_cc_mean_lats <- p_sept_mean_w_tzcfs + 
-    add_turtle_pts(df=mean_lats_historic, col="Mean Sept 1997-2012 (Historic)", size=4) +
-    add_turtle_pts(df=mean_lats_cohort1, col="Mean Sept 2023 (Cohort 1)", size=4) +
+    add_turtle_pts(df=mean_lats_historic, col="Mean Sept 1997-2012 (Historic)", size=3) +
+    add_turtle_pts(df=mean_lats_cohort1, col="Mean Sept 2023 (Cohort 1)", size=3) +
         
-   scale_color_manual("Average Turtle Location in September", 
+   scale_color_manual("Mean Turtle Location in September", 
                       breaks = c("Mean Sept 1997-2012 (Historic)", 
                                  "Mean Sept 2023 (Cohort 1)"#,
                                  # "Max Sept 2005-2006 (Historic)", "Mean Sept 2005-2006 (Historic)"
                                  ),
                       values = c("Mean Sept 1997-2012 (Historic)"="mediumorchid", 
-                                 "Mean Sept 2023 (Cohort 1)"="#14FCE1"
+                                 "Mean Sept 2023 (Cohort 1)"="#66CCC0"
                                  )) +
-    resize_cbar(24) 
+        theme(legend.direction = "vertical", legend.box = "vertical") +
+    resize_cbar(18) 
+    # resize_cbar(24) 
 
 p_sept_mean_w_tzcfs_cc_mean_lats_w_text <- 
     p_sept_mean_w_tzcfs_cc_mean_lats + 
     labs(title = "Long-term Average of SST for September (1997-2023) with Monthly Average of Turtle Location and TZCF Location",
-    subtitle = glue("\n\nFor each turtle located between (160°W-140°W longitude), their average lat and long locations are shown for September. \n\nThe historic tracks (1997-2012, n={nrow(mean_lats_historic)}) are shown as the purle circles. The STRETCH Cohort 1 turtle locations (September 2023, n={nrow(mean_lats_historic)}), are shown as the green circles. \n\nThe 18°C isotherm is a reference for the seasonal location of the TZCF. The gray line represents the average September TZCF location from 1997-2012. The white line represents the TZCF location for September 2023. \n\n"))
+    subtitle = glue("\n\nFor each turtle located between (165°W-140°W longitude), their average lat and long locations are shown for September. \n\nThe historic tracks (1997-2012, n={nrow(mean_lats_historic)}) are shown as the purle circles. The STRETCH Cohort 1 turtle locations (September 2023, n={nrow(mean_lats_historic)}), are shown as the green circles. \n\nThe 18°C isotherm is a reference for the seasonal location of the TZCF. The gray line represents the average September TZCF location from 1997-2012. The white line represents the TZCF location for September 2023. \n\n"))
     
+
+### Save plot ----
+ggsave(filename = str_c('03rmd-Fig2-plot-sept-clim-w-tzcfs-mean-lats-cc-pts.png'), plot = p_sept_mean_w_tzcfs_cc_mean_lats, 
+       # height=9,
+       width=11, bg='white',
+       path = '../figs/')
 ```
 
 
-```{r 03-plot-sept-clim-w-tzcfs-mean-cc-pts}
+```{r 03-plot-sept-clim-w-tzcfs-mean-vs-max-lats-cc-pts}
 
 p_sept_mean_w_tzcfs_cc_mean_vs_max_lats <- p_sept_mean_w_tzcfs + 
-    add_turtle_pts(df=mean_lats_historic, col="Mean Sept 1997-2012 (Historic)", size=4) +
-    add_turtle_pts(df=mean_lats_cohort1, col="Mean Sept 2023 (Cohort 1)", size=4) +
+    add_turtle_pts(df=mean_lats_historic, col="Mean Sept 1997-2012 (Historic)", size=3) +
+    add_turtle_pts(df=mean_lats_cohort1, col="Mean Sept 2023 (Cohort 1)", size=3) +
 
-    add_turtle_pts(df=max_lats_historic, col="Max Sept 1997-2012 (Historic)", size=4) +
-    add_turtle_pts(df=max_lats_cohort1, col="Max Sept 1997-2012 (Cohort 1)", size=4) +
+    add_turtle_pts(df=max_lats_historic, col="Max Sept 1997-2012 (Historic)", size=3) +
+    add_turtle_pts(df=max_lats_cohort1, col="Max Sept 2023 (Cohort 1)", size=3) +
 
     # add_turtle_pts(df=mean_lats_historic %>% filter(year >=2005 & year <= 2006), col="Mean Sept 2005-2006 (Historic)", size=4) +
     # add_turtle_pts(df=max_lats_historic %>% filter(year >=2005 & year <= 2006), col="Max Sept 2005-2006 (Historic)", size=4) +
     
-   scale_color_manual("Max vs Avg Turtle Location in September", 
+   scale_color_manual("Max vs Mean Turtle \nLocation in September", 
                       breaks = c("Max Sept 1997-2012 (Historic)", "Mean Sept 1997-2012 (Historic)", 
-                                 "Max Sept 1997-2012 (Cohort 1)","Mean Sept 2023 (Cohort 1)"#,
+                                 "Max Sept 2023 (Cohort 1)","Mean Sept 2023 (Cohort 1)"#,
                                  # "Max Sept 2005-2006 (Historic)", "Mean Sept 2005-2006 (Historic)"
                                  ),
                       values = c("Max Sept 1997-2012 (Historic)"="#6D4C94", "Mean Sept 1997-2012 (Historic)"="mediumorchid", 
-                                 "Max Sept 1997-2012 (Cohort 1)"="#276961","Mean Sept 2023 (Cohort 1)"="#14FCE1"#,
+                                 "Max Sept 2023 (Cohort 1)"="#276961","Mean Sept 2023 (Cohort 1)"="#66CCC0"#,
                                  # "Max Sept 2005-2006 (Historic)"="red", "Mean Sept 2005-2006 (Historic)"="pink"
                                  )) +
-    
-    resize_cbar(24) 
+        theme(legend.direction = "vertical", legend.box = "vertical") +
+    resize_cbar(18) 
+    # resize_cbar(24) 
 
 p_sept_mean_w_tzcfs_cc_mean_vs_max_lats_w_text <- 
     p_sept_mean_w_tzcfs_cc_mean_vs_max_lats + 
     labs(title = "Long-term Average of SST for September (1997-2023) with Monthly Average of Turtle Location and TZCF Location",
-    subtitle = glue("\n\nFor each turtle located between (160°W-140°W longitude), the their maximum and average lat and long locations are shown for September. \n\nThe historic tracks (1997-2012, n={nrow(mean_lats_historic)}) are shown as the purle circles (dark purple = max, light purple = average monthly location). The STRETCH Cohort 1 turtle locations (September 2023, n={nrow(mean_lats_historic)}), are shown as the green circles (dark green = max, light green = average monthly location). \n\nThe 18°C isotherm is a reference for the seasonal location of the TZCF. The gray line represents the average September TZCF location from 1997-2012. The white line represents the TZCF location for September 2023. \n\n"))
+    subtitle = glue("\n\nFor each turtle located between (165°W-140°W longitude), the their maximum and average lat and long locations are shown for September. \n\nThe historic tracks (1997-2012, n={nrow(mean_lats_historic)}) are shown as the purle circles (dark purple = max, light purple = average monthly location). The STRETCH Cohort 1 turtle locations (September 2023, n={nrow(mean_lats_historic)}), are shown as the green circles (dark green = max, light green = average monthly location). \n\nThe 18°C isotherm is a reference for the seasonal location of the TZCF. The gray line represents the average September TZCF location from 1997-2012. The white line represents the TZCF location for September 2023. \n\n"))
     
+
+### Save plot ----
+ggsave(filename = str_c('03rmd-Fig2-plot-sept-clim-w-tzcfs-mean-vs-max-lats-cc-pts.png'), plot = p_sept_mean_w_tzcfs_cc_mean_vs_max_lats, 
+       # height=9,
+       width=11, bg='white',
+       path = '../figs/')
 ```
 
-```{r 03-plot-sept-clim-w-tzcfs-2005-2006-cc-pts}
+```{r 03-plot-sept-clim-w-tzcfs-2005-2006-mean-lats-cc-pts}
+
+df_historic_2005_2006 <- mean_lats_historic %>% filter(year >=2005 & year <= 2006)
+
+p_sept_mean_w_tzcfs_cc_2005_2006_lats <- p_sept_mean_w_tzcfs_2005_2006 + 
+    # add_turtle_pts(df=mean_lats_historic, col="Mean Sept 1997-2012 (Historic)", size=4) +
+    add_turtle_pts(df=mean_lats_cohort1, col="Mean Sept 2023 (Cohort 1)", size=3) +
+
+    # add_turtle_pts(df=max_lats_historic, col="Max Sept 1997-2012 (Historic)", size=4) +
+    # add_turtle_pts(df=max_lats_cohort1, col="Max Sept 2023 (Cohort 1)", size=3) +
+
+    add_turtle_pts(df=mean_lats_historic %>% filter(year >=2005 & year <= 2006), col="Mean Sept 2005-2006 (Historic)", size=3) +
+    # add_turtle_pts(df=max_lats_historic %>% filter(year >=2005 & year <= 2006), col="Max Sept 2005-2006 (Historic)", size=3) +
+    
+       scale_color_manual("Max Turtle \nLocation in September", 
+                          breaks = c(#"Max Sept 1997-2012 (Historic)", "Mean Sept 1997-2012 (Historic)", 
+                                     # "Max Sept 2023 (Cohort 1)",
+                                     "Mean Sept 2023 (Cohort 1)",
+                                     # "Max Sept 2005-2006 (Historic)"#,
+                                     "Mean Sept 2005-2006 (Historic)"
+                                     ),
+                          values = c(#"Max Sept 1997-2012 (Historic)"="#6D4C94", "Mean Sept 1997-2012 (Historic)"="mediumorchid", 
+                                     # "Max Sept 2023 (Cohort 1)"="#276961",
+                                     "Mean Sept 2023 (Cohort 1)"="#66CCC0",
+                                     # "Max Sept 2005-2006 (Historic)"="darkred"#,
+                                     "Mean Sept 2005-2006 (Historic)"="#E05780"
+                                     )) +
+       theme(legend.direction = "vertical", legend.box = "vertical") +
+    resize_cbar(18) 
+  # resize_cbar(24) 
+
+# p_sept_mean_w_tzcfs_cc_2005_2006_lats_w_text <- 
+#     p_sept_mean_w_tzcfs_cc_2005_2006_lats + 
+#     labs(title = "Long-term Average of SST for September (1997-2023) with Monthly Average of Turtle Location and TZCF Location",
+#     subtitle = glue("\n\nFor each turtle located between (165°W-140°W longitude), their maximum and average lat and long locations are shown for September. \n\nThe historic tracks (2005-2006, n={nrow(df_historic_2005_2006)}) are shown as the red circles (dark red = max, light red = average monthly location). The STRETCH Cohort 1 turtle locations (September 2023, n={nrow(mean_lats_cohort1)}), are shown as the green circles (dark green = max, light green = average monthly location). \n\nThe 18°C isotherm is a reference for the seasonal location of the TZCF. The gray line represents the average September TZCF location from 1997-2012. The white line represents the TZCF location for September 2023. \n\n"))
+    
+
+### Save plot ----
+ggsave(filename = str_c('03rmd-Fig2-plot-sept-clim-w-tzcfs-2005-2006-mean-lats-cc-pts.png'), plot = p_sept_mean_w_tzcfs_cc_2005_2006_lats, 
+       # height=9,
+       width=11, bg='white',
+       path = '../figs/')
+```
+```{r 03-plot-sept-clim-w-tzcfs-2005-2006-max-lats-cc-pts}
 
 df_historic_2005_2006 <- max_lats_historic %>% filter(year >=2005 & year <= 2006)
 
-p_sept_mean_w_tzcfs_cc_2005_2006_lats <- p_sept_mean_w_tzcfs + 
+p_sept_max_w_tzcfs_cc_2005_2006_lats <- p_sept_mean_w_tzcfs_2005_2006 + 
     # add_turtle_pts(df=mean_lats_historic, col="Mean Sept 1997-2012 (Historic)", size=4) +
-    add_turtle_pts(df=mean_lats_cohort1, col="Mean Sept 2023 (Cohort 1)", size=4) +
+    # add_turtle_pts(df=mean_lats_cohort1, col="Mean Sept 2023 (Cohort 1)", size=3) +
 
     # add_turtle_pts(df=max_lats_historic, col="Max Sept 1997-2012 (Historic)", size=4) +
-    add_turtle_pts(df=max_lats_cohort1, col="Max Sept 1997-2012 (Cohort 1)", size=4) +
+    add_turtle_pts(df=max_lats_cohort1, col="Max Sept 2023 (Cohort 1)", size=3) +
 
-    add_turtle_pts(df=mean_lats_historic %>% filter(year >=2005 & year <= 2006), col="Mean Sept 2005-2006 (Historic)", size=4) +
-    add_turtle_pts(df=max_lats_historic %>% filter(year >=2005 & year <= 2006), col="Max Sept 2005-2006 (Historic)", size=4) +
+    # add_turtle_pts(df=mean_lats_historic %>% filter(year >=2005 & year <= 2006), col="Mean Sept 2005-2006 (Historic)", size=3) +
+    add_turtle_pts(df=max_lats_historic %>% filter(year >=2005 & year <= 2006), col="Max Sept 2005-2006 (Historic)", size=3) +
     
-       scale_color_manual("Max vs Avg Turtle Location in September", 
+       scale_color_manual("Max Turtle \nLocation in September", 
                           breaks = c(#"Max Sept 1997-2012 (Historic)", "Mean Sept 1997-2012 (Historic)", 
-                                     "Max Sept 1997-2012 (Cohort 1)","Mean Sept 2023 (Cohort 1)",
+                                     "Max Sept 2023 (Cohort 1)",
+                                     # "Mean Sept 2023 (Cohort 1)",
+                                     "Max Sept 2005-2006 (Historic)"#,
+                                     # "Mean Sept 2005-2006 (Historic)"
+                                     ),
+                          values = c(#"Max Sept 1997-2012 (Historic)"="#6D4C94", "Mean Sept 1997-2012 (Historic)"="mediumorchid", 
+                                     "Max Sept 2023 (Cohort 1)"="#276961",
+                                     # "Mean Sept 2023 (Cohort 1)"="#66CCC0",
+                                     "Max Sept 2005-2006 (Historic)"="darkred"#,
+                                     # "Mean Sept 2005-2006 (Historic)"="#E05780"
+                                     )) +
+       theme(legend.direction = "vertical", legend.box = "vertical") +
+    resize_cbar(18) 
+  # resize_cbar(24) 
+
+# p_sept_mean_w_tzcfs_cc_2005_2006_lats_w_text <- 
+#     p_sept_mean_w_tzcfs_cc_2005_2006_lats + 
+#     labs(title = "Long-term Average of SST for September (1997-2023) with Monthly Average of Turtle Location and TZCF Location",
+#     subtitle = glue("\n\nFor each turtle located between (165°W-140°W longitude), their maximum and average lat and long locations are shown for September. \n\nThe historic tracks (2005-2006, n={nrow(df_historic_2005_2006)}) are shown as the red circles (dark red = max, light red = average monthly location). The STRETCH Cohort 1 turtle locations (September 2023, n={nrow(mean_lats_cohort1)}), are shown as the green circles (dark green = max, light green = average monthly location). \n\nThe 18°C isotherm is a reference for the seasonal location of the TZCF. The gray line represents the average September TZCF location from 1997-2012. The white line represents the TZCF location for September 2023. \n\n"))
+    
+
+### Save plot ----
+ggsave(filename = str_c('03rmd-Fig2-plot-sept-clim-w-tzcfs-2005-2006-max-lats-cc-pts.png'), plot = p_sept_max_w_tzcfs_cc_2005_2006_lats, 
+       # height=9,
+       width=11, bg='white',
+       path = '../figs/')
+```
+
+
+```{r 03-plot-sept-clim-w-tzcfs-2005-2006-mean-max-cc-pts}
+
+df_historic_2005_2006 <- max_lats_historic %>% filter(year >=2005 & year <= 2006)
+
+p_sept_mean_w_tzcfs_cc_2005_2006_lats <- p_sept_mean_w_tzcfs_2005_2006 + 
+    # add_turtle_pts(df=mean_lats_historic, col="Mean Sept 1997-2012 (Historic)", size=4) +
+    add_turtle_pts(df=mean_lats_cohort1, col="Mean Sept 2023 (Cohort 1)", size=3) +
+
+    # add_turtle_pts(df=max_lats_historic, col="Max Sept 1997-2012 (Historic)", size=4) +
+    add_turtle_pts(df=max_lats_cohort1, col="Max Sept 2023 (Cohort 1)", size=3) +
+
+    add_turtle_pts(df=mean_lats_historic %>% filter(year >=2005 & year <= 2006), col="Mean Sept 2005-2006 (Historic)", size=3) +
+    add_turtle_pts(df=max_lats_historic %>% filter(year >=2005 & year <= 2006), col="Max Sept 2005-2006 (Historic)", size=3) +
+    
+       scale_color_manual("Max vs Mean Turtle \nLocation in September", 
+                          breaks = c(#"Max Sept 1997-2012 (Historic)", "Mean Sept 1997-2012 (Historic)", 
+                                     "Max Sept 2023 (Cohort 1)","Mean Sept 2023 (Cohort 1)",
                                      "Max Sept 2005-2006 (Historic)", "Mean Sept 2005-2006 (Historic)"
                                      ),
                           values = c(#"Max Sept 1997-2012 (Historic)"="#6D4C94", "Mean Sept 1997-2012 (Historic)"="mediumorchid", 
-                                     "Max Sept 1997-2012 (Cohort 1)"="#276961","Mean Sept 2023 (Cohort 1)"="#14FCE1",
-                                     "Max Sept 2005-2006 (Historic)"="darkred", "Mean Sept 2005-2006 (Historic)"="pink"
+                                     "Max Sept 2023 (Cohort 1)"="#276961","Mean Sept 2023 (Cohort 1)"="#66CCC0",
+                                     "Max Sept 2005-2006 (Historic)"="darkred", "Mean Sept 2005-2006 (Historic)"="#E05780"
                                      )) +
-    
-    resize_cbar(24) 
+       theme(legend.direction = "vertical", legend.box = "vertical") +
+    resize_cbar(18) 
+  # resize_cbar(24) 
 
 p_sept_mean_w_tzcfs_cc_2005_2006_lats_w_text <- 
     p_sept_mean_w_tzcfs_cc_2005_2006_lats + 
     labs(title = "Long-term Average of SST for September (1997-2023) with Monthly Average of Turtle Location and TZCF Location",
-    subtitle = glue("\n\nFor each turtle located between (160°W-140°W longitude), their maximum and average lat and long locations are shown for September. \n\nThe historic tracks (2005-2006, n={nrow(df_historic_2005_2006)}) are shown as the red circles (dark red = max, light red = average monthly location). The STRETCH Cohort 1 turtle locations (September 2023, n={nrow(mean_lats_cohort1)}), are shown as the green circles (dark green = max, light green = average monthly location). \n\nThe 18°C isotherm is a reference for the seasonal location of the TZCF. The gray line represents the average September TZCF location from 1997-2012. The white line represents the TZCF location for September 2023. \n\n"))
+    subtitle = glue("\n\nFor each turtle located between (165°W-140°W longitude), their maximum and average lat and long locations are shown for September. \n\nThe historic tracks (2005-2006, n={nrow(df_historic_2005_2006)}) are shown as the red circles (dark red = max, light red = average monthly location). The STRETCH Cohort 1 turtle locations (September 2023, n={nrow(mean_lats_cohort1)}), are shown as the green circles (dark green = max, light green = average monthly location). \n\nThe 18°C isotherm is a reference for the seasonal location of the TZCF. The gray line represents the average September TZCF location from 1997-2012. The white line represents the TZCF location for September 2023. \n\n"))
     
+
+### Save plot ----
+ggsave(filename = str_c('03rmd-Fig2-plot-sept-clim-w-tzcfs-2005-2006-mean-max-cc-pts.png'), plot = p_sept_mean_w_tzcfs_cc_2005_2006_lats, 
+       # height=9,
+       width=11, bg='white',
+       path = '../figs/')
+```
+
+
+```{r try legends}
+# horizontal_g <- p_sept_mean_w_tzcfs_cc_2005_2006_lats +  guides(color = guide_legend(order = 0),
+#          color  = guide_legend(order = 1)) + theme(legend.title.align = 0.5,
+#           legend.direction = "horizontal", 
+#           legend.position = "bottom")
+# 
+# library(cowplot)
+# 
+# horizontal_g_legend <- horizontal_g + theme(legend.direction = "horizontal", legend.box = "horizontal") |> get_legend()
+# 
+# horiz_legend_only <- horizontal_g_legend %>% plot_grid(., ncol = 2, rel_widths = c(1,1))
+# 
+# a = horizontal_g + theme(legend.position="bottom")
+# # b = horizontal_g
+# 
+# plot_grid(a, horiz_legend_only, ncol=2, rel_widths = c(3,0.5))
+
 ```
 
 
