@@ -127,7 +127,7 @@ library("gratia")
 load('../data/interim/01_northern_lats_EDA_interim_data.RData')
 load('../data/interim/02_northern_lats_EDA_interim_data.RData')
 load('../data/interim/03_northern_lats_EDA_interim_data.RData')
-load('../data/interim/04_northern_lats_EDA_interim_data.RData')
+# load('../data/interim/04_northern_lats_EDA_interim_data.RData')
 load('../data/interim/05_northern_lats_EDA_interim_data.RData')
 ```
 
@@ -135,7 +135,7 @@ load('../data/interim/05_northern_lats_EDA_interim_data.RData')
 # load('../data/interim/01_northern_lats_EDA_interim_data.RData')
 # load('../data/interim/02_northern_lats_EDA_interim_data.RData')
 # load('../data/interim/03_northern_lats_EDA_interim_data.RData')
-# load('../data/interim/04_northern_lats_EDA_interim_data.RData')
+load('../data/interim/04_northern_lats_EDA_interim_data.RData')
 # load('../data/interim/05_northern_lats_EDA_interim_data.RData')
 ```
 
@@ -405,19 +405,29 @@ gg_daily_avg_cohort1_max_lats
 
 SFigure 3 shows the average location of the 18°C SST isotherm during March (A) and September (B). 
 
-For each figure, the darker line represents the average isotherm location location between 1997-2022). The lighter line represents the 2023 isotherm location.
+For each figure, the darker line represents the average isotherm location location between 1997-2022). The light pink line represents the 2005-2006 location, and the white line represents the 2023 isotherm location.
 
-#### A. March TZCF Average Location 
+#### A) March TZCF Average Location 
 
 ```{r 03rmd-SFig3-plot-sept-clim-w-tzcfs}
-p_march_mean_w_tzcfs
+# p_march_mean_w_tzcfs
+p_march_mean +
+    add_contour_lines(df=ras_mean_march_1997_2012_df, contours=c(18), col='gray30') + 
+    add_contour_lines(df=ras_mean_march_2005_2006_df, contours=c(18), col='#FFC2D4') +
+    add_contour_lines(df=ras_march_2023_df, contours=c(18), col='snow') + 
+    resize_cbar(12)
 
 ```
 
-#### B. Sept TZCF Average Location 
+#### B) Sept TZCF Average Location 
 
 ```{r 03rmd-SFig3-plot-march-clim-w-tzcfs}
-p_sept_mean_w_tzcfs
+# p_sept_mean_w_tzcfs
+p_sept_mean +
+    add_contour_lines(df=ras_mean_sept_1997_2012_df, contours=c(18), col='gray30') + 
+    add_contour_lines(df=ras_mean_sept_2005_2006_df, contours=c(18), col='#FFC2D4') +
+    add_contour_lines(df=ras_sept_2023_df, contours=c(18), col='snow') + 
+    resize_cbar(12)
 
 ```
 
@@ -438,18 +448,24 @@ p_sept_mean_w_tzcfs
 ```
 
 
-### SFig 4 \| Seasonal TZCF by Year
+### SFig 4 \| Seasonal TZCF by Year {.tabset .tabset-fade .tabset-pills}
 
 ------------------------------------------------------------------------
 
 
 SFigure 4 shows the seasonal position of the 18°C SST isotherm between 165°W and 140°W longitude. This isotherm is a common proxy for the Transition Zone Chlorophyll Front.
 
-For each year between 1997-2023 (which encompasses both the historic tags and current, 'Cohort 1'), the annual isotherm trend is plotted as a gray line. The years 2015, 2019, 2020 (light reds) and 2023 (dark red) are highlighted as they were anomalously warm years.
+For each year between 1997-2023 (which encompasses both the historic tags and current, 'Cohort 1'), the annual isotherm trend is plotted as a gray line. The years 2005, 2015, 2019 (light reds) and 2023 (dark red) are highlighted as they were anomalously warm years.
 
+#### All Years
 ```{r 04rmd-SFig3-gg-tzcf-all-yrs, out.height="80%", out.width="95%"}
 gg_tzcf_all_yrs
 
+```
+
+#### Subset Years
+```{r 04rmd-SFig3-gg-seasonal-tzcf-yrs-only, out.height="80%", out.width="95%"}
+gg_tzcf_hist_yrs_cohort_yr
 ```
 
 <br>

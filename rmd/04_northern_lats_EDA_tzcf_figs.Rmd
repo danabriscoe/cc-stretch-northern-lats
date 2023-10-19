@@ -256,6 +256,18 @@ grouped_by_year_tzcf_1997_2012 <- grouped_by_year_month %>%
            day = lubridate::day(x)) %>%
     mutate(month_abb = month.abb[as.numeric(format(x, "%m"))]) 
 ```
+```{r 04-calc-avg-tzcf-2005-2006}
+grouped_by_year_tzcf_2005_2006 <- grouped_by_year_month %>%
+    filter(x >= '2005-01-01' & x <= '2006-12-31') %>%
+    group_by(month, y) %>%
+     summarise(
+               z = mean(z)) %>%
+    mutate(x = as.Date(paste0("2006-", month, "-01"))) %>%
+    mutate(year = lubridate::year(x),
+           month = lubridate::month(x),
+           day = lubridate::day(x)) %>%
+    mutate(month_abb = month.abb[as.numeric(format(x, "%m"))]) 
+```
 
 ```{r 04-set-ggplot-layers}
 
@@ -309,6 +321,14 @@ add_cohort1_mlats <- function(col="#66CCC0"){
     )
 }
 
+add_historic_2005_2006_mlats <- function(col="#E05780"){
+    list(
+        # geom_point(data=mlats_cohort1, aes(x = month, y = avgs, text = str_c("Avg Lat: ", round(avgs, 2)), color=col), size = 3),
+        geom_line(data=mlats_historic_2005_2006, aes(x = month, y = avgs, colour = col), linewidth = 1.25)
+    )
+}
+
+
 ```
 
 ```{r 04-plot-tzcf-all-yrs}
@@ -316,16 +336,19 @@ p_tzcf_all_yrs <-  ggplot() +
     # Create additional contour layers (replace with your data and aesthetics)
        add_tzcf_indiv_contours(grouped_by_year_month %>% filter(year != 2023), col="Individual Years (1997-2022)") +
     
+        add_tzcf_indiv_contours(grouped_by_year_month %>% filter(year == 2005), col="2005") +
         add_tzcf_indiv_contours(grouped_by_year_month %>% filter(year == 2015), col="2015") +
          add_tzcf_indiv_contours(grouped_by_year_month %>% filter(year == 2019), col="2019") +
-         add_tzcf_indiv_contours(grouped_by_year_month %>% filter(year == 2020), col="2020") +
+         # add_tzcf_indiv_contours(grouped_by_year_month %>% filter(year == 2020), col="2020") +
     
         add_tzcf_contour_2023(col="2023") + 
     
         add_baseplot_theme() +
+    
+    scale_y_continuous(breaks=seq(30, 45, 2)) +
 
         scale_color_manual(
-        name = "18°C Isotherm \n ",
+        name = "18°C Isotherm (165°W-140°W)\n ",
         values = c("#E4938B", "#EFC1BD","#F8C08C", "#952C23", "gray80")#,  # Specify colors - don't know why this is backwards from labels....
         # labels = c("Individual Years (1997-2022)", "2015","2023")  # Specify labels
         )
@@ -341,15 +364,24 @@ gg_tzcf_all_yrs <- ggplotly(p_tzcf_all_yrs, tooltip = c("text")) %>% layout(xaxi
 ```{r 04-calc-mlat-avgs-cc}
 mlats_historic <- hist_df %>%
     filter(lon >= -165 & lon <= -140) %>%
+        # filter(lon >= -179 & lon <= -130) %>%
     dplyr::select(-c(date)) %>%
     group_by(month) %>%
-    summarise(avgs = mean(lat))
+    summarise(avgs = mean(lat, na.rm=T))
+    # summarise(avgs = median(lat))
+
+mlats_historic_2005_2006 <- hist_df %>%
+    filter(lon >= -165 & lon <= -140) %>%
+    filter(year >= 2005 & year <= 2006) %>%
+    dplyr::select(-c(date)) %>%
+    group_by(month) %>%
+    summarise(avgs = mean(lat, na.rm=T))
     # summarise(avgs = median(lat))
     
 mlats_cohort1 <- daily_avg_data_cohort_1 %>%
     dplyr::select(-c(date)) %>%
     group_by(month) %>%
-    summarise(avgs = mean(lat))
+    summarise(avgs = mean(lat, na.rm=T))
     # summarise(avgs = median(lat)) 
 ```
 
@@ -357,15 +389,19 @@ mlats_cohort1 <- daily_avg_data_cohort_1 %>%
 ```{r 04-gg-seasonal-tzcf-yrs-only}
 p_tzcf_hist_yrs_cohort_yr <-  ggplot() +
  
-        add_tzcf_contour(grouped_by_year_tzcf_1997_2012, col="18°C Isotherm (1997-2012)") +
+        add_tzcf_contour(grouped_by_year_tzcf_1997_2012, col="Average (1997-2012)") +
     
-        add_tzcf_contour_2023(col='18°C Isotherm (2023)') +
+        add_tzcf_contour(grouped_by_year_tzcf_2005_2006, col="Average (2005-2006)") +
+    
+        add_tzcf_contour_2023(col='2023') +
         
         add_baseplot_theme() +
     
+        scale_y_continuous(breaks=seq(30, 45, 2)) +
+    
         scale_color_manual(
-        name = "18°C Isotherm \n ",
-        values = c("gray80","#952C23")#,  # Specify colors - don't know why this is backwards from labels....
+        name = "18°C Isotherm (165°W-140°W)\n ",
+        values = c("gray80","#E4938B", "#952C23")#,  # Specify colors - don't know why this is backwards from labels....
         # labels = c("1997-2022", "2023")  # Specify labels
         )
 
@@ -375,15 +411,41 @@ gg_tzcf_hist_yrs_cohort_yr <- ggplotly(p_tzcf_hist_yrs_cohort_yr, tooltip = c("t
 ```
 
 
-```{r 04-gg-seasonal-tzcf-yrs-with-cc}
+```{r 04-gg_tzcf_hist_cohort}
 p_tzcf_hist_cohort <- 
-p_tzcf_hist_yrs_cohort_yr + 
-    add_historic_mlats(col="Historic Tracks (1997-2012") + 
-    add_cohort1_mlats(col="Cohort 1 Tracks (2023)") +
+    ggplot() +
+# p_tzcf_hist_yrs_cohort_yr + 
+    
+        # add_tzcf_contour(grouped_by_year_tzcf_2005_2006, col="18°C Isotherm (2005-2006)") +
+        add_tzcf_contour_2023(col='18°C Isotherm (2023)') +
+        add_cohort1_mlats(col="Cohort 1 Tracks (2023)") +
+    
+        add_tzcf_contour(grouped_by_year_tzcf_1997_2012, col="18°C Isotherm (1997-2012)") +
+        
+        add_historic_mlats(col="Historic Tracks (1997-2012)") + 
+        add_historic_2005_2006_mlats(col="Historic Tracks (2005-2006)") +
+
+        add_baseplot_theme() +
+    
+        scale_y_continuous(breaks=seq(30, 45, 2)) +
     
     scale_color_manual(
-        name = "Avg Monthly Lat \n ",
-        values = c("gray80","#952C23","#66CCC0","#6D4C94")#,  # Specify colors - don't know why this is backwards from labels....
+        name = "Avg Monthly Lat (165°W-140°W)\n ",
+        breaks = c("18°C Isotherm (2003)",
+                   "Cohort 1 Tracks (2023)",                   
+                   "18°C Isotherm (1997-2012)", 
+                   "Historic Tracks (1997-2012)", 
+                   "Historic Tracks (2005-2006)"),
+
+                   
+        values = c(
+                   "18°C Isotherm (2003)"="#952C23",
+                   "Cohort 1 Tracks (2023)"="#66CCC0",
+                   "18°C Isotherm (1997-2012)"="gray80",
+                   "Historic Tracks (1997-2012)"="#6D4C94",
+                   "Historic Tracks (2005-2006)"="#E05780"
+                   )
+    #,  # Specify colors - don't know why this is backwards from labels....
         # labels = c("2023: 18°C Isotherm", "1997-2022: 18°C Isotherm","Historic Tracks", "Cohort 1 Tracks")  # Specify labels
         )
 
