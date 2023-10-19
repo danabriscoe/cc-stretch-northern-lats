@@ -49,6 +49,7 @@ rsconnect/
 
 # ignore folders
 scratch/
+figs/
 
 # ignore data
 data/
