@@ -127,7 +127,7 @@ library("gratia")
 load('../data/interim/01_northern_lats_EDA_interim_data.RData')
 load('../data/interim/02_northern_lats_EDA_interim_data.RData')
 load('../data/interim/03_northern_lats_EDA_interim_data.RData')
-# load('../data/interim/04_northern_lats_EDA_interim_data.RData')
+load('../data/interim/04_northern_lats_EDA_interim_data.RData')
 load('../data/interim/05_northern_lats_EDA_interim_data.RData')
 ```
 
@@ -135,7 +135,7 @@ load('../data/interim/05_northern_lats_EDA_interim_data.RData')
 # load('../data/interim/01_northern_lats_EDA_interim_data.RData')
 # load('../data/interim/02_northern_lats_EDA_interim_data.RData')
 # load('../data/interim/03_northern_lats_EDA_interim_data.RData')
-load('../data/interim/04_northern_lats_EDA_interim_data.RData')
+# load('../data/interim/04_northern_lats_EDA_interim_data.RData')
 # load('../data/interim/05_northern_lats_EDA_interim_data.RData')
 ```
 
@@ -265,9 +265,25 @@ gg_tzcf_hist_cohort
 
 <br>
 
-### Fig 5 \| GAM Results
+### Fig 5 \| GAM Results 
 
 ------------------------------------------------------------------------
+
+**Insert Text Here**
+
+#### Latitude of 18 deg C Between (165W-140W) {.tabset .tabset-fade .tabset-pills}
+
+##### March Stats
+```{r 05rmd-gg-plot-sum-stats-lat-year-mar, out.height="90%", out.width="95%"}
+gg_sum_stats_lat_year_mar
+
+```
+
+##### Sept Stats
+```{r 05rmd-gg-plot-sum-stats-lat-year-sept, out.height="90%", out.width="95%"}
+gg_sum_stats_lat_year_sept
+```
+
 
 The following GAM models explore evidence of latitudinal shifts in SST over time.
 
@@ -280,22 +296,30 @@ The following models were run for March & Sept (1997 - 2023):
 <br>
 
 #### Fig 5A. Model Summary (March)
+```{r}
+gam_18degC_lat_year_output_mar[[5]][[2]]$model_summary
+```
 
-```{r 05rmd-Fig5a-summary-gam_model_w2023, out.height="40%", out.width="95%"}
-# summary(gam_model_w2023)
-# 
-# draw(gam_model_w2023, residuals = TRUE)
+
+```{r 05rmd-Fig5a-summary-gam_model_mean-FIX-TEXT, out.height="40%", out.width="95%"}
+
+gam_18degC_lat_year_output_mar[[5]][[2]]$partial_plot
 
 ```
 
 ------------------------------------------------------------------------
 
-#### Fig 5A. Model Summary (Sept)
+#### Fig 5B. Model Summary (Sept)
+
+```{r}
+gam_18degC_lat_year_output_sept[[4]][[2]]$model_summary
+```
+
 
 ```{r 05rmd-Fig5b-summary-gam_model_wo-2023, out.height="40%", out.width="95%"}
-# summary(gam_model_wo_2023)
-# 
-# draw(gam_model_wo_2023, residuals = TRUE)
+
+
+gam_18degC_lat_year_output_sept[[4]][[2]]$partial_plot
 ```
 
 <br>
@@ -447,6 +471,7 @@ p_sept_mean +
 # #                   ncol = 2)  # number of rows
 ```
 
+<br>
 
 ### SFig 4 \| Seasonal TZCF by Year {.tabset .tabset-fade .tabset-pills}
 

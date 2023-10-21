@@ -42,7 +42,7 @@ knitr::opts_chunk$set(
 ```
 
 ```{r 05-load-libraries, message=FALSE}
-# 01
+# 05
 library(tidyverse)
 library(data.table)
 library(mgcv)
@@ -221,77 +221,345 @@ geom_histogram(binwidth = 0.5, fill = "steelblue", colour = "navy", alpha = 0.6)
 
 
 
-```{r try-gams}
+<!-- ```{r try-gams} -->
 
 
-## RUN MODELS
-# mean
-gam_model_w2023_mean <- gam(avg_lat ~ s(avg_lon, k = 3) + s(year, k = 3), data = max_lat_yr_w2023)
-gam_model_wo_2023_mean <- gam(avg_lat ~ s(avg_lon, k = 3) + s(year, k = 3), data = max_lat_yr_wo_2023)
+<!-- ## RUN MODELS -->
+<!-- # mean -->
+<!-- gam_model_w2023_mean <- gam(avg_lat ~ s(avg_lon, k = 3) + s(year, k = 3), data = max_lat_yr_w2023) -->
+<!-- gam_model_wo_2023_mean <- gam(avg_lat ~ s(avg_lon, k = 3) + s(year, k = 3), data = max_lat_yr_wo_2023) -->
 
-# median
-gam_model_w2023 <- gam(med_lat ~ s(med_lon, k = 3) + s(year, k = 3), data = max_lat_yr_w2023)
-gam_model_wo_2023 <- gam(med_lat ~ s(med_lon, k = 3) + s(year, k = 3), data = max_lat_yr_wo_2023)
+<!-- # median -->
+<!-- gam_model_w2023 <- gam(med_lat ~ s(med_lon, k = 3) + s(year, k = 3), data = max_lat_yr_w2023) -->
+<!-- gam_model_wo_2023 <- gam(med_lat ~ s(med_lon, k = 3) + s(year, k = 3), data = max_lat_yr_wo_2023) -->
 
 
-# # # # gam_model <- gam_model_w2023
-# # # # Summary of the GAM model
-# summary(gam_model_w2023_mean)
-# summary(gam_model_wo_2023_mean)
-# 
-# summary(gam_model_w2023)
-# summary(gam_model_wo_2023)
-# # # 
-# # # # Display partial plots for "lon" and "year"
-# # # par(mfrow=c(2, 2))  # Set up a grid for two plots side by side
-# # # plot(gam_model_w2023, select = 1, shade = TRUE, col = "blue", main = "Partial Plot for Lon (incl 2023)")
-# # # plot(gam_model_w2023, select = 2, shade = TRUE, col = "red", main = "Partial Plot for Year (incl 2023)")
-# # # 
-# # # plot(gam_model_wo_2023, select = 1, shade = TRUE, col = "blue", main = "Partial Plot for Lon (without 2023)")
-# # # plot(gam_model_wo_2023, select = 2, shade = TRUE, col = "red", main = "Partial Plot for Year (without 2023)")
-# # 
-# ## MEAN
-# draw(gam_model_w2023_mean, residuals = TRUE)
-# draw(gam_model_wo_2023_mean, residuals = TRUE)
-# 
-# # par(mfrow=c(1, 2))  # Set up a grid for two plots side by side
-# draw(gam_model_w2023, residuals = TRUE)
-# draw(gam_model_wo_2023, residuals = TRUE)
+<!-- # # # # gam_model <- gam_model_w2023 -->
+<!-- # # # # Summary of the GAM model -->
+<!-- # summary(gam_model_w2023_mean) -->
+<!-- # summary(gam_model_wo_2023_mean) -->
+<!-- #  -->
+<!-- # summary(gam_model_w2023) -->
+<!-- # summary(gam_model_wo_2023) -->
+<!-- # # #  -->
+<!-- # # # # Display partial plots for "lon" and "year" -->
+<!-- # # # par(mfrow=c(2, 2))  # Set up a grid for two plots side by side -->
+<!-- # # # plot(gam_model_w2023, select = 1, shade = TRUE, col = "blue", main = "Partial Plot for Lon (incl 2023)") -->
+<!-- # # # plot(gam_model_w2023, select = 2, shade = TRUE, col = "red", main = "Partial Plot for Year (incl 2023)") -->
+<!-- # # #  -->
+<!-- # # # plot(gam_model_wo_2023, select = 1, shade = TRUE, col = "blue", main = "Partial Plot for Lon (without 2023)") -->
+<!-- # # # plot(gam_model_wo_2023, select = 2, shade = TRUE, col = "red", main = "Partial Plot for Year (without 2023)") -->
+<!-- # #  -->
+<!-- # ## MEAN -->
+<!-- # draw(gam_model_w2023_mean, residuals = TRUE) -->
+<!-- # draw(gam_model_wo_2023_mean, residuals = TRUE) -->
+<!-- #  -->
+<!-- # # par(mfrow=c(1, 2))  # Set up a grid for two plots side by side -->
+<!-- # draw(gam_model_w2023, residuals = TRUE) -->
+<!-- # draw(gam_model_wo_2023, residuals = TRUE) -->
 
+<!-- ``` -->
+
+<!-- ```{r} -->
+
+<!-- # Create the GAM model -->
+<!-- gam_model <-  gam(avg_lat ~ s(avg_lon, k = 3) + s(year, k = 3), data = max_lat_yr_w2023) -->
+
+<!-- # Initialize a vector to store cross-validation results -->
+<!-- cv_results <- numeric(nrow(max_lat_yr_w2023)) -->
+
+<!-- # Perform leave-one-out cross-validation -->
+<!-- for (i in 1:nrow(max_lat_yr_w2023)) { -->
+<!--   # Exclude the i-th observation -->
+<!--   data_subset <- max_lat_yr_w2023[-i, ] -->
+
+<!--   # Fit the model on the subset -->
+<!--   model_subset <-  gam(avg_lat ~ s(avg_lon, k = 4) + s(year, k = 4), data = max_lat_yr_w2023) -->
+
+<!--   # Predict the excluded observation -->
+<!--   prediction <- predict(model_subset, newdata = max_lat_yr_w2023[i, ]) -->
+
+<!--   # Calculate and store the squared prediction error -->
+<!--   cv_results[i] <- (max_lat_yr_w2023[i, "avg_lat"] - prediction)^2 -->
+<!-- } -->
+
+<!-- # Calculate the mean squared prediction error (MSE) for LOOCV -->
+<!-- cv_results_df <- do.call(rbind, cv_results) -->
+
+<!-- mse_cv <- mean(cv_results_df, na.rm=TRUE) -->
+
+<!-- # # View the LOOCV MSE -->
+<!-- # print(mse_cv) -->
+
+<!-- ``` -->
+
+```{r 05-load-grouped-by-year-month-rds}
+
+# fyi, need to load this df from '04 rmd'
+grouped_by_year_month <- readRDS("../data/interim/04_grouped_by_year_month.rds")
+
+```
+
+```{r 05-get-sum-stats-lat-year-sept-mar}
+
+# first subset to only keep Mar & Sept; then group by month and get summary stats
+grouped_by_year_month_subset <- grouped_by_year_month %>%
+    filter(month == 3 | month == 9) 
+    # split(grouped_by_year_month_subset$month)
+
+# get min, mean, max lats of 18C per year
+min_18deg_lat_by_year <- grouped_by_year_month_subset %>%
+    group_by(year, month) %>%
+    # filter(month == 9) %>%
+    filter(z >= 18 & z < 18.1) %>%
+    # filter(z == 18) %>%  # fyi, this returns no values, so go up to 18.05 or 18.1
+    slice(which.min(y)) %>%
+    mutate(min_18degC_lat = y)
+
+mean_18deg_lat_by_year <- grouped_by_year_month %>%
+    group_by(year, x, month, day, month_abb) %>%
+        # filter(month == 9) %>%
+    filter(z >= 18 & z < 18.1) %>%
+    summarise(y = mean(y, na.rm=T),
+              z = mean(z, na.rm=T)) %>%
+    relocate(year, .after=x) %>%
+    relocate(y, .before=x) %>%
+    relocate(z, .after=x) %>%
+    mutate(mean_18degC_lat = y)
+    
+max_18deg_lat_by_year <- grouped_by_year_month %>%
+    group_by(year, month) %>%
+    # filter(month == 9) %>%
+    filter(z >= 18 & z < 18.1) %>%
+    slice(which.max(y)) %>%
+    mutate(max_18degC_lat = y)
+    
+    
+```
+
+```{r 05-plot-sum-stats-lat-year-sept-mar}
+df_sum_stats_lat_year_list <- list(min = min_18deg_lat_by_year, mean = mean_18deg_lat_by_year, max = max_18deg_lat_by_year)
+
+plot_sum_stats_lat_year_by_month <- function(df_list, mon = 9){
+    p <- ggplot() +
+    geom_point(data = df_list[['min']] %>% filter(month == mon), aes(x=year, y=y, col='Min Lat of 18°C Isotherm',
+                      text = str_c("Year: ", year, "\nLat: ", y, "°N", "\nStat: Min")), size=4) +
+    geom_point(data = df_list[['mean']] %>% filter(month == mon), aes(x=year, y=y, col='Mean Lat of 18°C Isotherm',
+                      text = str_c("Year: ", year, "\nLat: ", y, "°N", "\nStat: Mean")), size=4) + 
+    geom_point(data = df_list[['max']] %>% filter(month == mon), aes(x=year, y=y, col='Max Lat of 18°C Isotherm',
+                      text = str_c("Year: ", year, "\nLat: ", y, "°N", "\nStat: Max")), size=4) +
+       scale_color_manual(
+        name = glue("Latitude of {month.abb[mon]} 18°C Isotherm \n(165°W-140°W) by Year\n\n"),
+        breaks = c('Max Lat of 18°C Isotherm', 'Mean Lat of 18°C Isotherm', 'Min Lat of 18°C Isotherm'),
+        values = c('Max Lat of 18°C Isotherm'="#952C23",'Mean Lat of 18°C Isotherm'="#E4938B", 'Min Lat of 18°C Isotherm'="steelblue")#,  # Specify colors - don't know why this is backwards from labels....
+        # labels = c("1997-2022", "2023")  # Specify labels
+        ) + 
+    geom_line(data = df_list[['mean']] %>% filter(month == mon), aes(x=year, y=y), col='azure4') +
+    
+    scale_x_continuous(breaks=seq(1997,2023, 2)) +
+    scale_y_continuous(breaks=seq(29,46,0.5)) +
+    labs(x = "Year", y = "Latitude (°N")
+
+    return(p)    
+}
+
+
+```
+
+```{r 05-gg-plot-sum-stats-lat-year-mar}
+
+p_sum_stats_lat_year_mar <- plot_sum_stats_lat_year_by_month(df_list = df_sum_stats_lat_year_list, mon = 3)
+
+gg_sum_stats_lat_year_mar <- ggplotly(p_sum_stats_lat_year_mar, tooltip = c("text")) %>% layout(xaxis = list(title = "Year"), yaxis = list(title = "Latitude (°N)"))
+
+```
+
+
+```{r 05-gg-plot-sum-stats-lat-year-sept}
+p_sum_stats_lat_year_sept <- plot_sum_stats_lat_year_by_month(df_list = df_sum_stats_lat_year_list, mon = 9)
+
+
+gg_sum_stats_lat_year_sept <- ggplotly(p_sum_stats_lat_year_sept, tooltip = c("text")) %>% layout(xaxis = list(title = "Year"), yaxis = list(title = "Latitude (°N)"))
+
+```
+
+
+<!-- ```{r 05-fit-gam-18deg-lat-by-year} -->
+
+<!-- # df = min_18deg_lat_by_year %>% filter(month == 9) -->
+<!-- df = mean_18deg_lat_by_year %>% filter(month == 9) -->
+
+<!-- # Create the GAM model -->
+<!-- gam_model <-  gam(y ~ s(year, k = 3), data = df) -->
+
+<!-- # Initialize a vector to store cross-validation results -->
+<!-- cv_results <- numeric(nrow(df)) -->
+
+<!-- # Perform leave-one-out cross-validation -->
+<!-- for (i in 1:nrow(df)) { -->
+<!--   # Exclude the i-th observation -->
+<!--   data_subset <- df[-i, ] -->
+
+<!--   # Fit the model on the subset -->
+<!--   model_subset <-  gam(y ~ s(year, k = 3), data = data_subset) -->
+
+<!--   # Predict the excluded observation -->
+<!--   prediction <- predict(model_subset, newdata = df[i, ]) -->
+
+<!--   # Calculate and store the squared prediction error -->
+<!--   cv_results[i] <- (df[i, "y"] - prediction)^2 -->
+<!-- } -->
+
+<!-- # Calculate the mean squared prediction error (MSE) for LOOCV -->
+<!-- cv_results_df <- do.call(rbind, cv_results) -->
+
+<!-- mse_cv <- mean(cv_results_df, na.rm=TRUE) -->
+<!-- ``` -->
+<!-- ```{r} -->
+<!-- summary(gam_model) -->
+
+<!-- draw(gam_model, residuals = TRUE) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- # Load the required packages -->
+<!-- library(mgcv) -->
+<!-- library(caret) -->
+
+<!-- # Assuming 'df' is your data frame -->
+<!-- # df = min_18deg_lat_by_year %>% filter(month == 9) -->
+<!-- df = mean_18deg_lat_by_year %>% filter(month == 9) -->
+
+
+<!-- # Define the formula for the model -->
+<!-- model_formula <- y ~ s(year, k = 3) -->
+
+<!-- # Create a function to fit the GAM model and calculate RMSE -->
+<!-- fit_gam_and_rmse <- function(train_indices) { -->
+<!--   train_data <- df[train_indices, ] -->
+<!--   test_data <- df[-train_indices, ] -->
+
+<!--   gam_model <- gam(model_formula, data = train_data) -->
+<!--   predictions <- predict(gam_model, newdata = test_data) -->
+
+<!--   rmse <- sqrt(mean((test_data$y - predictions)^2)) -->
+
+<!--   return(rmse) -->
+<!-- } -->
+
+<!-- # Perform k-fold cross-validation (e.g., 5-fold) -->
+<!-- k <- 5 -->
+<!-- set.seed(123) # Set a random seed for reproducibility -->
+<!-- cv_indices <- createFolds(1:nrow(df), k = k, list = TRUE) -->
+
+<!-- cv_rmse <- sapply(cv_indices, function(indices) { -->
+<!--   fit_gam_and_rmse(indices) -->
+<!-- }) -->
+
+<!-- # Calculate the mean RMSE -->
+<!-- mean_rmse <- mean(cv_rmse) -->
+<!-- cat("Mean RMSE:", mean_rmse, "\n") -->
+
+<!-- # Assuming 'gam_model_min' is your GAM model -->
+<!-- # View a summary of the GAM model -->
+<!-- summary(gam_model_min) -->
+
+<!-- draw(gam_model_min, residuals = TRUE) -->
+<!-- # plot(gam_model_min, select = 1, scale = 0, rug = TRUE) -->
+
+<!-- ``` -->
+
+
+```{r}
+# Assuming 'df' is your data frame
+# df = min_18deg_lat_by_year %>% filter(month == 9)
+# df = mean_18deg_lat_by_year %>% filter(month == 3)
+
+
+# Load the required packages
+library(mgcv)
+library(boot)
+# library(ggplot2)
+
+# Load your dataset or replace this with your data loading method
+
+
+run_gam_kfolds <- function(data, kfolds = 5, mon = "March"){
+        # Define the formula for the GAM model
+    model_formula <- y ~ s(year, k = 3)
+    
+    
+    # Create an empty vector to store RMSE values
+    rmse_values <- numeric()
+    
+    # Set the number of folds (e.g., 5-fold cross-validation)
+    k <- kfolds
+    
+    # Create a function to calculate the RMSE for the GAM model
+    calculate_rmse <- function(train_indices) {
+      train_data <- data[train_indices, ]
+      test_data <- data[-train_indices, ]
+      
+      gam_model <- gam(model_formula, data = train_data)
+      predictions <- predict(gam_model, newdata = test_data)
+      
+      rmse <- sqrt(mean((test_data$y - predictions)^2))
+      
+      # Create a partial dependence plot for 'year' variable
+      partial_plot <- draw(gam_model, residuals = TRUE) + labs(title = glue("Partial Plot: {mon}"))
+      # title("Partial Dependence Plot")
+      
+      return(list(rmse = rmse, partial_plot = partial_plot, model_summary = summary(gam_model)))
+    }
+    
+    # Perform k-fold cross-validation
+    set.seed(123)  # Set a random seed for reproducibility
+    folds <- sample(1:k, nrow(data), replace = TRUE)
+    
+    results_list <- list()
+    
+    for (i in 1:k) {
+      results <- calculate_rmse(folds != i)
+      rmse_values <- c(rmse_values, results$rmse)
+      print(results$partial_plot)
+      print(results$model_summary)
+      
+      results_list[[i]] <- list(k=i,results)#, rmse_values, partial_plot=results$partial_plot)
+    }
+    
+    # View the RMSE values for each fold
+    cat("RMSE values for each fold:\n")
+    print(rmse_values)
+    
+    # Calculate the mean RMSE
+    mean_rmse <- mean(rmse_values)
+    cat("Mean RMSE:", mean_rmse, "\n")
+    
+    return(results_list)
+}
+
+
+
+
+```
+
+
+```{r}
+gam_18degC_lat_year_output_mar <- run_gam_kfolds(data=mean_18deg_lat_by_year %>% filter(month == 3), kfolds = 5, mon = "March")
+
+# RMSE values for each fold:
+# [1] 0.5026640 0.5067789 0.5215948 0.5062193 0.5025288
 ```
 
 ```{r}
+gam_18degC_lat_year_output_sept <- run_gam_kfolds(data=mean_18deg_lat_by_year %>% filter(month == 9), kfolds = 5, mon = "September")
 
-# Create the GAM model
-gam_model <-  gam(avg_lat ~ s(avg_lon, k = 3) + s(year, k = 3), data = max_lat_yr_w2023)
-
-# Initialize a vector to store cross-validation results
-cv_results <- numeric(nrow(max_lat_yr_w2023))
-
-# Perform leave-one-out cross-validation
-for (i in 1:nrow(max_lat_yr_w2023)) {
-  # Exclude the i-th observation
-  data_subset <- max_lat_yr_w2023[-i, ]
-  
-  # Fit the model on the subset
-  model_subset <-  gam(avg_lat ~ s(avg_lon, k = 4) + s(year, k = 4), data = max_lat_yr_w2023)
-  
-  # Predict the excluded observation
-  prediction <- predict(model_subset, newdata = max_lat_yr_w2023[i, ])
-  
-  # Calculate and store the squared prediction error
-  cv_results[i] <- (max_lat_yr_w2023[i, "avg_lat"] - prediction)^2
-}
-
-# Calculate the mean squared prediction error (MSE) for LOOCV
-cv_results_df <- do.call(rbind, cv_results)
-
-mse_cv <- mean(cv_results_df, na.rm=TRUE)
-
-# # View the LOOCV MSE
-# print(mse_cv)
-
+gam_18degC_lat_year_output_sept[[4]][[2]]$partial_plot
+# [1] 0.8960005 0.9007065 0.9120505 0.8901130 0.8919625
+# Mean RMSE: 0.8981666 
 ```
+
+
 
 ```{r 05-interim-rdata-save}
 

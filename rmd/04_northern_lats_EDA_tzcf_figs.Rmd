@@ -240,6 +240,13 @@ grouped_by_year_month <- combined_df %>%
            day = lubridate::day(x)) %>%
     mutate(month_abb = month.abb[as.numeric(format(x, "%m"))]) %>%
   group_by(year, month)
+
+```
+
+```{r 04-interim-save-grouped-by-year-month-tzcf-hov-df}
+saveRDS(grouped_by_year_month, "../data/interim/04_grouped_by_year_month.rds")
+
+
 ```
 
 

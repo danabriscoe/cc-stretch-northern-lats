@@ -402,7 +402,7 @@ p_ssta_mean <- ggplot() +
                          na.value="transparent",
                          name = "SSTA (°C) \n") +
     # add cohort 1 tracks
-    add_track_spLines(df=daily_df, cpal=wc_pal, linewidth=1) +
+    add_track_spLines(df=daily_df %>% filter(date <='2023-09-30'), cpal=wc_pal, linewidth=1) +
 
     # add baselayers
     add_baseplot(bbox) 
@@ -448,7 +448,7 @@ p_chla_mean <- ggplot() +
                          na.value="transparent",
                          name = "Chla (mg/m^3) \n") +
     # add cohort 1 tracks
-    add_track_spLines(daily_df, cpal=wc_pal, linewidth=1) +
+    add_track_spLines(daily_df %>% filter(date <= '2023-09-30'), cpal=wc_pal, linewidth=1) +
 
     # add baselayers
     add_baseplot(bbox) 
