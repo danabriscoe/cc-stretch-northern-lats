@@ -50,6 +50,7 @@ rsconnect/
 # ignore folders
 scratch/
 figs/
+_extensions/
 
 # ignore data
 data/
@@ -57,3 +58,4 @@ data/
 utils/
 
 .DS_Store
+
