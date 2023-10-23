@@ -16,7 +16,7 @@ filters:
   - lightbox
 lightbox: 
   match: auto
-  effect: fade
+  effect: zoom
   desc-position: top
 ---
 
@@ -122,19 +122,21 @@ load('../data/interim/05_northern_lats_EDA_interim_data.RData')
 
 <br>
 
-# MS Figs 
 
-<br>
+# MS Figs 
 
 ### Fig 1 \| Cohort 1 & SSTa 
 
 <span style="font-size:14pt">
 
-Figure 1 shows the average monthly SST anomalies (SSTa) from July - Sept, 2023. The STRETCH turtles deployed in July 2023 (n=`r length(unique(daily_df$id))`) are referred to as 'Cohort 1'. The tracks from 11 July - 30 Sept 2023 are shown in colors corresponding to the Wildlife Computers [map](https://my.wildlifecomputers.com/data/map/?id=646c14fae9b3514a9430a544). <br>
+Figure 1 shows the average monthly SST anomalies (SSTa) from July - Sept, 2023. The STRETCH turtles deployed in July 2023 (n=`r length(unique(daily_df$id))`) are referred to as 'Cohort 1'. The tracks from 11 July - 30 Sept 2023 are shown in the same color palette that corresponds to the Wildlife Computers [map](https://my.wildlifecomputers.com/data/map/?id=646c14fae9b3514a9430a544). <br>
 
-The 1.5°C SSTa contour is shown in black. The Thermal Corridor study area is outlined in gray. SSTa source: [NOAA Coral Reef Watch, Monthly 5km](https://coralreefwatch.noaa.gov/product/5km/index_5km_sst.php).
+The 1.5°C SSTa contour is shown in black. The Thermal Corridor study area is outlined in gray. <br>
+SSTa source: [NOAA Coral Reef Watch, Monthly 5km](https://coralreefwatch.noaa.gov/product/5km/index_5km_sst.php).
 
-The tabs can be clicked to change the spatial extent. </span>
+*Click on figures to expand view and/or display additional information.*
+<br>
+*The tabs can be clicked to change the spatial extent*. </span>
 
 ::: {.panel-tabset}
 
@@ -142,11 +144,11 @@ The tabs can be clicked to change the spatial extent. </span>
 
 ```{r 03rmd-Fig-1-ssta-cohort-1-map-full, out.width="95%"}
 #| fig-cap: 
-#|   - Fig 1. Average monthly SST anomaly (SSTA, July-Sept 2023) with STRETCH Cohort 1 tracks (July-Sept 2023)
+#|   - Fig 1. Average monthly SST anomaly (SSTa, July-Sept 2023) with STRETCH Cohort 1 tracks (July-Sept 2023)
 #| lightbox: 
-#|   group: Fig 1
+#|   group: Fig1
 #|   description: 
-#|     - Figure 1 shows the average monthly SST anomalies (SSTa) from July - Sept, 2023. The STRETCH turtles deployed in July 2023 (n=25) are referred to as 'Cohort 1'. The tracks from 11 July - 30 Sept 2023 are shown in colors corresponding to the Wildlife Computers [map](https://my.wildlifecomputers.com/data/map/?id=646c14fae9b3514a9430a544).
+#|     - Figure 1 shows the average monthly SST anomalies (SSTa) from July - Sept, 2023. The STRETCH turtles deployed in July 2023 (n=25) are referred to as 'Cohort 1'. The tracks from 11 July - 30 Sept 2023 are shown in the same color palette that corresponds to the Wildlife Computers [map](https://my.wildlifecomputers.com/data/map/?id=646c14fae9b3514a9430a544).
 #|     
 p_ssta_mean_tcms_w_contour
 
@@ -156,16 +158,17 @@ p_ssta_mean_tcms_w_contour
 
 ```{r 03rmd-Fig-1-ssta-cohort-1-map-zoom, out.width="95%"}
 #| fig-cap: 
-#|   - Fig 1. Average monthly SST anomaly (SSTA, July-Sept 2023) with STRETCH Cohort 1 tracks (July-Sept 2023)
+#|   - Fig 1 (Zoomed View). Average monthly SST anomaly (SSTa, July-Sept 2023) with STRETCH Cohort 1 tracks (July-Sept 2023)
 #| lightbox: 
-#|   group: Fig 1
+#|   group: Fig1
 #|   description: 
-#|     - Figure 1 shows the average monthly SST anomalies (SSTa) from July - Sept, 2023. The STRETCH turtles deployed in July 2023 (n=25) are referred to as 'Cohort 1'. The tracks from 11 July - 30 Sept 2023 are shown in colors corresponding to the Wildlife Computers [map](https://my.wildlifecomputers.com/data/map/?id=646c14fae9b3514a9430a544).
+#|     - Figure 1 shows the average monthly SST anomalies (SSTa) from July - Sept, 2023. The STRETCH turtles deployed in July 2023 (n=25) are referred to as 'Cohort 1'. The tracks from 11 July - 30 Sept 2023 are shown in the same color palette that corresponds to the Wildlife Computers [map](https://my.wildlifecomputers.com/data/map/?id=646c14fae9b3514a9430a544).
 #|    
 p_ssta_mean_tcms_w_contour_zoom
 ```
 
 :::
+
 <br>
 
 ### Fig 2 \| Turtles & TZCF 
@@ -176,11 +179,11 @@ Figure 2 shows the long-term average of SST for the month of September (1997-202
 
 For each turtle located between 165°W-140°W longitude during the month of September, their maximum and average lat and long locations are shown as colored circles. 
 
-The <span style="color:#6D4C94"> **historic tracks (1997-2012, n=`r nrow(mean_lats_historic)`)** </span> are shown as the <span style="color:#6D4C9"> **purple circles** </span> (dark purple = max, light purple = average monthly location).
+The <span style="color:#6D4C94"> **historic tracks (1997-2012, n=`r mean_lats_historic$id |> n_distinct()`)** </span> are shown as the <span style="color:#6D4C9"> **purple circles** </span>.
 
-A <span style="color:darkred"> **subset of the historic tracks (2005-2006, n=`r nrow(df_historic_2005_2006)`)** </span>are shown as the <span style="color:darkred"> **red circles** </span> (dark red = max, light red = average monthly location). 
+A <span style="color:darkred"> **subset of the historic tracks (2005-2006, n=`r df_historic_2005_2006$id |> n_distinct()`)** </span>are shown as the <span style="color:darkred"> **red circles** </span>. 
 
-The <span style="color:#276961"> **STRETCH Cohort 1 turtle locations (September 2023, n=`r nrow(mean_lats_cohort1)`)**, </span> are shown as the <span style="color:#276961"> **green circles** </span> (dark green = max, light green = average monthly location). 
+The <span style="color:#276961"> **STRETCH Cohort 1 turtle locations (September 2023, n=`r mean_lats_cohort1 |> n_distinct()`)**, </span> are shown as the <span style="color:#276961"> **green circles** </span>. 
 <br>
 
 The 18°C isotherm is a reference for the seasonal location of the TZCF. 
@@ -190,80 +193,111 @@ The gray line represents the average September TZCF location from 1997-2012. The
 
 <br>
 
-::: {.panel-tabset}
+
+<!-- ::: {.panel-tabset} -->
 
 #### Mean Lats Sept
-<!-- ![](../figs/03rmd-Fig2-plot-sept-clim-w-tzcfs-mean-lats-cc-pts.png){height="300%"} -->
-```{r 03rmd-Fig2-plot-sept-clim-w-tzcfs-mean-lats-cc-pts, out.width="120%"}
-#| out-width: 100%
-#| fig-format: svg
-#| fig-cap: 
-#|   - Fig 2. Long-term Average of SST for September (1997-2023) with Average (or Maximum) Turtle Latitudes and TZCF Location
-#| lightbox: 
-#|   group: Fig 2
-#|   description: 
-#|     - For each turtle located between (165°W-140°W longitude), their maximum lat and long locations are shown for September. \n\nThe historic tracks (1997-2012, n={nrow(mean_lats_historic)}) are shown as the purle circles. The STRETCH Cohort 1 turtle locations (September 2023, n={nrow(mean_lats_historic)}), are shown as the green circles. \n\nThe 18°C isotherm is a reference for the seasonal location of the TZCF. The gray line represents the average September TZCF location from 1997-2012. The white line represents the TZCF location for September 2023.
-#|
-p_sept_mean_w_tzcfs_cc_mean_lats +
-    # theme(legend.direction = "vert#ical", legend.box = "horizontal") +
-    resize_cbar(8)
 
+<!-- ![](../figs/03rmd-Fig2-plot-sept-clim-w-tzcfs-2005-2006-mean-lats-cc-pts.png) -->
+```{r}
+knitr::include_graphics("../figs/03rmd-Fig2-plot-sept-clim-w-tzcfs-mean-lats-cc-pts.png")
 ```
+
+
+<!-- ```{r 03rmd-Fig2-plot-sept-clim-w-tzcfs-mean-lats-cc-pts, out.width="120%", fig.topcaption=TRUE} -->
+<!-- #| fig-cap:  -->
+<!-- #|   - Fig 2. Average turtle latitude in relation to the 18°C isotherm during September -->
+<!-- #| lightbox:  -->
+<!-- #|   group: Fig2 -->
+<!-- #|   description:  -->
+<!-- #|     - For each turtle located between (165°W-140°W longitude), the avearge lat and long locations are shown for September. The historic tracks (1997-2012, n=38) are shown as the purle circles. The STRETCH Cohort 1 turtle locations (September 2023, n=24), are shown as the green circles. The 18°C isotherm is a reference for the seasonal location of the TZCF. The gray line represents the average September TZCF location from 1997-2012. The white line represents the TZCF location for September 2023. -->
+<!-- #| -->
+<!-- p_sept_mean_w_tzcfs_cc_mean_lats + -->
+<!--     # theme(legend.direction = "vert#ical", legend.box = "horizontal") + -->
+<!--     resize_cbar(8) -->
+
+<!-- ``` -->
 
 
 #### Max Lats Sept
-<!-- ![](../figs/03rmd-Fig2-plot-sept-clim-w-tzcfs-max-lats-cc-pts.png){height="100%"} -->
 
-```{r 03rmd-Fig2-plot-sept-clim-w-tzcfs-max-lats-cc-pts, fig.fullwidth=TRUE}
-p_sept_mean_w_tzcfs_cc_max_lats +
-    theme(legend.direction = "vertical", legend.box = "horizontal") +
-    resize_cbar(14)
+![](../figs/03rmd-Fig2-plot-sept-clim-w-tzcfs-max-lats-cc-pts.png){height="100%"}
 
-# knitr::include_graphics("../figs/03rmd-Fig2-plot-sept-clim-w-tzcfs-2005-2006-max-lats-cc-pts.png")
-```
+
+<!-- ```{r 03rmd-Fig2-plot-sept-clim-w-tzcfs-max-lats-cc-pts, fig.fullwidth=TRUE} -->
+<!-- #| fig-cap:  -->
+<!-- #|   - Fig 2 (Alternate - Max Lats). Max turtle latitude in relation to the 18°C isotherm during September -->
+<!-- #| lightbox:  -->
+<!-- #|   group: Fig2 -->
+<!-- #|   description:  -->
+<!-- #|     - For each turtle located between (165°W-140°W longitude), the avearge lat and long locations are shown for September. The historic tracks (1997-2012, n=38) are shown as the purle circles. The STRETCH Cohort 1 turtle locations (September 2023, n=24), are shown as the green circles. The 18°C isotherm is a reference for the seasonal location of the TZCF. The gray line represents the average September TZCF location from 1997-2012. The white line represents the TZCF location for September 2023. -->
+<!-- #| -->
+<!-- p_sept_mean_w_tzcfs_cc_max_lats + -->
+<!--     theme(legend.direction = "vertical", legend.box = "horizontal") + -->
+<!--     resize_cbar(14) -->
+
+<!-- # knitr::include_graphics("../figs/03rmd-Fig2-plot-sept-clim-w-tzcfs-2005-2006-max-lats-cc-pts.png") -->
+<!-- ``` -->
 
 
 #### 2005-2006 Mean Lats Sept
-<!-- ![](../figs/03rmd-Fig2-plot-sept-clim-w-tzcfs-2005-2006-mean-lats-cc-pts.png){height="100%"} -->
 
-```{r 03rmd-Fig2-plot-sept-clim-w-tzcfs-2005-2006-mean-lats-cc-pts, fig.fullwidth=TRUE}
-p_sept_mean_w_tzcfs_cc_2005_2006_lats +
-    theme(legend.direction = "vertical", legend.box = "horizontal") +
-    resize_cbar(14)
+![](../figs/03rmd-Fig2-plot-sept-clim-w-tzcfs-2005-2006-mean-lats-cc-pts.png){height="100%"}
 
-```
+<!-- ```{r 03rmd-Fig2-plot-sept-clim-w-tzcfs-2005-2006-mean-lats-cc-pts, fig.fullwidth=TRUE} -->
+<!-- #| fig-cap:  -->
+<!-- #|   - Fig 2 (Alternate - Mean Lats, 2005-2006). Average turtle latitude in relation to the 18°C isotherm during September -->
+<!-- #| lightbox:  -->
+<!-- #|   group: Fig2 -->
+<!-- #|   description:  -->
+<!-- #|     - For each turtle located between (165°W-140°W longitude), the avearge lat and long locations are shown for September. The historic tracks (1997-2012, n=19) are shown as the purle circles. The STRETCH Cohort 1 turtle locations (September 2023, n=24), are shown as the green circles. The 18°C isotherm is a reference for the seasonal location of the TZCF. The gray line represents the average September TZCF location from 1997-2012. The white line represents the TZCF location for September 2023. -->
+<!-- #| -->
+<!-- p_sept_mean_w_tzcfs_cc_2005_2006_lats + -->
+<!--     theme(legend.direction = "vertical", legend.box = "horizontal") + -->
+<!--     resize_cbar(14) -->
+
+<!-- ``` -->
 
 
 #### 2005-2006 Max Lats Sept
 
-<!-- ![](../figs/03rmd-Fig2-plot-sept-clim-w-tzcfs-2005-2006-max-lats-cc-pts.png){height="100%"} -->
+![](../figs/03rmd-Fig2-plot-sept-clim-w-tzcfs-2005-2006-max-lats-cc-pts.png){height="100%"}
 
-```{r 03rmd-Fig2-plot-sept-clim-w-tzcfs-2005-2006-max-lats-cc-pts, fig.fullwidth=TRUE}
-p_sept_mean_w_tzcfs_cc_mean_vs_max_lats +
-    theme(legend.direction = "vertical", legend.box = "horizontal") +
-    resize_cbar(14)
 
-```
+<!-- ```{r 03rmd-Fig2-plot-sept-clim-w-tzcfs-2005-2006-max-lats-cc-pts, fig.fullwidth=TRUE} -->
+<!-- #| fig-cap:  -->
+<!-- #|   - Fig 2 (Alternate - Max Lats, 2005-2006). Max turtle latitude in relation to the 18°C isotherm during September -->
+<!-- #| lightbox:  -->
+<!-- #|   group: Fig2 -->
+<!-- #|   description:  -->
+<!-- #|     - For each turtle located between (165°W-140°W longitude), the avearge lat and long locations are shown for September. The historic tracks (1997-2012, n=19) are shown as the purle circles. The STRETCH Cohort 1 turtle locations (September 2023, n=24), are shown as the green circles. The 18°C isotherm is a reference for the seasonal location of the TZCF. The gray line represents the average September TZCF location from 1997-2012. The white line represents the TZCF location for September 2023. -->
+<!-- #| -->
+<!-- p_sept_max_w_tzcfs_cc_2005_2006_lats + -->
+<!--     theme(legend.direction = "vertical", legend.box = "horizontal") + -->
+<!--     resize_cbar(14) -->
 
-:::
+<!-- ``` -->
+
+<!-- ::: -->
 
 
 ### Fig 3 \| Turtles & Avg Lats
 
 Figure 3 compares the average latitudes experienced by 2023's Cohort 1 turtles (green line) and turtles from the historic data set ('Historic' 1997-2012, purple line). Latitudes were spatially averaged eastern North Pacific region, between 165°W to 140°W longitude. The gray bands represent ± 2 standard deviations.
 
-Use the mouse to show tag information for each line.
+Use the mouse to display weekly averages for each line.
 
-```{r 02rmd-Fig3-gg-avg-cc-lats-by-week, out.height="90%", out.width="95%"}
+```{r 02rmd-Fig3-gg-avg-cc-lats-by-week, out.height="100%", out.width="95%"}
 #| fig-cap: 
 #|   - Fig 3. Average weekly latitudinal location of turtles from the Historic data set (Jul-Oct, 1997-2012) and STRETCH Cohort 1 (Jul-Oct, 2023)
 #| lightbox: 
-#|   group: Fig 3
+#|   group: Fig3
 #|   description: 
-#|     - Figure 3 compares the average latitudes experienced by 2023's Cohort 1 turtles (green line) and turtles from the historic data set ('Historic' 1997-2012, purple line). Latitudes were spatially averaged eastern North Pacific region, between 165°W to 140°W longitude. The gray bands represent ± 2 standard deviations.
+#|     - Figure 3 compares the average latitudes experienced by 2023's Cohort 1 turtles (green line) and turtles from the historic data set ('Historic' 1997-2012, purple line). Latitudes were spatially averaged across the eastern North Pacific region, between 165°W to 140°W longitude. For each data set, the gray bands represent ± 2 standard deviations.
 #| 
 
 gg_p_avg_turtle_lats_by_week
+# p_avg_turtle_lats_by_week
 ```
 
 <br>
@@ -271,20 +305,25 @@ gg_p_avg_turtle_lats_by_week
 
 ### Fig 4 \| TZCF & Turtles
 
-The average latitudinal movements of loggerheads between 165°W and 140°W in relation to the 18°C SST isotherm. Individuals from the Historic data set (1997-2012, n=`r length(unique(hist_df_subset$id))`) are shown in purple. Individuals from Cohort 1 (2023, n=25) are shown in green. 
+The average monthly latitude of loggerheads between 165°W and 140°W in relation to the 18°C SST isotherm. 
+<br>
 
-The all-time monthly average of isotherm position is shown in gray (1997-2022); the 2023 monthly position is shown in red.
+Individuals from the Historic data set (1997-2012, n range = 25-61 turtles/month) are shown in purple. A subset of these tracks (2005-2006 indiviuals, n range = 17-26 turtles/month) are shown in red. 
+Cohort 1 (2023, n=25) turtles are shown in green. 
 
-```{r 04rmd-Fig4-gg_tzcf_hist_cohort, out.height="80%", out.width="100%"}
+The light gray line is the monthly average of the 18°C SST isotherm position between 1997-2022. The dark gray line represents the position of the 18°C SST isotherm for 2023.
+
+```{r 04rmd-Fig4-gg_tzcf_hist_cohort, out.height="80%", out.width="120%"}
 #| fig-cap: 
-#|   - Fig 4. Average latitudinal movements of loggerheads between 165°W and 140°W in relation to the 18°C SST isotherm
+#|   - Fig 4. Average monthly latitude of loggerheads between 165°W and 140°W in relation to the 18°C SST isotherm.
 #| lightbox: 
-#|   group: Fig 4
+#|   group: Fig4
 #|   description: 
-#|     - The average latitudinal movements of loggerheads between 165°W and 140°W in relation to the 18°C SST isotherm. Individuals from the Historic data set (1997-2012, n=`r length(unique(hist_df_subset$id))`) are shown in purple. Individuals from Cohort 1 (2023, n=25) are shown in green. The all-time monthly average of isotherm position is shown in gray (1997-2022); the 2023 monthly position is shown in red.
+#|     - The average monthly latitude of loggerheads between 165°W and 140°W in relation to the 18°C SST isotherm. Individuals from the Historic data set (1997-2012, n range = 25-61 turtles/month) are shown in purple. A subset of these tracks (2005-2006 indiviuals, n range = 17-26 turtles/month) are shown in red. The light gray line is the monthly average of the 18°C SST isotherm position between 1997-2022. The dark gray line represents the position of the 18°C SST isotherm for 2023.
 #| 
 
-gg_tzcf_hist_cohort
+# gg_tzcf_hist_cohort
+p_tzcf_hist_cohort
 
 ```
 
@@ -293,20 +332,25 @@ gg_tzcf_hist_cohort
 
 ### Fig 5 \| GAM Results 
 
-**Insert Text Here**
+The following GAMs explore evidence of latitudinal shifts in SST over time.
 
-**Summary statistics of the latitudinal location of the 18°C SST isotherm between (165W-140W longitude)** 
+**Min, Mean, Max of the 18°C SST isotherm between (165W-140W longitude ~ Year (1997-2023)**
 
-*Figures are exploratory and were used to interpret similarities between GAM partial plots for models: min, mean, max 18°C SST Isotherm ~ Year
+Preliminary results of these 3 models (min, mean, max) showed similar results. 
+<br>
+
+To explore this in further detail, these summary statistics were plotted for visual review of the variability between min, mean, and max isotherm latitudes per year. 
+
+The figures below are exploratory and were used to confirm the reason for similarity between the min, mean, max GAM results.
 
 ::: {.panel-tabset}
 
-##### March 18°C SST isotherm {#test-ref}
+##### March 18°C SST isotherm 
 ```{r 05rmd-gg-plot-sum-stats-lat-year-mar, out.height="70%", out.width="110%"}
 #| fig-cap: 
 #|   - Fig 5. Plot showing the March min, mean, and max latitudinal location of the 18°C SST isotherm between 165°W and 140°W 
 #| lightbox: 
-#|   group: Fig 5
+#|   group: Fig5
 #|   description: 
 #|     - This figure explores the variability between the min, mean, and max latitudinal location of the 18°C SST isotherm between 165°W and 140°W. The months of March and Sept are shown because they represent the seasonal shift from the isotherm's southern-most location (March) and northern-most location (Sept) each year. 
 #| 
@@ -319,7 +363,7 @@ p_sum_stats_lat_year_mar
 ##### Sept 18°C SST isotherm
 ```{r 05rmd-gg-plot-sum-stats-lat-year-sept, out.height="70%", out.width="110%"}
 #| fig-cap: 
-#|   - Fig 5. Plot showing the September min, mean, and max latitudinal location of the 18°C SST isotherm between 165°W and 140°W  
+#|   - Fig5. Plot showing the September min, mean, and max latitudinal location of the 18°C SST isotherm between 165°W and 140°W  
 #| lightbox: 
 #|   group: Fig 5
 #|   description: 
@@ -333,17 +377,10 @@ p_sum_stats_lat_year_sept
 :::
 
 
-The following GAM models explore evidence of latitudinal shifts in SST over time.
-
-See @test-ref for details.
-
-The following models were run for March & Sept (1997 - 2023):
+Based on the above figures, the average latitude of the March and Sept 18°C SST isotherm (1997-2023) were run. Models were run using leave one out cross validation (LOOCV) and kfolds (k=5) cross validation. The kfolds models with the lowest RMSE results are shown below:
 
 <br>
 
-**Mean Latitude of 18C** \~ **Year** **Median Latitude of 18C** \~ **Year** **Max Latitude of 18C** \~ **Year**
-
-<br>
 
 #### Fig 5A. Model Summary (March)
 ```{r}
@@ -379,7 +416,8 @@ gam_18degC_lat_year_output_sept[[4]][[2]]$partial_plot +
 
 ### Fig 6 \| Turtle Residency-Env
 
-*Analsyes to be completed here*
+<br>
+*Analyses to be completed here*
 
 <br>
 
@@ -406,6 +444,32 @@ scroll_box(width = "100%", height = "300px")
 
 Between 1997-2012, there were `r length(unique(hist_df_subset$id))` turtles that transmitted between 165W and 140W. Of these, `r length(unique(hist_df_subset_septs$id))` transmitted during the month of September.
 
+```{r 04rmd-n_mlats_historic_per_month}
+n_mlats_historic_per_month %>%
+    mutate(month = month.name[month]) %>%
+    rename("Month" = "month","n Turtles" = 2) %>%
+    kbl(caption = " Number of individual turtles transmitting each month (1997-2012") %>%
+    kable_paper("hover", full_width = T) %>%
+    kable_styling(bootstrap_options = c("condensed", "responsive")) %>%
+    kable_styling(fixed_thead = T) %>%
+    kable_minimal() %>%
+scroll_box(width = "100%", height = "300px")
+
+```
+
+```{r 04rmd-n_mlats_historic_2005_2006_per_month}
+n_mlats_historic_2005_2006_per_month %>%
+    mutate(month = month.name[month]) %>%
+    rename("Month" = "month","n Turtles" = 2) %>%
+    kbl(caption = " Number of individual turtles transmitting each month (1997-2012") %>%
+    kable_paper("hover", full_width = T) %>%
+    kable_styling(bootstrap_options = c("condensed", "responsive")) %>%
+    kable_styling(fixed_thead = T) %>%
+    kable_minimal() %>%
+scroll_box(width = "100%", height = "300px")
+```
+
+
 <br>
 
 The table below shows the number of turtles that transmitted data (165°W-140°W), across individual months and years (1997-2012). Note that a few individuals transmitted for multiple years, which is reflected in the monthly column totals.
@@ -418,15 +482,15 @@ ntags_hist_tags_165W_140W_per_year_month
 <br>
 
 
-### STable3 \| Median Sept Turtle Lat & Long by Year
+### STable3 \| Average Sept Turtle Lat & Long by Year
 
 ```{r 05rmd-max-lat-yr-avg-meds-FIX ME!!!}
 max_lat_yr_w2023 %>%
-    mutate(med_lat = round(med_lat,2),
-            med_lon = round(med_lon,2)) %>%
-    dplyr::select(c(year, med_lat, med_lon)) %>%
-    rename("Year"="year", "Median \nLatitude (°N)"="med_lat", "Median \nLongitude (°W)" = "med_lon") %>%
-    kbl(caption = " Table shows the median September latitude and longitudes for turtles (165°W-140°W)") %>%
+    mutate(avg_lat = round(avg_lat,2),
+            avg_lon = round(avg_lon,2)) %>%
+    dplyr::select(c(year, avg_lat, avg_lon)) %>%
+    rename("Year"="year", "Average \nLatitude (°N)"="avg_lat", "Average \nLongitude (°W)" = "avg_lon") %>%
+    kbl(caption = " Table shows the average September latitude and longitudes for turtles (165°W-140°W)") %>%
     kable_paper("hover", full_width = T) %>%
     kable_styling(bootstrap_options = c("condensed", "responsive")) %>%
     kable_styling(fixed_thead = T) %>%
@@ -455,9 +519,9 @@ The tabs can be clicked to change the spatial extent.
 #| fig-cap: 
 #|   - SFig 1. Average monthly Chlorophyll-a (Chl, July-Sept 2023) with STRETCH Cohort 1 tracks (July-Sept 2023)
 #| lightbox: 
-#|   group: SFig 1
+#|   group: SFig1
 #|   description: 
-#|     - Figure 1 shows the average monthly chlorophyll-a (Chla) from July - Sept, 2023. The STRETCH turtles deployed in July 2023 (n=25) are referred to as 'Cohort 1'. The tracks from 11 July - 30 Sept 2023 are shown in colors corresponding to the Wildlife Computers [map](https://my.wildlifecomputers.com/data/map/?id=646c14fae9b3514a9430a544).
+#|     - Figure 1 shows the average monthly chlorophyll-a (Chla) from July - Sept, 2023. The STRETCH turtles deployed in July 2023 (n=25) are referred to as 'Cohort 1'. The tracks from 11 July - 30 Sept 2023 are shown in the same color palette that corresponds to the Wildlife Computers [map](https://my.wildlifecomputers.com/data/map/?id=646c14fae9b3514a9430a544).
 #|  
 p_chla_mean_tcms
 ```
@@ -468,9 +532,9 @@ p_chla_mean_tcms
 #| fig-cap: 
 #|   - SFig 1. Average monthly Chlorophyll-a (Chl, July-Sept 2023) with STRETCH Cohort 1 tracks (July-Sept 2023)
 #| lightbox: 
-#|   group: SFig 1
+#|   group: SFig1
 #|   description: 
-#|     - Figure 1 shows the average monthly chlorophyll-a (Chla) from July - Sept, 2023. The STRETCH turtles deployed in July 2023 (n=25) are referred to as 'Cohort 1'. The tracks from 11 July - 30 Sept 2023 are shown in colors corresponding to the Wildlife Computers [map](https://my.wildlifecomputers.com/data/map/?id=646c14fae9b3514a9430a544).
+#|     - Figure 1 shows the average monthly chlorophyll-a (Chla) from July - Sept, 2023. The STRETCH turtles deployed in July 2023 (n=25) are referred to as 'Cohort 1'. The tracks from 11 July - 30 Sept 2023 are shown in the same color palette that corresponds to the Wildlife Computers [map](https://my.wildlifecomputers.com/data/map/?id=646c14fae9b3514a9430a544).
 
 
 p_chla_mean_tcms_zoom
@@ -484,7 +548,7 @@ p_chla_mean_tcms_zoom
 
 SFigure 2 shows the northern progression of each turtle from Cohort 1, since their release date (11 July 2023).
 
-Use the mouse to show tag information for each line.
+Use the mouse to display individual tag information for each line.
 
 ```{r 02rmd-SFig2-daily-avg-cohort-1-max-lats-date, out.height="80%", out.width="100%"}
 
@@ -495,7 +559,7 @@ gg_daily_avg_cohort1_max_lats
 
 ### SFig 3 \| Seasonal TZCF 
 
-SFigure 3 shows the average location of the 18°C SST isotherm during March (A) and September (B). 
+SFigure 3 shows the average location of the 18°C SST isotherm during March (A) and September (B), 1997-2023
 
 For each figure, the darker line represents the average isotherm location location between 1997-2022). The light pink line represents the 2005-2006 location, and the white line represents the 2023 isotherm location.
 
@@ -505,9 +569,9 @@ For each figure, the darker line represents the average isotherm location locati
 
 ```{r 03rmd-SFig3-plot-sept-clim-w-tzcfs}
 #| fig-cap: 
-#|   - SFig 3. Average location of the 18°C SST isotherm during March (A) and September (B). 
+#|   - SFig 3A. Average location of the 18°C SST isotherm during March (1997-2023)
 #| lightbox: 
-#|   group: SFig 1
+#|   group: SFig1
 #|   description: 
 #|     - For each figure, the darker line represents the average isotherm location location between 1997-2022). The light pink line represents the 2005-2006 location, and the white line represents the 2023 isotherm location.
 
@@ -524,9 +588,9 @@ p_march_mean +
 
 ```{r 03rmd-SFig3-plot-march-clim-w-tzcfs}
 #| fig-cap: 
-#|   - SFig 3. Average location of the 18°C SST isotherm during March (A) and September (B). 
+#|   - SFig 3B. Average location of the 18°C SST isotherm during September (1997-2023). 
 #| lightbox: 
-#|   group: SFig 1
+#|   group: SFig1
 #|   description: 
 #|     - For each figure, the darker line represents the average isotherm location location between 1997-2022). The light pink line represents the 2005-2006 location, and the white line represents the 2023 isotherm location.
 
@@ -545,9 +609,9 @@ p_sept_mean +
 
 ### SFig 4 \| Seasonal TZCF by Year 
 
-SFigure 4 shows the seasonal position of the 18°C SST isotherm between 165°W and 140°W longitude. This isotherm is a common proxy for the Transition Zone Chlorophyll Front.
+SFigure 4 shows the seasonal position of the 18°C SST isotherm between 165°W and 140°W longitude. 
 
-For each year between 1997-2023 (which encompasses both the historic tags and current, 'Cohort 1'), the annual isotherm trend is plotted as a gray line. The years 2005, 2015, 2019 (light reds) and 2023 (dark red) are highlighted as they were anomalously warm years.
+For each year between 1997-2023 (which encompasses both the historic tags and current, 'Cohort 1'), the annual isotherm trend is plotted as a gray line. The years 2005, 2015, 2019 (light colors) and 2023 (dark red) are highlighted as they were anomalously warm years.
 
 ::: {.panel-tabset}
 
@@ -583,7 +647,7 @@ gg_tzcf_hist_yrs_cohort_yr
 
 ### SFig 5 \| Sept Lats: Mean vs Median
 
-Summary statistics for the historic data set show there is negatively skewed to the distribution of September latitudes. <br> **The mean of September latitudes: `r hist_all_stats$value[1]`** <br> **The median of September latitudes: `r hist_all_stats$value[2]`**
+Summary statistics for the Historic turtle tracks between 165°W and 140°W longitude (n=`r mean_lats_historic$id |> n_distinct()`) show there is a negative skew to the distribution of September latitudes. <br> **The mean of September latitudes: `r hist_all_stats$value[1]`** <br> **The median of September latitudes: `r hist_all_stats$value[2]`**
 
 ```{r 05rmd-SFig3-p-histogram-hist-df-septs-avg-medians}
 #| fig-cap: 
