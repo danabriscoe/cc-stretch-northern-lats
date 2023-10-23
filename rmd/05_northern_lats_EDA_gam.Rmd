@@ -50,6 +50,7 @@ library(ggalt)
 library(scales)
 library(plotly)
 library("gratia")
+library(glue)
 ```
 
 ```{r 05-source-helper-funcs}

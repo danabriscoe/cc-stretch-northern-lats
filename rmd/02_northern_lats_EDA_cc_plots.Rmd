@@ -194,7 +194,7 @@ df_165W %>%
     
     scale_color_manual(values=turtle_cpal, name = "Turtle Group \n") +
     theme_bw() +
-    labs(x = "Month", y = "Latitude (°N)", subtitle = "Average Turtle Latitude by Week (July - Sept)")
+    labs(x = "Month \n", y = "Latitude (°N)", subtitle = "Average Turtle Latitude by Week (July - Sept)")
 
 
 ## turn into ggplotly obj

@@ -392,6 +392,30 @@ mlats_cohort1 <- daily_avg_data_cohort_1 %>%
     # summarise(avgs = median(lat)) 
 ```
 
+```{r 04-calc-n-mlats-historic-per-month}
+
+n_mlats_historic_per_month <- hist_df %>%
+    filter(lon >= -165 & lon <= -140) %>%
+        # filter(lon >= -179 & lon <= -130) %>%
+    dplyr::select(-c(date)) %>%
+    group_by(month) %>%
+    summarise(n_distinct(id), .groups = "drop")
+
+n_mlats_historic_2005_2006_per_month <- hist_df %>%
+    filter(lon >= -165 & lon <= -140) %>%
+    filter(year >= 2005 & year <= 2006) %>%
+    dplyr::select(-c(date)) %>%
+    group_by(month) %>%
+    summarise(n_distinct(id), .groups = "drop")
+
+
+n_mlats_cohort_1_per_month <- daily_avg_data_cohort_1 %>%
+    filter(lon >= -165 & lon <= -140) %>%
+    dplyr::select(-c(date)) %>%
+    group_by(month) %>%
+    summarise(n_distinct(id), .groups = "drop")
+```
+
 
 ```{r 04-gg-seasonal-tzcf-yrs-only}
 p_tzcf_hist_yrs_cohort_yr <-  ggplot() +
@@ -438,19 +462,22 @@ p_tzcf_hist_cohort <-
     
     scale_color_manual(
         name = "Avg Monthly Lat (165°W-140°W)\n ",
-        breaks = c("18°C Isotherm (2003)",
-                   "Cohort 1 Tracks (2023)",                   
+        breaks = c("18°C Isotherm (2023)",
                    "18°C Isotherm (1997-2012)", 
+                   
                    "Historic Tracks (1997-2012)", 
-                   "Historic Tracks (2005-2006)"),
+                   "Historic Tracks (2005-2006)",
+                   "Cohort 1 Tracks (2023)"                  
+                    ),
 
                    
         values = c(
-                   "18°C Isotherm (2003)"="#952C23",
-                   "Cohort 1 Tracks (2023)"="#66CCC0",
+                   "18°C Isotherm (2023)"="gray30",
                    "18°C Isotherm (1997-2012)"="gray80",
+                   
                    "Historic Tracks (1997-2012)"="#6D4C94",
-                   "Historic Tracks (2005-2006)"="#E05780"
+                   "Historic Tracks (2005-2006)"="#E05780",
+                   "Cohort 1 Tracks (2023)"="#66CCC0"
                    )
     #,  # Specify colors - don't know why this is backwards from labels....
         # labels = c("2023: 18°C Isotherm", "1997-2022: 18°C Isotherm","Historic Tracks", "Cohort 1 Tracks")  # Specify labels
