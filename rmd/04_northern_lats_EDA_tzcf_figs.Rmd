@@ -383,6 +383,13 @@ mlats_historic_2005_2006 <- hist_df %>%
     dplyr::select(-c(date)) %>%
     group_by(month) %>%
     summarise(avgs = mean(lat, na.rm=T))
+
+mlats_historic_2006_2007 <- hist_df %>%
+    filter(lon >= -165 & lon <= -140) %>%
+    filter(year >= 2006 & year <= 2007) %>%
+    dplyr::select(-c(date)) %>%
+    group_by(month) %>%
+    summarise(avgs = mean(lat, na.rm=T))
     # summarise(avgs = median(lat))
     
 mlats_cohort1 <- daily_avg_data_cohort_1 %>%
@@ -391,6 +398,30 @@ mlats_cohort1 <- daily_avg_data_cohort_1 %>%
     summarise(avgs = mean(lat, na.rm=T))
     # summarise(avgs = median(lat)) 
 ```
+
+
+```{r 04-cross-check-mlats-historic-with-02-weekly-lat-avgs}
+# # fyi, will need to load 02 rmd RData
+# weekly_hist_df_avg_lats <- 
+# df_165W %>%
+#     filter(group == 'historic') %>%
+#     mutate(
+#     week_idx = week(date)) %>%
+#     mutate(week_date = getWeekDate(week_idx)) %>%
+#     group_by(group, week_date) %>%
+#     summarize(
+#         avg = mean(lat, na.rm=TRUE))
+# 
+# 
+# monthly_hist_df_avg_lats <- weekly_hist_df_avg_lats %>%
+#     mutate(year = lubridate::year(week_date),
+#            month = lubridate::month(week_date)) %>%
+#     group_by(month) %>%
+#        summarize(
+#         avgs = mean(avg, na.rm=TRUE))
+
+```
+
 
 ```{r 04-calc-n-mlats-historic-per-month}
 

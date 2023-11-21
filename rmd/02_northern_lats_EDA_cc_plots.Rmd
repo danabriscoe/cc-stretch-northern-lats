@@ -105,7 +105,7 @@ df_all <- rbind(daily_df, hist_df)
 
 ```{r filter-historic-165W}
 df_165W <- df_all %>%
-    filter(lon > -165 & lon < 140) %>%
+    filter(lon > -165 & lon < -140) %>%
     filter(month >=7 & month <= 9)
 
 ```
@@ -202,6 +202,27 @@ gg_p_avg_turtle_lats_by_week <-
     ggplotly(p_avg_turtle_lats_by_week,tooltip = c("text"))
 
 ```
+
+```{r 02-hist-daily-hist-cohort1-sept-by-lat-bins}
+
+df_165W %>%
+    filter(month == 9) %>%
+    filter(year != 2023) %>%
+    group_by(group, day) %>% # only interested in avg daily lat during sept, from 97-22, so don't need id/names
+      summarize(
+        avg = mean(lat, na.rm=TRUE)) %>% #,
+
+    mutate(group = str_to_upper(group)) %>%
+        
+ggplot(aes(avg)) +    
+    geom_histogram(binwidth = 0.05, fill = "steelblue", colour = "navy", alpha = 0.6) + 
+    # geom_vline(data = hist_all_stats, aes(xintercept = value, color = stat),  linewidth=0.9) +
+    # scale_color_manual(values = c("red", "orange"), labels = c("Mean", "Median"), name = "Statistic")  +
+    labs(x = 'Latitude (°N)', y= "Count") +
+    theme_bw()
+
+```
+
 
 
 ```{r 02-interim-rdata-save}

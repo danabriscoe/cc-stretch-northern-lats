@@ -121,6 +121,17 @@ ntags_hist_tags_165W_140W_per_year <- hist_df %>%
 
 ```
 
+```{r 05-ntags-165W-140W-per-year-month-sept-only}
+ntags_hist_tags_165W_140W_per_year_month_sept <- hist_df %>%
+    filter(lon >= -165 & lon <= -140) %>%
+    filter(month == 3) %>%
+    group_by(year) %>%
+    summarize(count=n_distinct(id)) %>%
+    spread(year, count)
+
+```
+
+
 ```{r 05-ntags-165W-140W-per-year-month}
 ntags_hist_tags_165W_140W_per_year_month <- hist_df %>%
     filter(lon >= -165 & lon <= -140) %>%
@@ -132,7 +143,7 @@ colnames(ntags_hist_tags_165W_140W_per_year_month) <- c("Year", month.abb)
 ```
 
 
-```{r 05-calc-mlat-avgs-cc-sept}
+```{r 05-calc-max-lat-avgs-cc-sept}
 max_lats_historic <- hist_df %>%
     filter(lon >= -165 & lon <= -140) %>%
     filter(month == 9) %>%
@@ -158,6 +169,50 @@ max_lats_cohort1 <- daily_avg_data_cohort_1 %>%
 
 max_lats_all <- rbind(max_lats_historic, max_lats_cohort1)
 ```
+
+```{r 04-repeat-calc-mlat-avgs-cc}
+mlats_historic <- hist_df %>%
+    filter(lon >= -165 & lon <= -140) %>%
+        # filter(lon >= -179 & lon <= -130) %>%
+    dplyr::select(-c(date)) %>%
+    group_by(month) %>%
+    summarise(avgs = mean(lat, na.rm=T))
+    # summarise(avgs = median(lat))
+
+mlats_historic_2005_2006 <- hist_df %>%
+    filter(lon >= -165 & lon <= -140) %>%
+    filter(year >= 2005 & year <= 2006) %>%
+    dplyr::select(-c(date)) %>%
+    group_by(month) %>%
+    summarise(avgs = mean(lat, na.rm=T))
+    # summarise(avgs = median(lat))
+    
+mlats_cohort1 <- daily_avg_data_cohort_1 %>%
+    dplyr::select(-c(date)) %>%
+    group_by(month) %>%
+    summarise(avgs = mean(lat, na.rm=T))
+    # summarise(avgs = median(lat)) 
+
+
+## Now do the same but calc monthly lat avgs by month & year
+mlats_historic_mon_year <- hist_df %>%
+    filter(lon >= -165 & lon <= -140) %>%
+    dplyr::select(-c(date)) %>%
+    group_by(month, year) %>%
+    summarise(avg_lat = mean(lat, na.rm=T), .groups = 'drop') %>%
+    mutate(group = 'historic') 
+    
+mlats_cohort1_mon_year <- daily_avg_data_cohort_1 %>%
+    filter(lon >= -165 & lon <= -140) %>%
+    dplyr::select(-c(date)) %>%
+    group_by(month, year) %>%
+    summarise(avg_lat = mean(lat, na.rm=T), .groups = 'drop') %>%
+    mutate(group = 'cohort1')
+
+mlats_all_mon_year <- rbind(mlats_historic_mon_year, mlats_cohort1_mon_year)
+    
+```
+
 
 ```{r 05-gg-graph-hist-id-yrmon}
 
@@ -385,6 +440,47 @@ gg_sum_stats_lat_year_sept <- ggplotly(p_sum_stats_lat_year_sept, tooltip = c("t
 ```
 
 
+```{r 05-gg-plot-sum-stats-avg-lats-18C-cc-year-mar-sept}
+
+df_list = df_sum_stats_lat_year_list
+
+p <- ggplot() +
+
+    geom_point(data = df_list[['mean']] %>% filter(month == 3), aes(x=year, y=y, col='March 18°C Isotherm',
+                      text = str_c("Year: ", year, "\nLat: ", y, "°N", "\nStat: Mean")), size=4) + 
+    geom_point(data = df_list[['mean']] %>% filter(month == 9), aes(x=year, y=y, col='Sept 18°C Isotherm',
+                      text = str_c("Year: ", year, "\nLat: ", y, "°N", "\nStat: Mean")), size=4) + 
+    geom_point(data = mlats_all_mon_year %>% filter(month == 3), aes(x=year, y=avg_lat, col='March Turtles',
+                      text = str_c("Year: ", year, "\nLat: ", avg_lat, "°N", "\nStat: Mean")), size=4) + 
+        geom_point(data = mlats_all_mon_year %>% filter(month == 9), aes(x=year, y=avg_lat, col='Sept Turtles',
+                      text = str_c("Year: ", year, "\nLat: ", avg_lat, "°N", "\nStat: Mean")), size=4) + 
+    
+       scale_color_manual(
+        name = glue("Average Latitude \n(165°W-140°W) \nby Year\n\n"),
+        breaks = c('March 18°C Isotherm','Sept 18°C Isotherm',"March Turtles", "Sept Turtles"),
+        values = c('March 18°C Isotherm'="#E4938B",'Sept 18°C Isotherm'="#952C23", "March Turtles"= "steelblue1", "Sept Turtles"="steelblue4")#,  # Specify colors - don't know why this is backwards from labels....
+        # labels = c("1997-2022", "2023")  # Specify labels
+        ) + 
+    geom_line(data = df_list[['mean']] %>% filter(month == 3), aes(x=year, y=y), col='#E4938B') +
+    geom_line(data = df_list[['mean']] %>% filter(month == 9), aes(x=year, y=y), col='#952C23') +
+    geom_line(data = mlats_all_mon_year %>% filter(month == 3), aes(x=year, y=avg_lat), col='steelblue1') +
+    geom_line(data = mlats_all_mon_year %>% filter(month == 9 & year <=2013), aes(x=year, y=avg_lat), col='steelblue4') +
+    
+    scale_x_continuous(breaks=seq(1997,2023, 1)) +
+    scale_y_continuous(breaks=seq(29,46,1)) +
+    labs(x = "Year", y = "Latitude (°N") + 
+    theme(legend.position="top", legend.title = element_text(hjust=0.5)) +
+    guides(fill=guide_legend(nrow=2,byrow=TRUE))
+
+### Save plot ----
+ggsave(filename = 'plot_mar_sept_avg_lats_turtles_18C.png', plot = p, 
+       # height=9,
+       width=13, bg='white',
+       path = '../figs/'
+       )
+```
+
+
 <!-- ```{r 05-fit-gam-18deg-lat-by-year} -->
 
 <!-- # df = min_18deg_lat_by_year %>% filter(month == 9) -->
@@ -545,20 +641,49 @@ run_gam_kfolds <- function(data, kfolds = 5, mon = "March"){
 ```
 
 
-```{r}
+```{r 05-gam-18degC-lat-year-output-mar}
 gam_18degC_lat_year_output_mar <- run_gam_kfolds(data=mean_18deg_lat_by_year %>% filter(month == 3), kfolds = 5, mon = "March")
 
 # RMSE values for each fold:
 # [1] 0.5026640 0.5067789 0.5215948 0.5062193 0.5025288
 ```
 
-```{r}
+```{r 05-gam-18degC-lat-year-output-sept}
 gam_18degC_lat_year_output_sept <- run_gam_kfolds(data=mean_18deg_lat_by_year %>% filter(month == 9), kfolds = 5, mon = "September")
 
 gam_18degC_lat_year_output_sept[[4]][[2]]$partial_plot
 # [1] 0.8960005 0.9007065 0.9120505 0.8901130 0.8919625
 # Mean RMSE: 0.8981666 
 ```
+
+```{r 05-gam-18degC-lat-year-output-diff-sept-mar}
+
+mean_18deg_lat_by_year_sept_only <- mean_18deg_lat_by_year %>% filter(month == 9)
+mean_18deg_lat_by_year_mar_only <- mean_18deg_lat_by_year %>% filter(month == 3)
+
+mean_18deg_lat_by_year_diff_sept_mar <- 
+    mean_18deg_lat_by_year %>% filter(month == 9 | month == 3) %>%
+    ungroup() %>%
+    dplyr::select(c("year", "month_abb", "mean_18degC_lat")) %>%
+    filter(year > 1997) %>% # fyi, there is no march '97, so remove full year
+    spread(month_abb,mean_18degC_lat) %>%
+    mutate(y = Sep - Mar)
+
+gam_18degC_lat_year_output_diff_sept_mar <- run_gam_kfolds(data=mean_18deg_lat_by_year_diff_sept_mar, kfolds = 5, mon = "Sept-Mar")
+
+gam_18degC_lat_year_output_diff_sept_mar[[4]][[2]]$partial_plot
+# [1] 0.8960005 0.9007065 0.9120505 0.8901130 0.8919625
+# Mean RMSE: 0.8981666 }
+
+```
+```{r}
+mean_18deg_lat_by_year_diff_sept_mar %>%
+ggplot() +    
+geom_point(aes(x=year, y=y), fill = "steelblue", colour = "navy", alpha = 0.6) + 
+geom_line(aes(x=year, y=y), fill = "steelblue", colour = "navy", alpha = 0.6) +
+    scale_x_continuous(breaks=seq(1998,2023,1))
+```
+
 
 
 

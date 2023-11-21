@@ -105,19 +105,19 @@ library("gratia")
 ```
 
 ```{r load-rdata, cache=TRUE}
-load('data/interim/01_northern_lats_EDA_interim_data.RData')
-load('data/interim/02_northern_lats_EDA_interim_data.RData')
-load('data/interim/03_northern_lats_EDA_interim_data.RData')
-load('data/interim/04_northern_lats_EDA_interim_data.RData')
-load('data/interim/05_northern_lats_EDA_interim_data.RData')
-```
-
-```{r load-rdata-no-cache}
 # load('data/interim/01_northern_lats_EDA_interim_data.RData')
 # load('data/interim/02_northern_lats_EDA_interim_data.RData')
 # load('data/interim/03_northern_lats_EDA_interim_data.RData')
 # load('data/interim/04_northern_lats_EDA_interim_data.RData')
 # load('data/interim/05_northern_lats_EDA_interim_data.RData')
+```
+
+```{r load-rdata-no-cache}
+load('data/interim/01_northern_lats_EDA_interim_data.RData')
+load('data/interim/02_northern_lats_EDA_interim_data.RData')
+load('data/interim/03_northern_lats_EDA_interim_data.RData')
+load('data/interim/04_northern_lats_EDA_interim_data.RData')
+load('data/interim/05_northern_lats_EDA_interim_data.RData')
 ```
 
 <br>
@@ -308,7 +308,7 @@ Cohort 1 (2023, n=25) turtles are shown in green.
 
 The light gray line is the monthly average of the 18°C SST isotherm position between 1997-2022. The dark gray line represents the position of the 18°C SST isotherm for 2023.
 
-```{r 04rmd-Fig4-gg_tzcf_hist_cohort, out.height="80%", out.width="120%"}
+```{r 04rmd-Fig4-gg_tzcf_hist_cohort, out.height="70%", out.width="110%"}
 #| fig-cap: 
 #|   - Fig 4. Average monthly latitude of loggerheads between 165°W and 140°W in relation to the 18°C SST isotherm.
 #| lightbox: 
@@ -341,7 +341,7 @@ The figures below are exploratory and were used to confirm the reason for simila
 ::: {.panel-tabset}
 
 ##### March 18°C SST isotherm 
-```{r 05rmd-gg-plot-sum-stats-lat-year-mar, out.height="70%", out.width="110%"}
+```{r 05rmd-gg-plot-sum-stats-lat-year-mar, out.height="60%", out.width="100%"}
 #| fig-cap: 
 #|   - Fig 5. Plot showing the March min, mean, and max latitudinal location of the 18°C SST isotherm between 165°W and 140°W 
 #| lightbox: 
@@ -443,7 +443,7 @@ Between 1997-2012, there were `r length(unique(hist_df_subset$id))` turtles that
 n_mlats_historic_per_month %>%
     mutate(month = month.name[month]) %>%
     rename("Month" = "month","n Turtles" = 2) %>%
-    kbl(caption = " Number of individual turtles transmitting each month (1997-2012") %>%
+    kbl(caption = " Number of individual turtles transmitting each month (1997-2012)") %>%
     kable_paper("hover", full_width = T) %>%
     kable_styling(bootstrap_options = c("condensed", "responsive")) %>%
     kable_styling(fixed_thead = T) %>%
@@ -452,11 +452,13 @@ scroll_box(width = "100%", height = "300px")
 
 ```
 
+<br>
+
 ```{r 04rmd-n_mlats_historic_2005_2006_per_month}
 n_mlats_historic_2005_2006_per_month %>%
     mutate(month = month.name[month]) %>%
     rename("Month" = "month","n Turtles" = 2) %>%
-    kbl(caption = " Number of individual turtles transmitting each month (1997-2012") %>%
+    kbl(caption = " Number of individual turtles transmitting each month (2005-2006)") %>%
     kable_paper("hover", full_width = T) %>%
     kable_styling(bootstrap_options = c("condensed", "responsive")) %>%
     kable_styling(fixed_thead = T) %>%

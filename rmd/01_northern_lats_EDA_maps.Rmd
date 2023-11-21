@@ -191,6 +191,30 @@ m360 <- m360 %>%
         )
 ```
 
+```{r 01-map-hist-df-gl-plot-indiv}
+m360 <- m360 %>%
+    # addGlPolylines(data = hist_subset %>% 
+    #                    filter(year == 1999) %>%
+    #                    makeSpatialLines(), group = "id", color='gray')  %>%
+    addTrackLines(df=hist_subset %>% 
+                       filter(year == 1999), cpal=wc_pal) %>%
+        addLayersControl(
+            baseGroups = c("ESRI World Imagery", "ESRI OpenStreetMap"
+                           # , "Esri.WorldPhysical"
+            ),
+            overlayGroups = str_c('Historic Tracks (n=', hist_ids %>% n_distinct(), ')'),
+            # hideGroup(as.character(c(ids[3:25])))
+            options = layersControlOptions(collapsed = TRUE)) %>%
+        
+        addScaleBar(position = c("bottomleft"),
+                    scaleBarOptions(
+                        # maxWidth = 100,
+                        metric = TRUE,
+                        imperial = TRUE,
+                        updateWhenIdle = TRUE)
+        )
+```
+
 
 ```{r 01-Section-2-Tables-Figs}
 ### Print Tables & Figures ------------------------------
