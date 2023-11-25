@@ -1,0 +1,365 @@
+---
+title: "6 | Sept-Mar cc-Xtract EDA"
+subtitle: "Project STRETCH: Northern Latitudes - Exploratory Analyses"
+author: "Dana K Briscoe"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    code_folding: none
+    df_print: paged
+    highlight: tango
+    number_sections: no
+    theme: flatly
+    toc: no
+    toc_float: true
+    toc_collapsed: true
+  pdf_document:
+    toc: yes
+    toc_depth: '2'
+---
+
+```{r 02-setup, include=FALSE}
+knitr::opts_chunk$set(
+    echo = FALSE,
+    eval = TRUE,
+    message = FALSE,
+    warning = FALSE,
+    dpi = 300,
+    fig.align = "center"
+    )
+
+# See Options: knitr::opts_chunk$get()
+```
+
+```{r 02-load-libraries, message=FALSE}
+# 01
+library(tidyverse)
+library(data.table)
+library(ggplot2)
+library(plotly)
+library(leaflet)
+library(mapview)
+library(leafsync)
+library(leafgl)
+library(sf)
+library(kableExtra)
+library(knitr)
+# 02
+library(lubridate)
+library(scales)
+# 03 
+library(RColorBrewer)
+library(fields)
+library(colorRamps)
+require(latticeExtra)
+require(zoo)
+suppressMessages(library(raster))
+library(glue)
+```
+
+```{r 06-source-helper-funcs}
+source('../code/00_northern_lats_helper_functions.R')
+```
+
+```{r 06-load-cohort-1}
+source('../code/01_prep_turtle_data.R')
+
+```
+
+
+```{r 06-load-xtracto-tagpts}
+obsdata <- readRDS(file = "../data/processed/xtracted_cc_sept_mar_1997_2023.rds")
+```
+
+
+```{r 06-rename-dfs-for-consistency}
+raw_df <- raw_data_cohort_1_w_names
+daily_df <- daily_avg_data_cohort_1
+
+# make historic df consistent with cohort df(s)
+hist_df <-  historic_tags %>% wrangleHistDF()
+
+```
+
+
+```{r 06-combine-dfs}
+# combine cohort 1 & historic dfs
+df_all <- rbind(daily_df, hist_df)
+
+```
+
+
+```{r 06-filter-obsdata-165W-sept-mar}
+obsdata_165W_mar_septs <- obsdata %>%
+    filter(lon >= -165 & lon <= -140) %>%
+    filter(month ==3 | month == 9)
+
+```
+
+
+
+```{r 06-hist-daily-hist-cohort1-sept-by-sst-bins}
+br <- seq(15,25,0.5)
+
+p_hist_septs_daily_sst <- 
+obsdata_165W_mar_septs %>%
+    filter(month == 9) %>%
+    filter(year != 2023) %>%
+ 
+      #  group_by(group, month, day) %>% # only interested in avg daily lat during sept, from 97-22, so don't need id/names
+      # summarize(
+      #   avg = mean(sst_dhw_5km_new_mean, na.rm=TRUE)) %>% #,
+
+    mutate(group = str_to_upper(group)) %>%
+        
+# ggplot(aes(avg)) + 
+    ggplot(aes(sst_dhw_5km_new_mean)) + 
+    geom_histogram(binwidth = 0.5, fill = "steelblue", colour = "navy", alpha = 0.6) + 
+    # geom_vline(data = hist_all_stats, aes(xintercept = value, color = stat),  linewidth=0.9) +
+    scale_x_continuous(labels = br, breaks=br) +
+    labs(x = 'SST (°C)', y= "Count",
+         subtitle = "September Turtle Days by SST (°C): 1997-2012 (All Years)") +
+    theme_bw()
+
+ggsave(filename = str_c('hist_sept_turtle_days_sst_1997_2012_all_years.png'), plot = p_hist_septs_daily_sst, 
+       # height=9,
+       width=10, bg='white',
+       path = '../figs/'
+       )
+```
+
+```{r 06-p-hist-avg-sept-sst-2006-2007}
+
+br <- seq(15,25,0.5)
+
+# split into groups (2006-2007)
+p_hist_avg_sept_sst_2006_2007 <- obsdata_165W_mar_septs %>%
+    filter(month == 9) %>%
+    filter(year != 2023) %>%
+        mutate(yr_cat = case_when((year == 2006 | year == 2007) ~ 1,
+                                         # (year != 2006 | year != 2007) ~ 2,
+                                          TRUE ~ 0)) %>%
+    # group_by(group, month, day, yr_cat) %>% # only interested in avg daily lat during sept, from 97-22, so don't need id/names
+    #   summarize(
+    #     avg = mean(sst_dhw_5km_new_mean, na.rm=TRUE)) %>% #,
+
+    mutate(group = str_to_upper(group)) %>%
+    
+# ggplot(aes(x=avg, fill = factor(yr_cat), colour = factor(group))) +    
+    ggplot(aes(x=sst_dhw_5km_new_mean, fill = factor(yr_cat), colour = factor(group))) +    
+    geom_histogram(binwidth = 0.5, center=0, colour = 1, alpha = 0.6, position = "identity") + 
+    # geom_vline(data = hist_all_stats, aes(xintercept = value, color = stat),  linewidth=0.9) +
+    scale_x_continuous(labels = br, breaks=br) +
+    labs(x = 'SST (°C)', y= "Count",
+         subtitle = "September Turtle Days by SST (°C): 1997-2012") +
+    theme_bw() +
+    theme(legend.position = c(0.85,0.85)) +
+    scale_fill_manual(values = c("steelblue", "lightslateblue"),labels = c("1997-2012 (!=2006-07)", "2006-2007 (only)"), name = "Year") 
+     # guides(fill = guide_legend(title = "Title"),
+     #     colour = guide_legend(title = "Title")) +         
+
+# ## Plot
+# br <- seq(17,22,0.5)
+# hist(avg_sept_sst_2006_2007$avg[avg_sept_sst_2006_2007$yr_cat==0],xlim=c(17,22),col='skyblue',border=F, breaks=br,
+#           main="September Turtle Days by SST (°C): 1997-2012",
+#      xlab="SST (°C)")
+# hist(avg_sept_sst_2006_2007$avg[avg_sept_sst_2006_2007$yr_cat==1],xlim=c(17,22), col=scales::alpha('red',.5),border=F,
+#      breaks=br,
+#      add=T
+#      )
+# 
+# legend("topright", c("1997-2012 (!=2006-07)", "2006-2007"), col=c("skyblue", scales::alpha('red',.5)), lwd=10, bty='n')
+
+## Save
+# dev.copy(png,"../figs/hist_sept_turtle_days_sst_2006_2007_subset.png",width=10,height=8,units="in",res=100)
+# dev.off()
+
+ggsave(filename = str_c('hist_sept_turtle_days_sst_2006_2007_subset.png'), plot = p_hist_avg_sept_sst_2006_2007, 
+       # height=9,
+       width=10, bg='white',
+       path = '../figs/'
+       )
+
+
+
+```
+
+```{r 06-hist-daily-hist-cohort1-mar-by-sst-bins}
+br <- seq(13,23,0.5)
+
+p_hist_mars_daily_sst <- 
+obsdata_165W_mar_septs %>%
+    filter(month == 3) %>%
+    filter(year != 2023) %>%
+    # group_by(group, month, day) %>% # only interested in avg daily lat during sept, from 97-22, so don't need id/names
+    #   summarize(
+    #     avg = mean(sst_dhw_5km_new_mean, na.rm=TRUE)) %>% #,
+
+    mutate(group = str_to_upper(group)) %>%
+        
+# ggplot(aes(avg)) +  
+    ggplot(aes(sst_dhw_5km_new_mean)) +  
+    geom_histogram(binwidth = 0.5, center=0, fill = "steelblue", colour = "navy", alpha = 0.6, position = "identity") + 
+    # geom_vline(data = hist_all_stats, aes(xintercept = value, color = stat),  linewidth=0.9) +
+   scale_x_continuous(labels = br, breaks=br) +
+    labs(x = 'SST (°C)', y= "Count",
+         subtitle = "March Turtle Days by SST (°C): 1997-2012 (All Years)") +
+    theme_bw()
+
+ggsave(filename = str_c('hist_mar_turtle_days_sst_1997_2012_all_years.png'), plot = p_hist_mars_daily_sst, 
+       # height=9,
+       width=10, bg='white',
+       path = '../figs/'
+       )
+```
+```{r 06-hist-avg_mar_sst_2006_2007}
+
+br <- seq(13,23,0.5)
+
+# split into groups (2006-2007)
+p_hist_avg_mar_sst_2006_2007 <- obsdata_165W_mar_septs %>%
+    filter(month == 3) %>%
+    filter(year != 2023) %>%
+        mutate(yr_cat = case_when((year == 2006 | year == 2007) ~ 1,
+                                         # (year != 2006 | year != 2007) ~ 2,
+                                          TRUE ~ 0)) %>%
+    # group_by(group, month, day, yr_cat) %>% # only interested in avg daily lat during sept, from 97-22, so don't need id/names
+    #   summarize(
+    #     avg = mean(sst_dhw_5km_new_mean, na.rm=TRUE)) %>% #,
+
+    mutate(group = str_to_upper(group)) %>%
+    
+
+# ggplot(aes(x=avg, fill = factor(yr_cat), colour = factor(group))) +  
+    ggplot(aes(x=sst_dhw_5km_new_mean, fill = factor(yr_cat), colour = factor(group))) +    
+    geom_histogram(binwidth = 0.5, center=0, colour = 1, alpha = 0.6, position = "identity") + 
+    # geom_vline(data = hist_all_stats, aes(xintercept = value, color = stat),  linewidth=0.9) +
+     scale_x_continuous(labels = br, breaks=br) +
+    labs(x = 'SST (°C)', y= "Count",
+         subtitle = "March Turtle Days by SST (°C): 1997-2012") +
+    theme_bw() +
+    theme(legend.position = c(0.85,0.85)) +
+    scale_fill_manual(values = c("steelblue", "lightslateblue"),labels = c("1997-2012 (!=2006-07)", "2006-2007 (only)"), name = "Year") 
+     # guides(fill = guide_legend(title = "Title"),
+     #     colour = guide_legend(title = "Title")) + 
+
+# ## Plot
+# br <- seq(14,22,0.5)
+# hist(avg_mar_sst_2006_2007$avg[avg_mar_sst_2006_2007$yr_cat==0],xlim=c(14,22),col='lightblue',border=F, breaks=br,
+#           main="March Turtle Days by SST (°C): 1997-2012",
+#      xlab="SST (°C)")
+# hist(avg_mar_sst_2006_2007$avg[avg_mar_sst_2006_2007$yr_cat==1],xlim=c(14,22), col=scales::alpha('purple3',.5), border=F,   
+#      breaks=br, 
+#      add=T
+#      )
+
+# legend("topright", c("1997-2012 (!=2006-07)", "2006-2007"), col=c("#66CCC0", scales::alpha('purple3',.5)), lwd=10, bty='n')
+
+## Save
+# dev.copy(png,"../figs/hist_mar_turtle_days_sst_2006_2007_subset.png",width=10,height=8,units="in",res=100)
+# dev.off()
+ggsave(filename = str_c('hist_mar_turtle_days_sst_2006_2007_subset.png'), plot = p_hist_avg_mar_sst_2006_2007, 
+       # height=9,
+       width=10, bg='white',
+       path = '../figs/'
+       )
+
+```
+
+
+```{r}
+unique(obsdata_165W_mar_septs$year[obsdata_165W_mar_septs$month == 9 & obsdata_165W_mar_septs$year != 2023])
+
+```
+```{r}
+unique(obsdata_165W_mar_septs$year[obsdata_165W_mar_septs$month == 3])
+```
+
+
+```{r}
+load(file = "../data/interim/03_northern_lats_EDA_interim_data.RData")
+```
+
+```{r}
+sst_ras_stack_monthlies <- sst_ras_stack # create a copy - don't overwrite this obj
+
+mon_yr <- names(sst_ras_stack_monthlies) %>%  gsub(".", "-", ., fixed = TRUE) 
+ras_dates <- as.Date(paste0('16-', c(mon_yr)), format="%d-%b-%Y")
+names(sst_ras_stack_monthlies) <- ras_dates
+
+mdates <- c(3,9) #lubridate::month(dates) %>% unique() #%>% month.abb[.] #%>% enframe() %>% transmute("mon_abb" = value)
+
+## 3) Subset rasters by month of interest ----
+idx <- raster::getZ(sst_ras_stack_monthlies) %>%
+  lubridate::month(.) %>% as_tibble() %>%
+  mutate(id = row_number()) %>%
+  setNames(c('month', 'id')) %>%
+  relocate(month, .after = id) %>%
+  filter(month %in% mdates)
+
+ras_septs = subset(sst_ras_stack_monthlies, idx$id[idx$month == 9])
+
+ras_mars = subset(sst_ras_stack_monthlies, idx$id[idx$month == 3])
+
+```
+
+```{r}
+yrs <- seq(1997,2023)
+
+hist_yrs_idx <- which(yrs <= 2012)
+
+# sept loop
+plot_list <- list()
+
+mon_idx = 9
+for(i in seq_along(hist_yrs_idx)){
+    # print(yrs[i])
+    
+    tmp_cc <- obsdata_165W_mar_septs %>%
+        filter(month == mon_idx) %>%
+        filter(year == yrs[i])
+    
+    tmp_ras <- subset(ras_septs, i)
+    
+    p <- ggplot() +
+    # add sst sept all-time clim layer
+    geom_raster(data = tmp_ras %>% ras2df(), 
+                aes(x = lon, y = lat, fill = val, interpolate = TRUE)) +
+    # scale_fill_gradientn(colours = sst_cpal[6:length(sst_cpal)],
+                         # breaks=seq(8,32,2),
+                         # limits = c(8,32), 
+    scale_fill_gradientn(colours = sst_cpal[2:length(sst_cpal)],
+                         breaks=seq(4,30,2),
+                         limits = c(3,32), 
+
+                         na.value="transparent",
+                         name = "SST (°C) \n") +
+    # add baselayers
+    add_baseplot(bbox) +
+    add_contour_lines(df=tmp_ras %>% ras2df(), contours=c(18), col='gray80') + 
+        add_contour_lines(df=tmp_ras %>% ras2df(), contours=c(19.5), col='snow') + 
+
+    add_turtle_pts(df=tmp_cc, col="Turtle Location", size=2) +
+        scale_color_manual("Turtle Location", 
+                  breaks = c("Turtle Location"),
+                  values = c("Turtle Location"="#6D4C94")) +
+        
+    labs(subtitle = str_c(month.name[mon_idx], " ", yrs[i]),
+         caption = str_c("Isotherms: 18°C (gray line), 19.5°C (white line); Turtles (n=", length(unique(tmp_cc$id)),")")) + 
+         xlab("\nLongitude") +
+         ylab("Latitude\n")
+    
+
+    plot_list[[i]] <- p
+    
+    ### Save plot ----
+ggsave(filename = str_c('plot_',month.name[mon_idx],'_turtles_sst_18C_195C_',yrs[i],'.png'), plot = p, 
+       # height=9,
+       width=13, bg='white',
+       path = '../figs/'
+       )
+    
+}
+
+```
+
