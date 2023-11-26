@@ -1213,29 +1213,32 @@ p_sept_mean_chla_2003_2011_rm_uturns <- ggplot(chla_ras_mean_2003_2011_sept_df %
     add_contour_lines(df=ras_mean_sept_1997_2012_df %>% filter(date >= "2003-09-01" | date <= "2011-09-30"), contours=c(18), col='white') +
         add_contour_lines(df=ras_mean_sept_1997_2012_df %>% filter(date >= "2003-09-01" | date <= "2011-09-30"), contours=c(17), col='azure4') +
         add_contour_lines(df=ras_mean_sept_1997_2012_df %>% filter(date >= "2003-09-01" | date <= "2011-09-30"), contours=c(19.5), col='black') +
+    add_contour_lines(df=ras_sept_2023_df, contours=c(18), col='pink') +
+    
     add_baseplot(bbox) +
     guides(fill = guide_legend(title = 'Mean Sept\nChla (mg/m^3)')) + 
 
      # add_turtle_pts(df=mean_lats_historic %>% filter(year >=2002 & year <= 2011), col="2002-2011", size=3) +
      add_turtle_pts(df=subset_mn_lats %>% filter(year >= 2003 & year <= 2011), col="2003-2011", size=3) +
+     add_turtle_pts(df=mean_lats_cohort1, col="2023", size=3) +
     
        scale_color_manual("Mean Sept\nTurtle Location", 
                           breaks = c(
-                              "2003-2011"#,
-                                     # "2006-2007"
+                              "2003-2011",
+                                     "2023"
                                      ),
                           values = c(
-                              "2003-2011"="mediumslateblue"#,
-                                     # "2006-2007"="green"
+                              "2003-2011"="mediumslateblue",
+                                     "2023"="#E05087"
                                      )) +
-        labs(subtitle = "Mean Sept Chl-a (2003-2011) and Turtle Location (2003-2011, 'u-turn' individuals removed)",
-         caption = str_c("Isotherms: 17°C (gray line), 18°C (white line), 19.5°C (black line)")) + 
+        labs(subtitle = "Mean Sept Chl-a (2003-2011) and Turtle Location (2003-2011)",
+         caption = str_c("Isotherms: 17°C (gray line); 18°C (2003-2011, white line), 18°C (2023, pink line); 19.5°C (black line)")) + 
          xlab("\nLongitude") +
          ylab("Latitude\n")
 
 
 ## Save plots
-ggsave(filename = str_c('plot_sept_mean_chla_turtles_w_sst_isotherms_2003_2011_rm_uturns.png'), plot = p_sept_mean_chla_2003_2011_rm_uturns, 
+ggsave(filename = str_c('plot_sept_mean_chla_turtles_w_sst_isotherms_2003_2011_rm_uturns_w_2023.png'), plot = p_sept_mean_chla_2003_2011_rm_uturns, 
        # height=9,
        width=13, bg='white',
        path = '../figs/'
