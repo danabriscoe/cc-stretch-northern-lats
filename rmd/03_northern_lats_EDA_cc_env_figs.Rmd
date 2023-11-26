@@ -792,7 +792,34 @@ mean_lats_cohort1 <- daily_avg_data_cohort_1 %>%
 mean_lats_all <- rbind(mean_lats_historic, mean_lats_cohort1)
 
 ```
+```{r 03-calc-mean-lat-avgs-cc-mar}
+mean_lats_historic_mar <- hist_df %>%
+    filter(lon >= -165 & lon <= -140) %>%
+    filter(month == 3) %>%
+    group_by(id, month, year) %>% # fyi - grouping to include month and year, for means so that it's easy to pull out 2005-2006 subset
+    # slice(which.max(lat)) %>%
+    summarise(lat = mean(lat, na.rm=TRUE),
+              lon = mean(lon, na.rm=TRUE)) %>%
+    mutate(lon = round(lon, 3),
+           lat = round(lat, 3)) %>%
+    mutate(group = 'historic') %>%
+    as_tibble()
 
+# mean_lats_cohort1 <- daily_avg_data_cohort_1 %>%
+#     filter(month == 9) %>%
+#     group_by(id, month, year) %>% # fyi - grouping to include month and year, for means so that it's consistent for rbind'ing
+#     # slice(which.max(lat)) %>%
+#     summarise(lat = mean(lat, na.rm=TRUE),
+#               lon = mean(lon, na.rm=TRUE)) %>%
+#     mutate(lon = round(lon, 3),
+#            lat = round(lat, 3)) %>%
+#     mutate(group = 'cohort1') %>%
+#     mutate(id = as.factor(id)) %>%
+#     as_tibble()
+# 
+# mean_lats_all <- rbind(mean_lats_historic, mean_lats_cohort1)
+
+```
 
 
 ```{r 03-plot-sept-clim-w-tzcfs-max-lats-cc-pts}
@@ -1042,6 +1069,226 @@ ggsave(filename = str_c('03rmd-Fig2-plot-sept-clim-w-tzcfs-2005-2006-mean-max-cc
 # plot_grid(a, horiz_legend_only, ncol=2, rel_widths = c(3,0.5))
 
 ```
+
+```{r 03-load-chlmday-nc=sept-mars}
+nc_path = "/Users/briscoedk/dbriscoe@stanford.edu - Google Drive/My Drive/ncdf/npac"
+
+chl_mday_ncs_sept <- list.files(nc_path, pattern = str_c("chla_erdMH1chlamday_Lon0360_"), full.names=T) %>%
+    .[grep("-09-", .)]
+
+chl_mday_ncs_mar <- list.files(nc_path, pattern = str_c("chla_erdMH1chlamday_Lon0360_"), full.names=T) %>%
+    .[grep("-03-", .)]
+
+
+sept_fdates <- chl_mday_ncs_sept %>% 
+    str_split(., "_") %>%
+    purrr::map_chr(~ pluck(., 4)) %>%
+    substr(., start=1, stop=10)
+
+mar_fdates <- chl_mday_ncs_mar %>% 
+    str_split(., "_") %>%
+    purrr::map_chr(~ pluck(., 4)) %>%
+    substr(., start=1, stop=10)
+
+
+chl_mday_ras_stack_sept <- chl_mday_ncs_sept %>% #ncs[fdates >= params$min_dt & fdates <= params$max_dt] %>%
+    raster::stack(.)
+
+chl_mday_ras_stack_mar <- chl_mday_ncs_mar %>% #ncs[fdates >= params$min_dt & fdates <= params$max_dt] %>%
+    raster::stack(.)
+
+```
+
+```{r 03-calc-ras-means-chlamday-sept-mars-2003-2011}
+
+# set Z - Sept -------
+chl_mday_ras_stack_sept <- setZ(chl_mday_ras_stack_sept, sept_fdates)
+names(chl_mday_ras_stack_sept) <- as.character(sept_fdates)  # mon-yr abbreb
+
+# set Z - Mar
+chl_mday_ras_stack_mar <- setZ(chl_mday_ras_stack_mar, mar_fdates)
+names(chl_mday_ras_stack_mar) <- as.character(mar_fdates)  # mon-yr abbreb
+
+
+## CALC RAS MEAN -------
+# Septs
+chla_ras_mean_2003_2011_sept <- chl_mday_ras_stack_sept %>%
+     calc(., mean, na.rm=TRUE)
+# Mars
+chla_ras_mean_2003_2011_mar <- chl_mday_ras_stack_mar %>%
+     calc(., mean, na.rm=TRUE)
+
+
+# RESET MEAN RAS NAMES ----
+# Septs
+names(chla_ras_mean_2003_2011_sept) = as.character(getZ(chl_mday_ras_stack_sept) |> (\(x) { tail(x, n=1)})() )# assign dummy date for mean ras. use last date
+# Mars
+names(chla_ras_mean_2003_2011_mar) = as.character(getZ(chl_mday_ras_stack_mar) |> (\(x) { tail(x, n=1)})() )# assign dummy date for mean ras. use last date
+
+
+# CONVERT TO DF -------
+# Septs
+chla_ras_mean_2003_2011_sept_df <- chla_ras_mean_2003_2011_sept  %>% ras2df() %>%
+    mutate(lon= make180(lon))
+# Mars
+chla_ras_mean_2003_2011_mar_df <- chla_ras_mean_2003_2011_mar  %>% ras2df() %>%
+    mutate(lon= make180(lon))
+
+```
+
+```{r 03-set-chla-cpal-blue-green-zCuts}
+# CBAR
+myPallette <-
+  c(rev(brewer.pal(8, "Greens")[2:8])
+    # , "white"
+    , brewer.pal(3, "Blues")[2:2])
+
+zCuts <- c(0,0.2, 0.3, 0.5,1.0,2,5,25)
+
+
+```
+
+
+```{r 03-gg-sept-chl-with-cc-sst-isotherm-w-uturns}
+
+## PLOT (with u-turn lower lat tags)
+
+p_sept_mean_chla_2003_2011_uturns <- ggplot(chla_ras_mean_2003_2011_sept_df %>% drop_na(), aes(lon, lat)) +
+  # geom_raster(aes(x = lon, y = lat, fill = cut(val, zCuts), interpolate = TRUE, na.rm = TRUE)) +
+     geom_tile(aes(x = lon, y = lat, fill = cut(val, zCuts), interpolate = TRUE, na.rm = TRUE)) +
+  scale_fill_manual("Mean Chla", na.translate = F,
+                    values = rev(myPallette), na.value="transparent",
+                      labels = c("0","0.2", "0.3", "0.5","1.0","2",">5",">25")
+                      ) + 
+    add_contour_lines(df=ras_mean_sept_1997_2012_df %>% filter(date >= "2003-09-01" | date <= "2011-09-30"), contours=c(18), col='white') +
+        add_contour_lines(df=ras_mean_sept_1997_2012_df %>% filter(date >= "2003-09-01" | date <= "2011-09-30"), contours=c(17), col='azure4') +
+        add_contour_lines(df=ras_mean_sept_1997_2012_df %>% filter(date >= "2003-09-01" | date <= "2011-09-30"), contours=c(19.5), col='black') +
+    add_baseplot(bbox) +
+    guides(fill = guide_legend(title = 'Mean Sept\nChla (mg/m^3)')) + 
+    # add_turtle_pts(df=mean_lats_historic %>% filter(year >=2006 & year <= 2007), col="2006-2007", size=3) +
+     add_turtle_pts(df=mean_lats_historic %>% filter(year >=2003 & year <= 2011), col="2003-2011", size=3) +
+     # add_turtle_pts(df=subset_mn_lats %>% filter(year >= 2002 & year <= 2011), col="2002-2011", size=3) +
+    
+       scale_color_manual("Mean Sept\nTurtle Location", 
+                          breaks = c(
+                              "2003-2011"#,
+                                     # "2006-2007"
+                                     ),
+                          values = c(
+                              "2003-2011"="lightslateblue"#,
+                                     # "2006-2007"="green"
+                                     )) +
+        labs(subtitle = "Mean Sept Chl-a (2003-2011) and Turtle Location (2003-2011)",
+         caption = str_c("Isotherms: 17°C (gray line), 18°C (white line), 19.5°C (black line)")) + 
+         xlab("\nLongitude") +
+         ylab("Latitude\n")
+
+    
+    ### Save plot ----
+ggsave(filename = str_c('plot_sept_mean_chla_turtles_w_sst_isotherms_2003_2011_w_uturns.png'), plot = p_sept_mean_chla_2003_2011_uturns, 
+       # height=9,
+       width=13, bg='white',
+       path = '../figs/'
+       )
+
+```
+
+```{r 03-gg-sept-chl-with-cc-sst-isotherm-rm-uturns}
+
+## MN FILT (remove u-turns!)
+subset_mn_lats <- mean_lats_historic %>%
+    filter(!(id == "50136_05" & year == "2007")) %>%
+    filter(!(id == "57142_05" & year == "2006")) %>%
+     filter(!(id == "23177_05" & year == "2007")) %>%
+     filter(!(id == "23045_03" & year == "2006")) 
+
+## PLOT (w/o u-turn tags)
+p_sept_mean_chla_2003_2011_rm_uturns <- ggplot(chla_ras_mean_2003_2011_sept_df %>% drop_na(), aes(lon, lat)) +
+  # geom_raster(aes(x = lon, y = lat, fill = cut(val, zCuts), interpolate = TRUE, na.rm = TRUE)) +
+     geom_tile(aes(x = lon, y = lat, fill = cut(val, zCuts), interpolate = TRUE, na.rm = TRUE)) +
+  scale_fill_manual("Mean Chla", na.translate = F,
+                    values = rev(myPallette), na.value="transparent",
+                      labels = c("0","0.2", "0.3", "0.5","1.0","2",">5", ">25")
+                      ) + 
+    add_contour_lines(df=ras_mean_sept_1997_2012_df %>% filter(date >= "2003-09-01" | date <= "2011-09-30"), contours=c(18), col='white') +
+        add_contour_lines(df=ras_mean_sept_1997_2012_df %>% filter(date >= "2003-09-01" | date <= "2011-09-30"), contours=c(17), col='azure4') +
+        add_contour_lines(df=ras_mean_sept_1997_2012_df %>% filter(date >= "2003-09-01" | date <= "2011-09-30"), contours=c(19.5), col='black') +
+    add_baseplot(bbox) +
+    guides(fill = guide_legend(title = 'Mean Sept\nChla (mg/m^3)')) + 
+
+     # add_turtle_pts(df=mean_lats_historic %>% filter(year >=2002 & year <= 2011), col="2002-2011", size=3) +
+     add_turtle_pts(df=subset_mn_lats %>% filter(year >= 2003 & year <= 2011), col="2003-2011", size=3) +
+    
+       scale_color_manual("Mean Sept\nTurtle Location", 
+                          breaks = c(
+                              "2003-2011"#,
+                                     # "2006-2007"
+                                     ),
+                          values = c(
+                              "2003-2011"="mediumslateblue"#,
+                                     # "2006-2007"="green"
+                                     )) +
+        labs(subtitle = "Mean Sept Chl-a (2003-2011) and Turtle Location (2003-2011, 'u-turn' individuals removed)",
+         caption = str_c("Isotherms: 17°C (gray line), 18°C (white line), 19.5°C (black line)")) + 
+         xlab("\nLongitude") +
+         ylab("Latitude\n")
+
+
+## Save plots
+ggsave(filename = str_c('plot_sept_mean_chla_turtles_w_sst_isotherms_2003_2011_rm_uturns.png'), plot = p_sept_mean_chla_2003_2011_rm_uturns, 
+       # height=9,
+       width=13, bg='white',
+       path = '../figs/'
+       )
+    
+```
+
+
+```{r 03-gg-mar-chl-with-cc-sst-isotherm-w-uturns}
+
+## PLOT (with u-turn lower lat tags)
+
+p_mar_mean_chla_2003_2011_uturns <- ggplot(chla_ras_mean_2003_2011_mar_df %>% drop_na(), aes(lon, lat)) +
+  # geom_raster(aes(x = lon, y = lat, fill = cut(val, zCuts), interpolate = TRUE, na.rm = TRUE)) +
+     geom_tile(aes(x = lon, y = lat, fill = cut(val, zCuts), interpolate = TRUE, na.rm = TRUE)) +
+     scale_fill_manual("Mean Chla", na.translate = F,
+                      values = rev(myPallette), na.value="transparent",
+                      labels = c("0","0.2", "0.3", "0.5","1.0","2",">5",">25")
+                      ) + 
+    add_contour_lines(df=ras_mean_march_1997_2012_df %>% filter(date >= "2003-03-01" | date <= "2011-03-31"), contours=c(18), col='white') +
+        add_contour_lines(df=ras_mean_march_1997_2012_df %>% filter(date >="2003-03-01" | date <= "2011-03-31"), contours=c(17), col='azure4') +
+        add_contour_lines(df=ras_mean_march_1997_2012_df %>% filter(date >= "2003-03-01" | date <= "2011-03-31"), contours=c(19.5), col='black') +
+     add_contour_lines(df=ras_mean_march_1997_2012_df %>% filter(date >= "2003-03-01" | date <= "2011-03-31"), contours=c(16), col='pink') +
+    add_baseplot(bbox) +
+    guides(fill = guide_legend(title = 'Mean March\nChla (mg/m^3)')) + 
+    # add_turtle_pts(df=mean_lats_historic %>% filter(year >=2006 & year <= 2007), col="2006-2007", size=3) +
+     add_turtle_pts(df=mean_lats_historic_mar %>% filter(year >=2003 & year <= 2011), col="2003-2011", size=3) +
+     # add_turtle_pts(df=subset_mn_lats %>% filter(year >= 2002 & year <= 2011), col="2002-2011", size=3) +
+    
+       scale_color_manual("Mean March\nTurtle Location", 
+                          breaks = c(
+                              "2003-2011"#,
+                                     # "2006-2007"
+                                     ),
+                          values = c(
+                              "2003-2011"="lightslateblue"#,
+                                     # "2006-2007"="green"
+                                     )) +
+        labs(subtitle = "Mean March Chl-a (2003-2011) and Turtle Location (2003-2011)",
+         caption = str_c("Isotherms: 16°C (pink line), 17°C (gray line), 18°C (white line), 19.5°C (black line)")) + 
+         xlab("\nLongitude") +
+         ylab("Latitude\n")
+
+    
+    ### Save plot ----
+ggsave(filename = str_c('plot_mar_mean_chla_turtles_w_sst_isotherms_2003_2011_w_uturns.png'), plot = p_mar_mean_chla_2003_2011_uturns, 
+       # height=9,
+       width=13, bg='white',
+       path = '../figs/'
+       )
+
+```
+
 
 
 ```{r 03-interim-rdata-save}

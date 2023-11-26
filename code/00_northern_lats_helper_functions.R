@@ -386,7 +386,8 @@ ras2df <- function(x){
         rasterToPoints %>%
         as.data.frame() %>%
         `colnames<-`(c("lon", "lat", names(x))) %>%
-        pivot_longer(cols = starts_with("X20"),
+        # pivot_longer(cols = starts_with("X20"),
+        pivot_longer(cols = starts_with("X"),
                      names_to = "layer",
                      values_to = "val") %>%
         mutate(layer = substr(layer, 2, 14)) %>%
