@@ -1,0 +1,298 @@
+---
+title: "STRETCH Team Oceanography Meeting"
+subtitle: ""
+date: "Noviembre 23 2023"
+date-format: "MMMM DD YYYY"
+author: "Dana Briscoe"
+format: 
+  revealjs:
+    slide-number: c
+    width: 1600
+    height: 900
+    logo: "" 
+    footer: ""
+    theme: ["simple", "../theme/styles.scss"]
+    echo: true
+    fig-cap-location: top
+    title-slide-attributes:
+      data-background-color: "#447099"
+editor: source
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r 00-setup, include=FALSE}
+knitr::opts_chunk$set(
+    echo = FALSE,
+    eval = TRUE,
+    message = FALSE,
+    warning = FALSE,
+    dpi = 300,
+    fig.align = "center"
+    )
+
+# See Options: knitr::opts_chunk$get()
+```
+
+
+```{r load-libraries, message=FALSE}
+library(knitr)
+library(fontawesome)
+library(tidyverse)
+library(quarto)
+# library(gt)
+# library(gtExtras)
+# library(gtsummary)
+```
+
+```{r load-rdata, cache=TRUE}
+# load('data/interim/01_northern_lats_EDA_interim_data.RData')
+load('../data/interim/02_northern_lats_EDA_interim_data.RData')
+# load('data/interim/03_northern_lats_EDA_interim_data.RData')
+load('../data/interim/04_northern_lats_EDA_interim_data.RData')
+load('../data/interim/05_northern_lats_EDA_interim_data.RData')
+# load('../data/interim/06_northern_lats_EDA_interim_data.RData')
+```
+
+## Agenda
+
+<br>
+
+::: {style="font-size: 34pt"}
+
+1) State of the ocean updates (NOAA/Climate Prediction Center)
+
+<br>
+
+2) Draft materials for northern movements analysis & ms prep
+
+<br>
+
+3) Any additional project business
+
+:::
+
+## {background-image="images/noaa_cpc_summary_assess_25Nov2023.png" background-size="75%" padding-top="100"}
+
+::: {r-stack}
+
+![](images/noaa_cpc_ssta_29Oct_25Nov_2023.jpg){.fragment .absolute top="150" left="250" height="700"}
+:::
+
+::: footer
+[**https://www.cpc.ncep.noaa.gov/**]{style="color: #EE6331"}
+:::
+
+
+## 'Speedy' Intro
+
+::: {style="font-size: 32pt"}
+
+- Ocean warming as a driver for shifts in species’ habitats 
+
+<br>
+
+- North Pacific Ocean is changing: considerable documentation of pelagic animals response to anomalous conditions & established expansion of subtropical gyre [(Polovina et al. 2011)]{style="font-size: 22pt"}
+
+<br>
+
+- Most studies: short-term or simulations... but we have a unique data set (+2 decades) to explore these changes 
+
+:::
+
+## ## {background-image="images/plot_cc_ssta_mean_tcms_w_contour.png" background-size="75%"}
+<div class="bg-title"> 
+<h2><span style='color:#447099; text-align: center; font-size: 38pt; font-weight:550'> Turtle Movements & SST Anomalies (July-Sept 2023) </span></h2>
+</div>
+
+## TZCF & 18°C as a Proxy for Turtle Habitat {.scrollable}
+
+::::: {.columns}
+:::: {.column width="75%"}
+
+![Sept Turtle Position & Sept SSTs (1997-2012)](images/hist_sept_turtle_days_sst_1997_2012_all_years_w_uturns_crop.png){height=600 width=1000}
+::::
+
+::::{.column width="25%"}
+
+
+<br>
+
+::: {style='font-size:28'}
+- Loggerhead movements track the seasonal shift of the 18°C SST isotherm (proxy for forage habitat <br> 
+[(Polovina et al. 2001, 2015)]{style="font-size: 20pt"}
+
+:::
+
+::::
+:::::
+
+
+## TZCF & 18°C as a Proxy for Turtle Habitat {.scrollable}
+
+:::: {.columns}
+:::: {.column width="75%"}
+
+![Lag: Sept Turtle Position & Aug SST Histogram (1997-2012)](images/hist_sept_turtles_aug_sst_1997_2012_lag_crop.png){height=600 width=1000}
+::::
+
+::::{.column width="25%"}
+
+<br>
+
+::: {style='font-size:28'}
+- [Jeff P: 'SST is not a perfect proxy for turtle forage as the actual chlorophyll front may be temporally dynamic and the forage may lag it spatially...]{style="font-size: 26pt"}
+
+<br>
+
+- [... similar lag in the central North Pacific during the summer.' ]{style="font-size: 26pt"}
+:::
+
+::::
+:::::
+
+
+## Questions
+
+1. How do Sept turtle-18°C SST positions compare between historic (1997-2012) and 2023 turtles in the NE Pacific? Is this a northward expansion?
+
+<br>
+
+2. 2023 was an unprecedented year. Are turtles responding to year-to-year variability or longer-term trends in ocean warming?
+    - H1: Year to year variability but no long-term trend in seasonal bounds of gyre & turtle habitat
+
+    - H2: Expansion of summer bounds (ie Sept) due to rapid warming 
+
+    - H3: Expansion of summer and winter bounds (ie Sept and Mar) 
+
+
+
+
+## {.scrollable}
+<div class="bg-title">
+<h2 style='font-size: 38pt'>September Chl-a with SST isotherms </h2> 
+</div>
+
+![](images/plot_sept_mean_chla_turtles_w_aug_sst_isotherms_2003_2011_and_2023.png)
+
+![](images/plot_September_turtles_chl_aug_sst_18C_195C_2006_v2.png)
+
+![](images/plot_September_turtles_chl_aug_sst_18C_195C_2007_v2.png)
+
+![](images/plot_September_turtles_chl_aug_18C_195C_2023_v2.png)
+
+## Average Turtle Latitude by Week (July - Sept)
+
+:::: {.columns}
+:::: {.column width="80%"}
+
+![](images/plot_avg_turtle_lats_by_week.png)
+::::
+
+::::{.column width="20%"}
+
+
+<br>
+
+- [2023 loggerheads ('Cohort 1') still tracked 18C SST ... <br> but moved several degrees further north than historic data set <br> (1997-2012)]{style="font-size: 24pt"}
+
+
+::::
+:::::
+
+## Expansion of Gyre's Seasonal Bounds?
+![](images/plot_mar_sept_avg_lats_no_turtles_18C.png)
+
+## Generalized Additive Models (GAMs) {.scrollable}
+
+Latitude of 18C isotherm ~ Year
+
+:::: {.columns}
+::: {.column width="90%"}
+![March 18C Latitude (p < 0.05)](images/gam_partial_plot_Mar_18C.png){height="650"}
+![Sept 18C Latitude (p < 0.05)](images/gam_partial_plot_Sept_18C.png){height="650"}
+
+[K-Folds CV <br>
+Both March & September GAMs returned p < 0.05]{style="font-size: 24pt"}
+:::
+::: {.column width="90%"}
+
+:::
+::::
+
+## Results
+
+- Historically ~18C SST and loggerhead forage habitat moves seasonally from about 30 N lat in March to about 40 N lat in September
+
+<br>
+
+- Tagging release in 2023 NE Pacific showed loggerheads still tracking 18C SST but reaching several degrees further north than historic data set
+
+<br>
+
+- Analysis of 18C SST location (1985 - 2023) shows March and Sept isotherms moving north over time with loggerheads also moving northward, tracking 18C SST 
+
+<br>
+
+- This northerly shift of 18C SST means greater migration distance for loggerheads to travel. What will this mean for distance to coastal habitat?
+
+##
+
+## Supplemental
+
+## n Sept Turtle Tracks (1997-2013, 2023)
+
+<br>
+
+```{r table1, tidy=TRUE, echo=FALSE, fig.align='left'}
+
+turtles_Yr <- data.frame(Year = c(seq(1997,2013,1),2023),
+nTurtles =c(0,2,0,1,0,0,0,2,4,14,11,0,0,0,2,3,0,24)) %>% spread(Year, nTurtles)
+
+
+knitr::kable(
+  turtles_Yr[1:9],
+   full_width = F
+) %>% kableExtra::kable_styling(position = "left")
+knitr::kable(
+  turtles_Yr[10:18],
+   full_width = F
+) %>% kableExtra::kable_styling(position = "left")
+```
+
+
+## TZCF by Year
+![](/images/plot_tzcf_all_yrs_2006_2007_2023.png){height="700"}
+
+## GAM Model Summaries {.scrollable}
+
+[March]{style="font-size: 24pt"}
+```{r 05rmd-gam-18degC-lat-year-output-mar}
+ gam_18degC_lat_year_output_mar[[5]][[2]]$model_summary
+```
+
+<br>
+
+<br>
+[Sept]{style="font-size: 24pt"}
+```{r 05rmd-gam-18degC-lat-year-output-sept}
+gam_18degC_lat_year_output_sept[[4]][[2]]$model_summary
+```
+
+
+## {visibility="hidden"}
+<!-- ::: {layout="[[40,40], [40,40], [40,40], [40,40]]"} -->
+
+![July](images/noaa_jpl_mhw_july_2023.png){height="650"}
+
+![August](images/noaa_jpl_mhw_aug_2023.png){height="650"}
+
+![September](images/noaa_jpl_mhw_sept_2023.png)height="650"}
+
+![October](images/noaa_jpl_mhw_oct_2023.png)height="650"}
+
+<!-- ::: -->
+
+::: footer
+[**https://psl.noaa.gov/marine-heatwaves/**]{style="color: #EE6331"}
+:::
