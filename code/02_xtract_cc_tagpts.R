@@ -80,8 +80,16 @@ df_all <- rbind(daily_df, hist_df)
 # rename tagpts for consistency
 obsdata <- df_all %>%
     filter(lon >=-180 & lon <= 0) %>%
-    filter(month == 9 | month == 3) 
+    filter(month == 9 | month == 3 | month == 8) 
 
+library(lubridate)
+obsdata_sept_lag <- obsdata %>%
+    filter(month == 9) %>%
+    mutate(orig_date = date,
+               date = ymd(as.Date(orig_date)) %m+% months(-1)) 
+
+# rename for consistency:
+obsdata <- obsdata_sept_lag
 
 ## PART 2: XTRACTO LOCAL ----------------------------------------------------------
 
@@ -227,4 +235,6 @@ na_by_cols <- lapply(obsdata, function(x) sum(is.na(x)))
 
 
 ## Save RDS File ----
-saveRDS(obsdata, file = "../data/processed/xtracted_cc_sept_mar_1997_2023.rds")
+# saveRDS(obsdata, file = "../data/processed/xtracted_cc_sept_mar_aug_1997_2023.rds")
+
+saveRDS(obsdata, file = "../data/processed/xtracted_cc_sept_sst_lag_aug_1997_2023.rds") # only for sept turtle position - aug sst lag

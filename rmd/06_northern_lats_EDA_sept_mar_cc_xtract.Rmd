@@ -66,9 +66,19 @@ source('../code/01_prep_turtle_data.R')
 
 ```
 
+```{r 06-load-interim-data}
+f <- "../data/interim/06_northern_lats_EDA_interim_data.RData"
+if (file.exists(f)){
+    load(f)
+}
+
+```
+
 
 ```{r 06-load-xtracto-tagpts}
-obsdata <- readRDS(file = "../data/processed/xtracted_cc_sept_mar_1997_2023.rds")
+obsdata <- readRDS(file = "../data/processed/xtracted_cc_sept_mar_aug_1997_2023.rds")
+
+obsdata_sst_lag <- readRDS(file = "../data/processed/xtracted_cc_sept_sst_lag_aug_1997_2023.rds")
 ```
 
 
@@ -89,10 +99,18 @@ df_all <- rbind(daily_df, hist_df)
 ```
 
 
-```{r 06-filter-obsdata-165W-sept-mar}
+```{r 06-filter-obsdata-165W-sept-mar-aug}
 obsdata_165W_mar_septs <- obsdata %>%
     filter(lon >= -165 & lon <= -140) %>%
     filter(month ==3 | month == 9)
+
+obsdata_165W_mar_septs_augs <- obsdata %>%
+    filter(lon >= -165 & lon <= -140) %>%
+    filter(month ==3 | month == 9 | month == 8)
+
+obsdata_165W_sept_sst_lag <- obsdata_sst_lag %>%
+    filter(lon >= -165 & lon <= -140) #%>%
+    # filter(month ==3 | month == 9 | month == 8)
 
 ```
 
@@ -274,6 +292,7 @@ ggsave(filename = str_c('hist_mar_turtle_days_sst_1997_2012_all_years.png'), plo
        path = '../figs/'
        )
 ```
+
 ```{r 06-hist-avg_mar_sst_2006_2007}
 
 br <- seq(13,23,0.5)
@@ -328,12 +347,186 @@ ggsave(filename = str_c('hist_mar_turtle_days_sst_subset_2006_2007.png'), plot =
 
 ```
 
+<!-- ```{r 06-hist-daily-hist-cohort1-aug-by-sst-bins-rm-uturns} -->
+<!-- br <- seq(15,25,0.5) -->
+
+<!-- subset_obs16W_lats <- obsdata_165W_mar_septs_augs %>% -->
+<!--     filter(!(id == "50136_05" & year == "2007")) %>% -->
+<!--     filter(!(id == "57142_05" & year == "2006")) %>% -->
+<!--     filter(!(id == "23177_05" & year == "2007")) %>% -->
+<!--     filter(!(id == "23045_03" & year == "2006")) -->
+
+<!-- p_hist_augs_daily_sst_rm_uturns <-  -->
+<!-- # obsdata_165W_mar_septs %>% -->
+<!--  subset_obs16W_lats %>% -->
+<!--         filter(month == 8) %>% -->
+<!--         filter(year != 2023) %>% -->
+
+<!--     mutate(group = str_to_upper(group)) %>% -->
+
+<!-- # ggplot(aes(avg)) +  -->
+<!--     ggplot(aes(sst_dhw_5km_new_mean)) +  -->
+<!--     geom_histogram(binwidth = 0.5, fill = "steelblue", colour = "navy", alpha = 0.6) +  -->
+<!--     # geom_vline(data = hist_all_stats, aes(xintercept = value, color = stat),  linewidth=0.9) + -->
+<!--     scale_x_continuous(labels = br, breaks=br) + -->
+<!--     labs(x = 'SST (°C)', y= "Count", -->
+<!--          subtitle = "August Turtle Days by SST (°C): 1997-2012 (All Years)") + -->
+<!--     theme_bw() -->
+
+<!-- ggsave(filename = str_c('hist_aug_turtle_days_sst_1997_2012_all_years_rm_uturns.png'), plot = p_hist_augs_daily_sst_rm_uturns,  -->
+<!--        # height=9, -->
+<!--        width=10, bg='white', -->
+<!--        path = '../figs/' -->
+<!--        ) -->
+<!-- ``` -->
+
+```{r 06-p-hist-avg-aug-sst-2006-2007-rm-uturns}
+
+subset_obs16W_lats_sept_lag <- obsdata_165W_sept_sst_lag %>%
+    filter(!(id == "50136_05" & year == "2007")) %>%
+    filter(!(id == "57142_05" & year == "2006")) %>%
+     filter(!(id == "23177_05" & year == "2007")) %>%
+     filter(!(id == "23045_03" & year == "2006")) 
+
+br <- seq(13,25,0.5)
+
+# split into groups (2006-2007)
+p_hist_avg_aug_sst_1997_2012_sept_lag_rm_uturns <- subset_obs16W_lats_sept_lag %>%
+    # filter(month == 8) %>%
+    filter(year != 2023) %>%
+    #     mutate(yr_cat = case_when((year == 2006 | year == 2007) ~ 1,
+    #                                      # (year != 2006 | year != 2007) ~ 2,
+    #                                       TRUE ~ 0)) %>%
+    # # group_by(group, month, day, yr_cat) %>% # only interested in avg daily lat during sept, from 97-22, so don't need id/names
+    # #   summarize(
+    # #     avg = mean(sst_dhw_5km_new_mean, na.rm=TRUE)) %>% #,
+
+    mutate(group = str_to_upper(group)) %>%
+    
+# ggplot(aes(x=avg, fill = factor(yr_cat), colour = factor(group))) +    
+    ggplot(aes(x=sst_dhw_5km_new_mean, fill = factor(group), colour = factor(group))) +    
+    geom_histogram(binwidth = 0.5, center=0, colour = 1, alpha = 0.6, position = "identity") + 
+    # geom_vline(data = hist_all_stats, aes(xintercept = value, color = stat),  linewidth=0.9) +
+    scale_x_continuous(labels = br, breaks=br) +
+    labs(x = 'SST (°C)', y= "Count",
+         subtitle = "September Turtle Position by August SST (°C): 1997-2012") +
+    theme_bw() +
+    theme(legend.position = c(0.85,0.85)) +
+    scale_fill_manual(values = c("steelblue"),labels = c("1997-2012"), name = "Year") 
+     # guides(fill = guide_legend(title = "Title"),
+     #     colour = guide_legend(title = "Title")) +         
+
+ggsave(filename = str_c('hist_sept_turtles_aug_sst_1997_2012_lag.png'), plot = p_hist_avg_aug_sst_1997_2012_sept_lag_rm_uturns, 
+       # height=9,
+       width=10, bg='white',
+       path = '../figs/'
+       )
+
+
+## NOW PLOT JUST 2006-2007
+# split into groups (2006-2007)
+p_hist_avg_aug_sst_2006_2007_only_sept_lag <- subset_obs16W_lats_sept_lag %>%
+    # filter(month == 8) %>%
+    filter(year == 2006 | year == 2007) %>%
+    #     mutate(yr_cat = case_when((year == 2006 | year == 2007) ~ 1,
+    #                                      # (year != 2006 | year != 2007) ~ 2,
+    #                                       TRUE ~ 0)) %>%
+    # # group_by(group, month, day, yr_cat) %>% # only interested in avg daily lat during sept, from 97-22, so don't need id/names
+    # #   summarize(
+    # #     avg = mean(sst_dhw_5km_new_mean, na.rm=TRUE)) %>% #,
+
+    mutate(group = str_to_upper(group)) %>%
+    
+# ggplot(aes(x=avg, fill = factor(yr_cat), colour = factor(group))) +    
+    ggplot(aes(x=sst_dhw_5km_new_mean, fill = factor(group), colour = factor(group))) +    
+    geom_histogram(binwidth = 0.5, center=0, colour = 1, alpha = 0.6, position = "identity") + 
+    # geom_vline(data = hist_all_stats, aes(xintercept = value, color = stat),  linewidth=0.9) +
+    scale_x_continuous(labels = br, breaks=br) +
+    labs(x = 'SST (°C)', y= "Count",
+         subtitle = "September Turtle Position by August SST (°C): 2006-2007") +
+    theme_bw() +
+    theme(legend.position = c(0.85,0.85)) +
+    scale_fill_manual(values = c( "lightslateblue"),labels = c("2006-2007 (only)"), name = "Year") 
+     # guides(fill = guide_legend(title = "Title"),
+     #     colour = guide_legend(title = "Title")) +         
+
+ggsave(filename = str_c('hist_sept_turtles_aug_sst_subset_2006_2007_only_with_lag.png'), plot = p_hist_avg_aug_sst_2006_2007_only_sept_lag, 
+       # height=9,
+       width=10, bg='white',
+       path = '../figs/'
+       )
+
+
+## NOW PLOT JUST 2023
+# 2) NO LAG
+p_hist_avg_aug_sst_2023_only <- subset_obs16W_lats %>%
+    filter(month == 9) %>%
+    filter(year == 2023) %>%
+    #     mutate(yr_cat = case_when((year == 2006 | year == 2007) ~ 1,
+    #                                      # (year != 2006 | year != 2007) ~ 2,
+    #                                       TRUE ~ 0)) %>%
+    # # group_by(group, month, day, yr_cat) %>% # only interested in avg daily lat during sept, from 97-22, so don't need id/names
+    # #   summarize(
+    # #     avg = mean(sst_dhw_5km_new_mean, na.rm=TRUE)) %>% #,
+
+    mutate(group = str_to_upper(group)) %>%
+    
+# ggplot(aes(x=avg, fill = factor(yr_cat), colour = factor(group))) +    
+    ggplot(aes(x=sst_dhw_5km_new_mean, fill = factor(group), colour = factor(group))) +    
+    geom_histogram(binwidth = 0.5, center=0, colour = 1, alpha = 0.6, position = "identity") + 
+    # geom_vline(data = hist_all_stats, aes(xintercept = value, color = stat),  linewidth=0.9) +
+    scale_x_continuous(labels = br, breaks=br) +
+    labs(x = 'SST (°C)', y= "Count",
+         subtitle = "September Turtle Position by September SST (°C): 2023") +
+    theme_bw() +
+    theme(legend.position = c(0.85,0.85)) +
+    scale_fill_manual(values = c( "darkslateblue"),labels = c("2023 (only)"), name = "Year") 
+     # guides(fill = guide_legend(title = "Title"),
+     #     colour = guide_legend(title = "Title")) +         
+
+ggsave(filename = str_c('hist_sept_turtles_sept_sst_subset_2023_only.png'), plot = p_hist_avg_aug_sst_2023_only, 
+       # height=9,
+       width=10, bg='white',
+       path = '../figs/'
+       )
+
+
+# 2) WITH LAG
+p_hist_avg_aug_sst_2023_only_sept_lag <- subset_obs16W_lats_sept_lag %>%
+    # filter(month == 8) %>%
+    filter(year == 2023) %>%
+
+    mutate(group = str_to_upper(group)) %>%
+    
+# ggplot(aes(x=avg, fill = factor(yr_cat), colour = factor(group))) +    
+    ggplot(aes(x=sst_dhw_5km_new_mean, fill = factor(group), colour = factor(group))) +    
+    geom_histogram(binwidth = 0.5, center=0, colour = 1, alpha = 0.6, position = "identity") + 
+    # geom_vline(data = hist_all_stats, aes(xintercept = value, color = stat),  linewidth=0.9) +
+    scale_x_continuous(labels = br, breaks=br) +
+    labs(x = 'SST (°C)', y= "Count",
+         subtitle = "September Turtle Position by August SST (°C): 2023") +
+    theme_bw() +
+    theme(legend.position = c(0.85,0.85)) +
+    scale_fill_manual(values = c( "mediumslateblue"),labels = c("2023 (only)"), name = "Year") 
+     # guides(fill = guide_legend(title = "Title"),
+     #     colour = guide_legend(title = "Title")) +         
+
+ggsave(filename = str_c('hist_sept_turtles_aug_sst_subset_2023_only_with_lag.png'), plot = p_hist_avg_aug_sst_2023_only_sept_lag, 
+       # height=9,
+       width=10, bg='white',
+       path = '../figs/'
+       )
+
+```
+
+
 
 ```{r 06-hist-daily-hist-cohort1-sept-by-chl-bins}
 br <- seq(0,8,0.2)
 
 p_hist_septs_daily_chl <- 
-obsdata_165W_mar_septs %>%
+# obsdata_165W_mar_septs %>%
+    subset_obs16W_lats %>% 
     filter(month == 9) %>%
     filter(year != 2023) %>%
  
@@ -359,12 +552,14 @@ ggsave(filename = str_c('hist_sept_turtle_days_chl_1997_2012_all_years.png'), pl
        )
 ```
 
-```{r 06-p-hist-avg-sept-sst-2006-2007}
+```{r 06-p-hist-avg-sept-chl-2006-2007}
 
 br <- seq(0,8,0.2)
 
+
 # split into groups (2006-2007)
-p_hist_avg_sept_chl_2006_2007 <- obsdata_165W_mar_septs %>%
+p_hist_avg_sept_chl_2006_2007 <- 
+    obsdata_165W_mar_septs %>%
     filter(month == 9) %>%
     filter(year != 2023) %>%
         mutate(yr_cat = case_when((year == 2006 | year == 2007) ~ 1,
@@ -409,17 +604,23 @@ unique(obsdata_165W_mar_septs$year[obsdata_165W_mar_septs$month == 3])
 
 
 ```{r}
+unique(obsdata_165W_mar_septs_augs$year[obsdata_165W_mar_septs_augs$month == 8 & obsdata_165W_mar_septs_augs$year != 2023])
+```
+
+
+
+```{r 06-load-03-RData}
 load(file = "../data/interim/03_northern_lats_EDA_interim_data.RData")
 ```
 
-```{r}
+```{r 06-sst-monthly-rast-subsets}
 sst_ras_stack_monthlies <- sst_ras_stack # create a copy - don't overwrite this obj
 
 mon_yr <- names(sst_ras_stack_monthlies) %>%  gsub(".", "-", ., fixed = TRUE) 
 ras_dates <- as.Date(paste0('16-', c(mon_yr)), format="%d-%b-%Y")
 names(sst_ras_stack_monthlies) <- ras_dates
 
-mdates <- c(3,9) #lubridate::month(dates) %>% unique() #%>% month.abb[.] #%>% enframe() %>% transmute("mon_abb" = value)
+mdates <- c(3,9, 8) #lubridate::month(dates) %>% unique() #%>% month.abb[.] #%>% enframe() %>% transmute("mon_abb" = value)
 
 ## 3) Subset rasters by month of interest ----
 idx <- raster::getZ(sst_ras_stack_monthlies) %>%
@@ -433,12 +634,17 @@ ras_septs = subset(sst_ras_stack_monthlies, idx$id[idx$month == 9])
 
 ras_mars = subset(sst_ras_stack_monthlies, idx$id[idx$month == 3])
 
+ras_augs = subset(sst_ras_stack_monthlies, idx$id[idx$month == 8])
+
 ```
 
-```{r}
+
+```{r 06-plot-cc-septs-monthly-sst-by-year-1997-2012}
 yrs <- seq(1997,2023)
 
 hist_yrs_idx <- which(yrs <= 2012)
+
+zCuts <- seq(10,32,1)
 
 # sept loop
 plot_list <- list()
@@ -447,29 +653,40 @@ mon_idx = 9
 for(i in seq_along(hist_yrs_idx)){
     # print(yrs[i])
     
-    tmp_cc <- obsdata_165W_mar_septs %>%
+    tmp_cc <- 
+        # obsdata_165W_mar_septs %>%
+        subset_obs16W_lats %>% 
         filter(month == mon_idx) %>%
-        filter(year == yrs[i])
+        filter(year == yrs[i]) 
     
     tmp_ras <- subset(ras_septs, i)
+                #subset(ras_augs, i)
     
     p <- ggplot() +
     # add sst sept all-time clim layer
     geom_raster(data = tmp_ras %>% ras2df(), 
-                aes(x = lon, y = lat, fill = val, interpolate = TRUE)) +
+                # aes(x = lon, y = lat, fill = val, interpolate = TRUE)) +
+                aes(x = lon, y = lat, fill = cut(val, zCuts), interpolate = TRUE)) + 
     # scale_fill_gradientn(colours = sst_cpal[6:length(sst_cpal)],
                          # breaks=seq(8,32,2),
                          # limits = c(8,32), 
-    scale_fill_gradientn(colours = sst_cpal[2:length(sst_cpal)],
-                         breaks=seq(4,30,2),
-                         limits = c(3,32), 
-
-                         na.value="transparent",
-                         name = "SST (°C) \n") +
+    # scale_fill_gradientn(colours = sst_cpal[2:length(sst_cpal)],
+    #                      breaks=seq(4,30,2),
+    #                      limits = c(3,32), 
+    # 
+    #                      na.value="transparent",
+    #                      name = "SST (°C) \n") +
+        
+                scale_fill_manual("SST", na.translate = F,
+                    values = sst_cpal[7:length(sst_cpal)], na.value="transparent",
+                      labels = seq(10,32,1)
+                      ) +   
     # add baselayers
     add_baseplot(bbox) +
     add_contour_lines(df=tmp_ras %>% ras2df(), contours=c(18), col='gray80') + 
-        add_contour_lines(df=tmp_ras %>% ras2df(), contours=c(19.5), col='snow') + 
+        add_contour_lines(df=tmp_ras %>% ras2df(), contours=c(19.5), col='black') + 
+        
+     guides(fill = guide_legend(title = 'SST (°C)', ncol=1, reverse=T)) + 
 
     add_turtle_pts(df=tmp_cc, col="Turtle Location", size=2) +
         scale_color_manual("Turtle Location", 
@@ -477,7 +694,7 @@ for(i in seq_along(hist_yrs_idx)){
                   values = c("Turtle Location"="#6D4C94")) +
         
     labs(subtitle = str_c(month.name[mon_idx], " ", yrs[i]),
-         caption = str_c("Isotherms: 18°C (gray line), 19.5°C (white line); Turtles (n=", length(unique(tmp_cc$id)),")")) + 
+         caption = str_c("Isotherms: Sept 18°C (gray line), Sept 19.5°C (black line); Turtles (n=", length(unique(tmp_cc$id)),")")) + 
          xlab("\nLongitude") +
          ylab("Latitude\n")
     
@@ -485,7 +702,7 @@ for(i in seq_along(hist_yrs_idx)){
     plot_list[[i]] <- p
     
     ### Save plot ----
-ggsave(filename = str_c('plot_',month.name[mon_idx],'_turtles_sst_18C_195C_',yrs[i],'.png'), plot = p, 
+ggsave(filename = str_c('plot_',month.name[mon_idx],'_turtles_sst_18C_195C_',yrs[i],'_discrete_cbar.png'), plot = p, 
        # height=9,
        width=13, bg='white',
        path = '../figs/'
@@ -494,4 +711,288 @@ ggsave(filename = str_c('plot_',month.name[mon_idx],'_turtles_sst_18C_195C_',yrs
 }
 
 ```
+
+```{r 06-plot-cc-septs-monthly-sst-by-year-2023-only}
+yrs <- seq(1997,2023)
+
+hist_yrs_idx <- which(yrs == 2012)
+
+zCuts <- seq(10,32,1)
+
+# sept loop
+plot_list <- list()
+
+mon_idx = 9
+
+i=27
+
+    tmp_cc <- 
+        # obsdata_165W_mar_septs %>%
+        subset_obs16W_lats %>% 
+        filter(month == mon_idx) %>%
+        filter(year == yrs[i]) 
+    
+    tmp_ras <- ras_sept_2023
+                #subset(ras_augs, i)
+    
+    p <- ggplot() +
+    # add sst sept all-time clim layer
+    geom_raster(data = tmp_ras %>% ras2df(), 
+                # aes(x = lon, y = lat, fill = val, interpolate = TRUE)) +
+                aes(x = lon, y = lat, fill = cut(val, zCuts), interpolate = TRUE)) + 
+    # scale_fill_gradientn(colours = sst_cpal[6:length(sst_cpal)],
+                         # breaks=seq(8,32,2),
+                         # limits = c(8,32), 
+    # scale_fill_gradientn(colours = sst_cpal[2:length(sst_cpal)],
+    #                      breaks=seq(4,30,2),
+    #                      limits = c(3,32), 
+    # 
+    #                      na.value="transparent",
+    #                      name = "SST (°C) \n") +
+        
+                scale_fill_manual("SST", na.translate = F,
+                    values = sst_cpal[7:length(sst_cpal)], na.value="transparent",
+                      labels = seq(10,32,1)
+                      ) +   
+    # add baselayers
+    add_baseplot(bbox) +
+    add_contour_lines(df=tmp_ras %>% ras2df(), contours=c(18), col='gray80') + 
+        add_contour_lines(df=tmp_ras %>% ras2df(), contours=c(19.5), col='black') + 
+        
+     guides(fill = guide_legend(title = 'SST (°C)', ncol=1, reverse=T)) + 
+
+    add_turtle_pts(df=tmp_cc, col="Turtle Location", size=2) +
+        scale_color_manual("Turtle Location", 
+                  breaks = c("Turtle Location"),
+                  values = c("Turtle Location"="#6D4C94")) +
+        
+    labs(subtitle = str_c(month.name[mon_idx], " ", yrs[i]),
+         caption = str_c("Isotherms: Sept 18°C (gray line), Sept 19.5°C (black line); Turtles (n=", length(unique(tmp_cc$id)),")")) + 
+         xlab("\nLongitude") +
+         ylab("Latitude\n")
+    
+
+    plot_list[[i]] <- p
+    
+    ### Save plot ----
+ggsave(filename = str_c('plot_',month.name[mon_idx],'_turtles_sst_18C_195C_',yrs[i],'_discrete_cbar.png'), plot = p, 
+       # height=9,
+       width=13, bg='white',
+       path = '../figs/'
+       )
+    
+
+
+
+```
+
+
+
+```{r 06-chl-monthly-rast-subsets}
+# sst_ras_stack_monthlies <- sst_ras_stack # create a copy - don't overwrite this obj
+# 
+# mon_yr <- names(sst_ras_stack_monthlies) %>%  gsub(".", "-", ., fixed = TRUE) 
+# ras_dates <- as.Date(paste0('16-', c(mon_yr)), format="%d-%b-%Y")
+# names(sst_ras_stack_monthlies) <- ras_dates
+# 
+# mdates <- c(3,9) #lubridate::month(dates) %>% unique() #%>% month.abb[.] #%>% enframe() %>% transmute("mon_abb" = value)
+# 
+# ## 3) Subset rasters by month of interest ----
+# idx <- raster::getZ(sst_ras_stack_monthlies) %>%
+#   lubridate::month(.) %>% as_tibble() %>%
+#   mutate(id = row_number()) %>%
+#   setNames(c('month', 'id')) %>%
+#   relocate(month, .after = id) %>%
+#   filter(month %in% mdates)
+# 
+# ras_septs = subset(sst_ras_stack_monthlies, idx$id[idx$month == 9])
+# 
+# ras_mars = subset(sst_ras_stack_monthlies, idx$id[idx$month == 3])
+# }
+
+ras_chl_septs = chl_mday_ras_stack_sept
+ras_chl_mars = chl_mday_ras_stack_mar
+
+```
+
+```{r}
+# CBAR
+myPallette <-
+  c(rev(brewer.pal(8, "Greens")[2:8])
+    # , "white"
+    , brewer.pal(3, "Blues")[2:2])
+
+    zCuts <- c(0,0.2, 0.3, 0.5,1.0,2,5,25)
+
+```
+
+
+```{r 03-plot-cc-hist-monthly-chla-by-year-2003-2011}
+yrs <- seq(2003,2023)
+
+hist_yrs_idx <- which(yrs <= 2011)
+
+# sept loop
+chla_plot_list <- list()
+
+mon_idx = 9
+for(i in seq_along(hist_yrs_idx)){
+    # print(yrs[i])
+    
+    tmp_cc <- 
+        # obsdata_165W_mar_septs %>%
+        subset_obs16W_lats %>% 
+        filter(month == mon_idx) %>%
+        filter(year == yrs[i])
+    
+    tmp_ras_chl <- subset(ras_chl_septs, i) %>% ras2df() %>%
+        mutate(lon = make180(lon))
+    
+    tmp_ras_sst_sept <- subset(ras_septs, i+18) %>% ras2df()
+    tmp_ras_sst_aug <- subset(ras_augs, i+18) %>% ras2df()
+
+    
+    # ras dt check
+    stopifnot(substr(names(subset(ras_chl_septs, i)),2,5) == substr(names(subset(ras_augs, i+18)),2,5))
+    stopifnot(names(subset(ras_chl_septs, i)) == names(subset(ras_septs, i+18)))
+    
+    chl_p_aug <- ggplot() +
+    # add sst sept all-time clim layer
+    # geom_raster(data = tmp_ras %>% ras2df(), 
+    #             aes(x = lon, y = lat, fill = val, interpolate = TRUE)) +
+
+
+     geom_tile(data = tmp_ras_chl,
+         aes(x = lon, y = lat, fill = cut(val, zCuts), interpolate = TRUE, na.rm = TRUE)) +
+        scale_fill_manual("Mean Chla", na.translate = F,
+                    values = rev(myPallette), na.value="transparent",
+                      labels = c("0 to < 0.2","0.2", "0.3", "0.5","1.0","2","> 5","> 25")
+                      ) +     
+        
+    # add baselayers
+    add_baseplot(bbox) +
+    add_contour_lines(df=tmp_ras_sst_sept, contours=c(18), col='azure4') +
+    add_contour_lines(df=tmp_ras_sst_sept, contours=c(19.5), col='black') +
+        
+        # geom_contour(data=tmp_ras_sst_sept, aes(x=lon, y=lat, z = val, linetype = "solid"),
+        #           colour = 'azure4', linewidth = 1.25, breaks = c(18), show.legend = F) +
+        
+          geom_contour(data=tmp_ras_sst_aug, aes(x=lon, y=lat, z = val), linetype = "dotted",
+              colour = 'azure4', linewidth =1, breaks = c(18), show.legend = F) +
+    
+          geom_contour(data=tmp_ras_sst_aug, aes(x=lon, y=lat, z = val), linetype = "dotted",
+              colour = 'gray10', linewidth = 0.65, breaks = c(19.5), show.legend = F) +
+        # 
+        #  geom_contour(data=tmp_ras_sst_sept, aes(x=lon, y=lat, z = val), linetype = "dotted",
+        #           colour = 'gray20', linewidth = 1.25, breaks = c(19.5), show.legend = F) +
+        
+  guides(fill = guide_legend(title = 'Mean Sept\nChla (mg/m^3)')) + 
+
+    add_turtle_pts(df=tmp_cc, col="Turtle Location", size=2) +
+        scale_color_manual("Turtle Location", 
+                  breaks = c("Turtle Location"),
+                  values = c("Turtle Location"="#6D4C94")) +
+        
+    labs(subtitle = str_c(month.name[mon_idx], " ", yrs[i]),
+    caption = str_c("Isotherms: September 18°C (solid gray line), September 19.5°C (solid black line), \nAugust 18°C (dotted gray line), August 19.5°C (dotted black line)\n Turtles (n=", length(unique(tmp_cc$id)),")")) +
+    xlab("\nLongitude") +
+    ylab("Latitude\n")
+    
+
+    chla_plot_list[[i]] <- chl_p_aug
+    
+    ### Save plot ----
+ggsave(filename = str_c('plot_',month.name[mon_idx],'_turtles_chl_aug_sst_18C_195C_',yrs[i],'_v2.png'), plot = chl_p_aug, 
+       # height=9,
+       width=13, bg='white',
+       path = '../figs/'
+       )
+    
+}
+
+```
+
+```{r 03-chla-2023-only}
+
+# now do just 2023 -- VIIRS
+i = 21 # idx for 2023
+
+ tmp_cc <- 
+        # obsdata_165W_mar_septs %>%
+        subset_obs16W_lats %>% 
+        filter(month == mon_idx) %>%
+        filter(year == yrs[i])
+    
+    # tmp_ras_chl <- subset(ras_chl_septs, i) %>% ras2df() %>%
+    #     mutate(lon = make180(lon))
+    # 
+    # tmp_ras_sst <- subset(ras_septs, i+6) %>% ras2df()
+    
+    tmp_ras_chl <- chla_ras_mean_df # from 03 rmd
+    tmp_ras_sst_sept <- ras_sept_2023_df
+    tmp_ras_sst_aug <- ras_aug_2023_df
+    
+    # ras dt check
+    stopifnot(tmp_ras_chl$date[1] == tmp_ras_sst_sept$date[1])
+    
+    chl_p_aug_2023 <- ggplot() +
+    # add sst sept all-time clim layer
+    # geom_raster(data = tmp_ras %>% ras2df(), 
+    #             aes(x = lon, y = lat, fill = val, interpolate = TRUE)) +
+
+
+     geom_tile(data = tmp_ras_chl,
+         aes(x = lon, y = lat, fill = cut(val, zCuts), interpolate = TRUE, na.rm = TRUE)) +
+        scale_fill_manual("Mean Chla", na.translate = F,
+                    values = rev(myPallette), na.value="transparent",
+                      labels = c("0 to < 0.2","0.2", "0.3", "0.5","1.0","2","> 5",">25")
+                      ) +     
+        
+    # add baselayers
+    add_baseplot(bbox) +
+    add_contour_lines(df=tmp_ras_sst_sept, contours=c(18), col='azure4') +
+        add_contour_lines(df=tmp_ras_sst_sept, contours=c(19.5), col='black') +
+        
+         geom_contour(data=tmp_ras_sst_aug, aes(x=lon, y=lat, z = val), linetype = "dotted",
+              colour = 'azure4', linewidth =1, breaks = c(18), show.legend = F) +
+    
+          geom_contour(data=tmp_ras_sst_aug, aes(x=lon, y=lat, z = val), linetype = "dotted",
+              colour = 'gray10', linewidth = 0.65, breaks = c(19.5), show.legend = F) +
+
+    guides(fill = guide_legend(title = 'Mean Sept\nChla (mg/m^3)')) + 
+        
+    add_turtle_pts(df=tmp_cc, col="Turtle Location", size=2) +
+        scale_color_manual("Turtle Location", 
+                  breaks = c("Turtle Location"),
+                  values = c("Turtle Location"="#6D4C94")) +
+        
+    labs(subtitle = str_c(month.name[mon_idx], " ", yrs[i]),
+    caption = str_c("Isotherms: September 18°C (solid gray line), September 19.5°C (solid black line)\nAugust 18°C (dotted gray line), August 19.5°C (dotted black line)\n Turtles (n=", length(unique(tmp_cc$id)),")")) +
+    xlab("\nLongitude") +
+    ylab("Latitude\n")
+    
+
+    chla_plot_list[[i]] <- chl_p_aug_2023
+    
+    ### Save plot ----
+ggsave(filename = str_c('plot_',month.name[mon_idx],'_turtles_chl_aug_18C_195C_',yrs[i],'_v2.png'), plot = chl_p_aug_2023, 
+       # height=9,
+       width=13, bg='white',
+       path = '../figs/'
+       )
+
+```
+
+```{r 06-interim-rdata-save}
+
+## INTERIM SAVE 
+f <- "../data/interim/06_northern_lats_EDA_interim_data.RData"
+if (file.exists(f)){
+    invisible()
+} else{
+    save.image(file = "../data/interim/06_northern_lats_EDA_interim_data.RData")
+}
+
+```
+
 
