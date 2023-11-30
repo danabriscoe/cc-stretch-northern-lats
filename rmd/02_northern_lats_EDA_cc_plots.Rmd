@@ -197,6 +197,13 @@ df_165W %>%
     labs(x = "Month \n", y = "Latitude (°N)", subtitle = "Average Turtle Latitude by Week (July - Sept)")
 
 
+# save
+ggsave(filename = 'plot_avg_turtle_lats_by_week.png', plot = p_avg_turtle_lats_by_week + labs(subtitle=""), 
+       # height=9,
+       width=11, bg='white',
+       path = '../figs/'
+       )
+
 ## turn into ggplotly obj
 gg_p_avg_turtle_lats_by_week <- 
     ggplotly(p_avg_turtle_lats_by_week,tooltip = c("text"))
