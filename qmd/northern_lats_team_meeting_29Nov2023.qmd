@@ -247,7 +247,7 @@ knitr::kable(
 
 ## Location 18°C SST by Year
 
-![](/images/plot_tzcf_all_yrs_2006_2007_2023 copy.png){.absolute left="50" height="700"}
+![](images/plot_tzcf_all_yrs_2006_2007_2023 copy.png){.absolute left="50" height="700"}
 
 
 ## Expansion of Gyre's Seasonal Bounds?
