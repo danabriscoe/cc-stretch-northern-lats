@@ -1,0 +1,729 @@
+---
+title: "STRETCH Northern Lats MS Draft Figs"
+author: "Dana K Briscoe"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r 02-setup, include=FALSE}
+knitr::opts_chunk$set(
+    echo = FALSE,
+    eval = TRUE,
+    message = FALSE,
+    warning = FALSE,
+    dpi = 300,
+    fig.align = "center"
+    )
+
+# See Options: knitr::opts_chunk$get()
+```
+
+```{r 02-load-libraries, message=FALSE}
+# 01
+library(tidyverse)
+library(data.table)
+library(ggplot2)
+library(plotly)
+library(leaflet)
+library(mapview)
+library(leafsync)
+library(leafgl)
+library(sf)
+library(kableExtra)
+library(knitr)
+# 02
+library(lubridate)
+library(scales)
+# 03 
+library(RColorBrewer)
+library(fields)
+library(colorRamps)
+require(latticeExtra)
+require(zoo)
+suppressMessages(library(raster))
+library(glue)
+
+# 05
+library(tidyverse)
+library(data.table)
+library(mgcv)
+library(ggalt)
+library(scales)
+library(plotly)
+library("gratia")
+
+library(hrbrthemes)
+
+```
+
+```{r 07-source-helper-funcs}
+source('../code/00_northern_lats_helper_functions.R')
+```
+
+```{r 07-load-cohort-1}
+source('../code/01_prep_turtle_data.R')
+
+```
+
+
+## Load Historic & 2023 Data
+```{r 06-rename-dfs-for-consistency}
+raw_df <- raw_data_cohort_1_w_names
+daily_df <- daily_avg_data_cohort_1
+
+# make historic df consistent with cohort df(s)
+hist_df <-  historic_tags %>% wrangleHistDF()
+
+```
+
+
+```{r 06-combine-dfs}
+# combine cohort 1 & historic dfs
+df_all <- rbind(daily_df, hist_df)
+
+```
+
+
+
+## Fig 1 Avg Lat by Week
+```{r 07-02rmd-filter-historic-165W}
+df_165W <- df_all %>%
+    filter(lon > -165 & lon < -140) %>%
+    filter(month >=7 & month <= 9)
+
+```
+
+
+```{r Fig1-cc-map-02rmd-plot-weekly-avg-lats-dfs-ts}
+turtle_cpal <- c("#66CCC0", "lightslateblue")
+
+p_avg_turtle_lats_by_week <-   
+df_all %>%
+    # subset for longs: 165W to 140W
+    filter(lon > -165 & lon < -140) %>%
+    
+    # subset for months 7 - 9 only
+    filter(month >=7 & month <= 9) %>%
+    
+    # subset for years of interest (majority of historic tracks were in 2006-2007)
+    filter(year == 2006 | year == 2007 | year == 2023) %>% 
+    
+    # subste to remove 2nd sept tracks (aka tracks that used tzcf in 2006 but u-turned and tracked for another year/sept 2007, moving west)
+    filter(!(id == "50136_05" & year == "2007")) %>%
+    # filter(!(id == "57142_05" & year == "2006")) %>% # for 160-130W only
+    filter(!(id == "23486_05" & year == "2007")) %>%
+    filter(!(id == "23177_05" & year == "2007")) %>%
+    filter(!(id == "23082_05" & year == "2007")) %>%
+    filter(!(id == "23045_03" & year == "2006")) %>%
+    
+    mutate(
+    week_idx = week(date)) %>%
+    mutate(week_date = getWeekDate(week_idx)) %>%
+    group_by(group, week_date) %>%
+    summarize(
+        avg = mean(lat, na.rm=TRUE),
+        high = mean(lat, na.rm = T) + 0.2 * sd(lat, na.rm= T),
+        low  = mean(lat, na.rm = T) - 0.2 * sd(lat, na.rm= T), .groups = "drop")  %>%
+    mutate(across(3:5, round, 2)) %>%
+    mutate(group = str_to_upper(group)) %>%
+
+    # filter(group == 'cohort1') %>%
+ ggplot() +
+    geom_point(aes(week_date, avg, color = group), size = 3) +
+    geom_line(aes(week_date, avg, color = group), size = 1.1) +
+    geom_ribbon(aes(x = week_date, ymax = high, ymin = low, color = group), alpha = 0.3) +
+    
+    scale_color_manual(values=turtle_cpal, 
+                       labels = c("2023","2006-2007"),
+                       name = "Year"
+    ) +
+    theme_bw() +
+    # theme(legend.position = c(0.85,0.15)) + 
+    theme(legend.justification = "top") +
+    labs(x = "Month \n", 
+         y = "Latitude (°N)"#, 
+         # subtitle = "Average Turtle Latitude by Week (July - Sept)"
+         )
+
+# show
+p_avg_turtle_lats_by_week
+
+# save
+ggsave(
+       filename = 'draft_fig1_plot_avg_turtle_lats_by_week_july_sept.png',
+       # filename = 'draft_fig1_plot_avg_turtle_lats_by_week_july_nov.png', 
+       plot = p_avg_turtle_lats_by_week + labs(subtitle=""), 
+       # height=9,
+       width=6,
+       bg='white',
+       path = '../figs/'
+       )
+
+```
+
+
+
+
+
+## Fig 2 Density Histograms
+```{r 07-06rmd-load-xtracto-tagpts}
+obsdata <- readRDS(file = "../data/processed/xtracted_cc_sept_mar_aug_1997_2023.rds") %>%
+    filter(!(id == "50136_05" & year == "2007")) %>%
+    # filter(!(id == "57142_05" & year == "2006")) %>% # for 160-130W only
+    filter(!(id == "23486_05" & year == "2007")) %>%
+    filter(!(id == "23177_05" & year == "2007")) %>%
+    filter(!(id == "23082_05" & year == "2007")) %>%
+    filter(!(id == "23045_03" & year == "2006"))
+
+# obsdata_sst_lag <- readRDS(file = "../data/processed/xtracted_cc_sept_sst_lag_aug_1997_2023.rds")
+```
+
+```{r 07-06rmd-filter-obsdata-165W-sept-mar-aug}
+obsdata_165W_mar_septs <- obsdata %>%
+    filter(lon >= -165 & lon <= -140) %>%
+    filter(month ==3 | month == 9)
+
+obsdata_165W_mar_septs_augs <- obsdata %>%
+    filter(lon >= -165 & lon <= -140) %>%
+    filter(month ==3 | month == 9 | month == 8)
+
+# obsdata_165W_sept_sst_lag <- obsdata_sst_lag %>%
+#     filter(lon >= -165 & lon <= -140) #%>%
+#     # filter(month ==3 | month == 9 | month == 8)
+
+```
+
+```{r 07-06rmd-subset-obsdata-2006-2007-2023}
+
+obsdata_165W_mar_septs_augs_06_07_23 <- obsdata %>%
+    filter(lon >= -165 & lon <= -140) %>%
+    filter(month == 3 | month == 9 | month == 8) %>%
+    filter(year == 2006 | year == 2007 | year == 2023)
+
+
+obsdata_165W_mar_septs_augs_06_07_23 %>%
+    # filter(lon >= -165 & lon <= -140) %>%
+    group_by(year, month) %>%
+    summarize(count=n_distinct(id)) %>%
+    spread(month, count)
+
+```
+
+```{r Fig2a-06rmd-cc-2006-2007-2023-sept-sst-histograms}
+sst_br <- seq(13,25,1)
+
+df <- 
+obsdata_165W_mar_septs_augs_06_07_23 %>%
+    filter(month == 9) %>%
+    mutate(yr_cat = case_when((year == 2006 | year == 2007) ~ 1,
+                                         (year == 2023) ~ 2,
+                                          TRUE ~ 0)) %>%
+   mutate(group = str_to_upper(group)) 
+ 
+    
+p_density_hist_cc_sst_2006_2007_2023 <- df %>%    
+    ## histogram
+    # ggplot(aes(x=sst_dhw_5km_new_mean, 
+    #            fill = factor(yr_cat),
+    #            colour = factor(group))
+    #        ) +    
+    # geom_histogram(binwidth = 0.5, center=0, colour = 1, alpha = 0.6, position = "identity") + 
+    # scale_fill_manual(values = c("69b3a2", "lightslateblue"),labels = c("2023","2006-2007"), name = "Year") +
+
+    ## density
+    ggplot(aes(x=sst_dhw_5km_new_mean, y = after_stat(density), 
+               fill = factor(group),
+               colour = group)) +
+     # ggplot(aes(x=sst_dhw_5km_new_mean, y = after_stat(scaled), fill = factor(group), colour = group)) +
+    geom_density(adjust=1.5, alpha=.3, lwd = 1.2, linetype = 1) + 
+    scale_color_manual(values = c("#69b3a2","lightslateblue"),labels = c("2023","2006-2007"), name = "Year") +
+    
+      scale_fill_manual(values = c("#69b3a2","lightslateblue"),labels = c("2023","2006-2007"), name = "Year") +
+    scale_x_continuous(labels = sst_br, breaks=sst_br) +
+    labs(x = 'SST (°C)', y= "Density",
+         subtitle = "September Turtle-SST (°C) Preference") +
+    theme_bw() +
+     # theme_minimal()+   
+    # theme(legend.position = c(0.90,0.85)) +
+    theme(legend.justification = "top") +
+    # stat_function(fun = dnorm, args = list(mean = mean(df$sst_dhw_5km_new_mean), sd = sd(df$sst_dhw_5km_new_mean)))
+    # stat_density(geom="line")
+   NULL
+    
+p_density_hist_cc_sst_2006_2007_2023
+# save
+ggsave(filename = 'draft_fig2_p_density_hist_cc_sst_2006_2007_2023.png', plot = p_density_hist_cc_sst_2006_2007_2023 + labs(subtitle=""), 
+       # height=4,
+       width=7,
+       bg='white',
+       path = '../figs/'
+       )
+
+
+```
+
+```{r Fig2b-06rmd-cc-2006-2007-2023-sept-chl-histograms}
+chl_br <- seq(0,0.8,0.05)
+
+df <- 
+obsdata_165W_mar_septs_augs_06_07_23 %>%
+    filter(month == 9) %>%
+    mutate(yr_cat = case_when((year == 2006 | year == 2007) ~ 1,
+                                         (year == 2023) ~ 2,
+                                          TRUE ~ 0)) %>%
+   mutate(group = str_to_upper(group)) 
+ 
+
+mu <- plyr::ddply(df, "group", summarise, grp.mean=round(median(chl_mean, na.rm=T),6))
+head(mu)
+    
+p_density_hist_cc_chl_2006_2007_2023 <- df %>%    
+    filter(chl_mean <= 0.8) %>%
+    ## histogram
+    # ggplot(aes(x=sst_dhw_5km_new_mean, 
+    #            fill = factor(yr_cat),
+    #            colour = factor(group))
+    #        ) +    
+    # geom_histogram(binwidth = 0.5, center=0, colour = 1, alpha = 0.6, position = "identity") + 
+    # scale_fill_manual(values = c("69b3a2", "lightslateblue"),labels = c("2023","2006-2007"), name = "Year") +
+
+    ## density
+
+    ggplot(aes(x=chl_mean, y = after_stat(density), 
+               fill = factor(group),
+               colour = group)) +
+    # ggplot(aes(x=chl_mean, ..scaled.., fill = factor(group), colour = group)) +
+    # geom_histogram(aes(y = ..density..)) +
+    geom_density(adjust=1.5, alpha=.3, lwd = 1.2, linetype = 1) + 
+    scale_color_manual(values = c("#69b3a2","lightslateblue"),labels = c("2023","2006-2007"), name = "Year") +
+    
+      scale_fill_manual(values = c("#69b3a2","lightslateblue"),labels = c("2023","2006-2007"), name = "Year") +
+    scale_x_continuous(labels = chl_br, breaks = chl_br) +
+    labs(x = 'Chla (mg/m^3)', y= "Density",
+         subtitle = "September Turtle-Chla (°C) Preference") +
+    theme_bw() +
+     # theme_minimal()+   
+    # theme(legend.position = c(0.90,0.85)) +
+    theme(legend.justification = "top") +
+    # stat_function(fun = dnorm, args = list(mean = mean(df$sst_dhw_5km_new_mean), sd = sd(df$sst_dhw_5km_new_mean)))
+    # stat_density(geom="line")
+   NULL
+    
+p_density_hist_cc_chl_2006_2007_2023
+# save
+ggsave(filename = 'draft_fig2b_p_density_hist_cc_chl_2006_2007_2023.png', plot = p_density_hist_cc_chl_2006_2007_2023 + labs(subtitle=""), 
+       # height=4,
+       width=7,
+       bg='white',
+       path = '../figs/'
+       )
+
+  
+p<- df %>%    
+    filter(chl_mean <= 0.8) %>%
+    # ggplot(aes(x=chl_mean, ..scaled.., colour = group)) +
+      ggplot(aes(x=chl_mean, ..density.., colour = group)) +
+  geom_density(adjust=1.5, lwd = 1.2, linetype = 1)+
+  # geom_vline(data=mu, aes(xintercept=grp.mean, color=group),
+  #            linetype="dashed")+
+  labs(x="Chla", y = "Density")
+  
+p + scale_color_manual(values=c("#69b3a2", "lightslateblue"),labels = c("2023","2006-2007"), name = "Year")+
+  theme_classic()
+
+```
+
+
+
+
+## Fig 3 Sept CC Position & Isotherms
+```{r 07-04rmd-set-spatial-extent}
+
+bbox <- c(make360(-170), make360(-110), 20, 50)
+e <- extent(bbox[1], bbox[2], bbox[3], bbox[4])
+
+bbox180 <- c(-170, -110, 20, 50)
+
+tzcf_bbox <- c(make360(-160), make360(-130), 25, 50)
+e_tzcf <- extent(tzcf_bbox[1], tzcf_bbox[2], tzcf_bbox[3], tzcf_bbox[4])
+
+```
+
+```{r 07-03rmd-set-plot-params}
+# mapdata <- map_data('world', wrap=c(-25,335), ylim=c(-55,75)) %>%
+#     filter(long >= 120 & long <= 270 & lat >= 15 & lat <=80) 
+mapdata <- map_data('world')
+
+grid_theme <- theme_bw() + theme(panel.ontop=TRUE, panel.background=element_blank())
+
+
+ssta_pal <- rev(c(rev(brewer.pal(9, "YlOrRd")),"white", brewer.pal(9, "Blues")))
+# chla_pal <- brewer.pal(9, "Greens")
+chla_pal <- oce::oceColorsChlorophyll(20)
+
+wc_pal   <- rainbow(25)
+
+smooth_rainbow <- khroma::colour("smooth rainbow")
+
+sst_cpal <- c(smooth_rainbow(length(seq(floor(8), ceiling(32), 1)), range = c(0, 0.9)), "#9e2a2b", "firebrick4", "#540b0e")
+
+
+# CBAR
+myPallette <-
+  c(rev(brewer.pal(8, "Greens")[2:8])
+    # , "white"
+    , brewer.pal(3, "Blues")[2:2])
+
+zCuts <- c(0,0.2, 0.3, 0.5,1.0,2,5,25)
+
+
+```
+
+
+```{r 07-03rmd-make-gglayers}
+
+add_baseplot <- function(bbox) {
+    list(
+    # add land
+    geom_polygon(data = mapdata, aes(x=long, y = lat, group = group), color = "black", fill = "black"),
+    # sest cbar height
+    guides(fill = guide_colourbar(barheight =12, ticks = TRUE,
+                  frame.colour = "black", ticks.colour = "black")),
+    # set map extent
+    coord_sf(xlim = c(bbox[1], bbox[2]), ylim = c(bbox[3], bbox[4]), 
+             expand = FALSE, crs = st_crs(4326)), 
+    labs(x = "Longitude", y = "Latitude")
+    )
+}
+
+update_map_extent <- function(xrange, yrange){
+    list(
+        coord_sf(xlim = c(xrange[1], xrange[2]), ylim = c(yrange[1], yrange[2]), 
+        expand = FALSE, crs = st_crs(4326))
+    )
+}
+
+add_turtle_pts <- function(df, col="#66CCC0", size=3){
+    list(
+        geom_point(data=df, aes(x = lon, y = lat, colour = col), size = size)
+    )
+}
+
+# add_turtle_pts <- function(df, size=3){
+#     list(
+#         geom_point(data=df, aes(x = lon, y = lat, colour = as.factor(group)), size = size)
+#     )
+# }
+
+add_track_spLines <- function(df, cpal, linewidth) {
+    list(
+    # add cohort 1 tracks
+    geom_sf(data = df %>% makeSpatialLines(lon360=FALSE), 
+        aes(colour = as.factor(id)),linewidth = linewidth, alpha = 0.9, show.legend=FALSE),
+        scale_colour_manual(values = cpal)
+    )
+}
+
+add_tcms_box <- function(){
+    list(
+    geom_rect(aes(xmin=make180(225),xmax=make180(243),ymin=25,ymax=35),
+          colour="honeydew3",alpha=0, size=0.45)
+    )
+}
+
+
+add_contour_lines <- function(df, contours, col='black'){
+    list(
+        geom_contour(data=df, aes(x=lon, y=lat, z = val), 
+        colour = col, linewidth = 1.25, breaks = c(contours), show.legend = T)
+    )
+}
+
+add_contour_lines_dashed <- function(df, contours, col='black'){
+    list(
+        geom_contour(data=df, aes(x=lon, y=lat, z = val), linetype = 'dashed', 
+        colour = col, linewidth = 1.25, breaks = c(contours), show.legend = F) 
+    )
+}
+
+resize_cbar <- function(x){
+    list(
+        guides(fill = guide_colourbar(barheight =x, ticks = TRUE,
+        frame.colour = "black", ticks.colour = "black"))
+    )
+}
+
+```
+
+
+```{r 07-04rmd-set-ras-params}
+params <- tibble(
+    eov = "sst",
+    timestep = "month",
+    # min_dt = '1997-07-16',
+    min_dt = '1985-01-16',
+    max_dt = '2023-10-16')
+
+```
+
+```{r 07-04rmd-load sst-monthly-ncdf}
+
+nc_path = "/Users/briscoedk/dbriscoe@stanford.edu - Google Drive/My Drive/ncdf/npac"
+
+sst_ncs <- list.files(nc_path, pattern = str_c(params$eov, "_"), full.names=T) %>%
+    .[grep(params$timestep, .)]
+
+
+sst_fdates <- sst_ncs %>% 
+    str_split(., "_") %>%
+    purrr::map_chr(~ pluck(., 6)) %>%
+    substr(., start=1, stop=10)
+       
+
+sst_ras_stack <- #ncs[fdates >= params$min_dt & fdates <= params$max_dt] %>%
+    sst_ncs %>%
+    raster::stack(.) %>%
+    crop(., e)
+    # crop(., e_tzcf)
+
+```
+
+```{r 07-04rmd-set-ras-info}
+
+# dt_idx <- getDateRange(params$min_dt, params$max_dt, unit = params$timestep)
+# sst_ras_names_yrmon <- as.yearmon(dt_idx)
+sst_ras_names_yrmon <- as.yearmon(sst_fdates)
+
+sst_ras_stack <- setZ(sst_ras_stack, sst_ras_names_yrmon)
+names(sst_ras_stack) <- as.character(sst_ras_names_yrmon)  # mon-yr abbreb
+# names(ras_stack) <- as.character(dt_idx) # full Xyr-mon-d 
+```
+
+```{r 07-03rmd-pull-yr-mon-from-ras}
+
+# names(sst_ras_stack) <- getZ(ras_stack)
+
+yrs <- getZ(sst_ras_stack) |> format("%Y") |> unique()
+mons <- getZ(sst_ras_stack) |> format("%b") |> unique()
+
+dte <- getZ(sst_ras_stack)
+m <- format(dte, "%b")
+y <- format(dte, "%Y")
+
+```
+
+```{r 07-03rmd-get-sept-ras-cc}
+
+### SEPTS ---------------------------------------
+
+# 1) get historic subset Sept months: 2006-2007
+i_hist_sept_2006_2007 <- dte[(m == "Sep" & y >= "2006" & y <= "2007")] %>% gsub(" ", ".", .)
+sst_ras_sept_2006_2007 <- sst_ras_stack[[i_hist_sept_2006_2007]]
+
+
+# 3) get cohort 1 Sept month: 2023
+i_cohort1_sept <- dte[(m == "Sep" & y == "2023")] %>% gsub(" ", ".", .)
+sst_ras_sept_2023 <- sst_ras_stack[[i_cohort1_sept]]
+
+
+#5) Longterm avgs (1985/1990 vs 2020-2023)
+# 1985-1995
+i_hist_sept_1985_1995 <- dte[(m == "Sep" & y >= "1985" & y <= "1995")] %>% gsub(" ", ".", .)
+sst_ras_sept_1985_1995 <- sst_ras_stack[[i_hist_sept_1985_1995]]
+
+# 1990-1994
+i_hist_sept_1990_1994 <- dte[(m == "Sep" & y >= "1990" & y <= "1994")] %>% gsub(" ", ".", .)
+sst_ras_sept_1990_1994 <- sst_ras_stack[[i_hist_sept_1990_1994]]
+
+# 2020-2023
+i_hist_sept_2020_2023 <- dte[(m == "Sep" & y >= "2020" & y <= "2023")] %>% gsub(" ", ".", .)
+sst_ras_sept_2020_2023 <- sst_ras_stack[[i_hist_sept_2020_2023]]
+
+
+
+### MARCH ---------------------------------------
+
+# 1) get historic subset Mar months: 2006-2007
+i_hist_mar_2006_2007 <- dte[(m == "Mar" & y >= "2006" & y <= "2007")] %>% gsub(" ", ".", .)
+sst_ras_mar_2006_2007 <- sst_ras_stack[[i_hist_mar_2006_2007]]
+
+
+# 3) get cohort 1 Mar month: 2023
+i_cohort1_mar <- dte[(m == "Mar" & y == "2023")] %>% gsub(" ", ".", .)
+sst_ras_mar_2023 <- sst_ras_stack[[i_cohort1_mar]]
+
+
+#5) Longterm avgs (1985/1990 vs 2020-2023)
+# 1985-1995
+i_hist_mar_1985_1995 <- dte[(m == "Mar" & y >= "1985" & y <= "1995")] %>% gsub(" ", ".", .)
+sst_ras_mar_1985_1995 <- sst_ras_stack[[i_hist_mar_1985_1995]]
+
+# 1990-1994
+i_hist_mar_1990_1994 <- dte[(m == "Mar" & y >= "1990" & y <= "1994")] %>% gsub(" ", ".", .)
+sst_ras_mar_1990_1994 <- sst_ras_stack[[i_hist_mar_1990_1994]]
+
+# 2020-2023
+i_hist_mar_2020_2023 <- dte[(m == "Mar" & y >= "2020" & y <= "2023")] %>% gsub(" ", ".", .)
+sst_ras_mar_2020_2023 <- sst_ras_stack[[i_hist_mar_2020_2023]]
+
+
+
+```
+
+
+```{r 07-03rmd-calc-sept-ras-means}
+
+### SEPTS ---------------------------------------
+
+# 1) get historic subset Sept months: 2006-2007
+sst_ras_mean_sept_2006_2007 <- calc(sst_ras_sept_2006_2007, fun = mean, na.rm = T) 
+names(sst_ras_mean_sept_2006_2007) <- c('X2007-09-16')
+
+# 2023
+sst_ras_mean_sept_2023 <- sst_ras_sept_2023 #calc(sst_ras_sept_2023, fun = mean, na.rm = T)
+names(sst_ras_mean_sept_2023) <- c('X2023-09-16')
+
+# 1985-1995
+sst_ras_mean_sept_1985_1995 <- calc(sst_ras_sept_1985_1995, fun = mean, na.rm = T)
+names(sst_ras_mean_sept_1985_1995) <- c('X1995-09-16')
+
+# 1990-1994
+sst_ras_mean_sept_1990_1994 <- calc(sst_ras_sept_1990_1994, fun = mean, na.rm = T)
+names(sst_ras_mean_sept_1990_1994) <- c('X1994-09-16')
+
+# 2020-2023
+sst_ras_mean_sept_2020_2023 <- calc(sst_ras_sept_2020_2023, fun = mean, na.rm = T)
+names(sst_ras_mean_sept_2020_2023) <- c('X2020-09-16') # using startdate so don't have dupes with 2023 raster
+
+
+### MARCH ---------------------------------------
+
+# 1) get historic subset Sept months: 2006-2007
+sst_ras_mean_mar_2006_2007 <- calc(sst_ras_mar_2006_2007, fun = mean, na.rm = T) 
+names(sst_ras_mean_mar_2006_2007) <- c('X2007-03-16')
+
+# 2023
+sst_ras_mean_mar_2023 <- sst_ras_mar_2023 #calc(sst_ras_mar_2023, fun = mean, na.rm = T)
+names(sst_ras_mean_mar_2023) <- c('X2023-03-16')
+
+# 1985-1995
+sst_ras_mean_mar_1985_1995 <- calc(sst_ras_mar_1985_1995, fun = mean, na.rm = T)
+names(sst_ras_mean_mar_1985_1995) <- c('X1995-03-16')
+
+# 1990-1994
+sst_ras_mean_mar_1990_1994 <- calc(sst_ras_mar_1990_1994, fun = mean, na.rm = T)
+names(sst_ras_mean_mar_1990_1994) <- c('X1994-03-16')
+
+# 2020-2023
+sst_ras_mean_mar_2020_2023 <- calc(sst_ras_mar_2020_2023, fun = mean, na.rm = T)
+names(sst_ras_mean_mar_2020_2023) <- c('X2020-03-16') # using startdate so don't have dupes with 2023 raster
+
+
+
+```
+
+
+
+```{r 07-03rmd-ras-sept-means-to-df}
+
+## NEED THIS CELL??
+
+# sst_ras_mean_sept_2006_2007
+```
+
+
+
+
+## Fig 4 GAMs
+```{r 07-05rmd-load-grouped-by-year-month-rds}
+
+# fyi, need to load this df from '04 rmd'
+grouped_by_year_month <- readRDS("../data/interim/04_grouped_by_year_month_Jan1981_Oct2023.rds")
+
+```
+
+```{r 07-05rmd-get-sum-stats-lat-year-sept-mar}
+# calc average lat of the 18deg C isotherm (165W-140W)
+mean_18deg_lat_by_year <- grouped_by_year_month %>%
+    group_by(year, x, month, day, month_abb) %>%
+        # filter(month == 9) %>%
+    filter(z >= 18 & z < 18.1) %>%
+    summarise(y = mean(y, na.rm=T),
+              z = mean(z, na.rm=T)) %>%
+    relocate(year, .after=x) %>%
+    relocate(y, .before=x) %>%
+    relocate(z, .after=x) %>%
+    mutate(mean_18degC_lat = y)
+
+## assign ENSO condition to year using case ~ when
+
+```
+
+```{r 07-create-ENSO-df}
+# enso_yr <- data.frame(year = seq(1985,2023,1)) %>%
+#     mutate(enso = case_when((year == 1987 | year == 1988 | year == 1992 | year == 1995 | year == 1998 | year == 2003 | year == 2007 | year == 2010 | year == 2016 | year == 2023) ~ "el_nino",
+#                                          (year == 1989 | year == 1999 | year == 2000 | year == 2008 | year == 2011 | year == 2012 | year == 2021 | year == 2022) ~ "la_nina",
+#                                           TRUE ~ "neutral")) 
+
+```
+
+```{r07-Fig4...TBD}
+
+```
+
+
+
+
+## Fig 5 Longterm Sept Isotherm Position
+
+```{r}
+library(geomtextpath)
+p <- ggplot() +
+    # add baselayers
+    add_baseplot(bbox180) +
+    
+    # Sept
+    add_contour_lines(df=sst_ras_mean_sept_1985_1995 %>% 
+                          ras2df() %>%
+                          mutate(lon = make180(lon)), 
+                          contours=c(18), col='azure3') +
+    add_contour_lines(df=sst_ras_mean_sept_1990_1994 %>% 
+                          ras2df() %>%
+                          mutate(lon = make180(lon)), 
+                          contours=c(18), col='azure4') +
+    add_contour_lines(df=sst_ras_mean_sept_2020_2023 %>% 
+                          ras2df() %>%
+                          mutate(lon = make180(lon)), 
+                          contours=c(18), col='black') + 
+    
+    # Mar
+    add_contour_lines(df=sst_ras_mean_mar_1985_1995 %>% 
+                          ras2df() %>%
+                          mutate(lon = make180(lon)), 
+                          contours=c(18), col='azure3') +
+    add_contour_lines(df=sst_ras_mean_mar_1990_1994 %>% 
+                          ras2df() %>%
+                          mutate(lon = make180(lon)), 
+                          contours=c(18), col='azure4') +
+    add_contour_lines(df=sst_ras_mean_mar_2020_2023 %>% 
+                          ras2df() %>%
+                          mutate(lon = make180(lon)), 
+                          contours=c(18), col='black') +
+    theme_bw()
+
+p_caption <- p +
+    theme(plot.caption = element_text(hjust = 0)) +
+    labs(caption = "\nAverage 18C SST Isotherm Location:\n1985 - 1995 (light gray); 1990 - 1994 (medium gray); 2020 - 2023 (black)"
+         ) 
+
+p_caption +  annotate("text", x=-165, y=45, label= "September") +
+    annotate("text", x=-167, y=27.5, label= "March")
+    
+
+```
+

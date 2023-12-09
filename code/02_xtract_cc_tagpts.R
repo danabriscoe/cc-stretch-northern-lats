@@ -82,6 +82,8 @@ obsdata <- df_all %>%
     filter(lon >=-180 & lon <= 0) %>%
     filter(month == 9 | month == 3 | month == 8) 
 
+sst.lag = FALSE
+if(sst.lag){
 library(lubridate)
 obsdata_sept_lag <- obsdata %>%
     filter(month == 9) %>%
@@ -90,6 +92,13 @@ obsdata_sept_lag <- obsdata %>%
 
 # rename for consistency:
 obsdata <- obsdata_sept_lag
+
+}
+
+
+## for northern lats 165W to 140W long
+obsdata <- obsdata %>%
+    filter(lon > -165 & lon < -140)
 
 ## PART 2: XTRACTO LOCAL ----------------------------------------------------------
 
@@ -132,8 +141,8 @@ rm(sstmean); rm(sstfilesIn)
 
 ## 2) now get CHLA ----
 ### SEAWIFS
-# filenames<-grep("erdSW2018chla8day",list.ncs)
-filenames<-grep("erdSW2018chlamday",list.ncs)
+filenames<-grep("erdSW2018chla8day",list.ncs)
+# filenames<-grep("erdSW2018chlamday",list.ncs)
 chlfiles<-list.ncs[filenames]
 varname<-"chlorophyll";  mnradius<- 1; sdradius<- 1; alt<-1
 chlfilesIn <- getDateRangeX(inpts=obsdata,ncIn=chlfiles)
@@ -150,8 +159,8 @@ rm(seawifsmean); rm(chlfilesIn)
 # 
 ### MODIS
 #http://coastwatch.pfeg.noaa.gov/erddap/griddap/erdMHchla8day.nc?chlorophyll[(2013-10-12T00:00:00Z):1:(2013-10-12T00:00:00Z)][(0.0):1:(0.0)][(-90.0):1:(90.0)][(0.0):1:(360.0)]
-# filenames<-grep("erdMH1chla8day",list.ncs)
-filenames<-grep("erdMH1chlamday",list.ncs)
+filenames<-grep("erdMH1chla8day",list.ncs)
+# filenames<-grep("erdMH1chlamday",list.ncs)
 chlfiles<-list.ncs[filenames]
 varname<-"chlorophyll";  mnradius<- 1; sdradius<- 1; alt<-1
 chlfilesIn <- getDateRangeX(inpts=obsdata,ncIn=chlfiles)
@@ -168,8 +177,8 @@ rm(modismean); rm(chlfilesIn)
 
 ### VIIRS
 #http://coastwatch.pfeg.noaa.gov/erddap/griddap/erdMHchla8day.nc?chlorophyll[(2013-10-12T00:00:00Z):1:(2013-10-12T00:00:00Z)][(0.0):1:(0.0)][(-90.0):1:(90.0)][(0.0):1:(360.0)]
-# filenames<-grep("nesdisVHNSQchlaWeekly",list.ncs)
-filenames<-grep("nesdisVHNSQchlaMonthly",list.ncs)
+filenames<-grep("nesdisVHNSQchlaWeekly",list.ncs)
+# filenames<-grep("nesdisVHNSQchlaMonthly",list.ncs)
 chlfiles<-list.ncs[filenames]
 varname<-"chlor_a";  mnradius<- 0.25; sdradius<- 1; alt<-1
 chlfilesIn <- getDateRangeX(inpts=obsdata,ncIn=chlfiles)
@@ -235,6 +244,6 @@ na_by_cols <- lapply(obsdata, function(x) sum(is.na(x)))
 
 
 ## Save RDS File ----
-# saveRDS(obsdata, file = "../data/processed/xtracted_cc_sept_mar_aug_1997_2023.rds")
+saveRDS(obsdata, file = "./data/processed/xtracted_cc_sept_mar_aug_1997_2023.rds")
 
-saveRDS(obsdata, file = "../data/processed/xtracted_cc_sept_sst_lag_aug_1997_2023.rds") # only for sept turtle position - aug sst lag
+# saveRDS(obsdata, file = "../data/processed/xtracted_cc_sept_sst_lag_aug_1997_2023.rds") # only for sept turtle position - aug sst lag

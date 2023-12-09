@@ -394,6 +394,46 @@ resize_cbar <- function(x){
 
 <!-- ------------------------------------------------------------------------ -->
 
+```{r 03-plot-ssta-mean-no-cc-tracks}
+
+p_ssta_mean_no_cc <- ggplot() +
+    # add ssta layer
+    geom_raster(data = ssta_ras_mean_df, 
+                aes(x = lon, y = lat, fill = val, interpolate = TRUE)) +
+    scale_fill_gradientn(colours = ssta_pal[5:length(ssta_pal)],
+    # scale_colour_gradient2(high = "red", mid = "white", low = "blue", midpoint = 1, 
+                         breaks=seq(-2,4,1),
+                         limits = c(-2,4), 
+                         na.value="transparent",
+                         name = "SSTA (°C) \n") +
+    # # add cohort 1 tracks
+    # add_track_spLines(df=daily_df %>% filter(date <='2023-09-30'), cpal=wc_pal, linewidth=1) +
+
+    # add baselayers
+    add_baseplot(bbox) 
+ 
+# show plot with tcms box
+p_ssta_mean_no_cc_or_tcms <- p_ssta_mean_no_cc #+ add_tcms_box()
+# p_ssta_mean_no_cc_with_tcms <- p_ssta_mean_no_cc + add_tcms_box()
+
+
+# save
+ggsave(filename = str_c('plot_ssta_mean_no_cc_or_tcms_w_contour.png'), plot = p_ssta_mean_no_cc_or_tcms + resize_cbar(24) +
+           labs(caption = ''), 
+       # height=9,
+       width=13, bg='white',
+       path = '../figs/'
+       )
+
+# ggsave(filename = str_c('plot_ssta_mean_no_cc_with_tcms_w_contour.png'), plot = p_ssta_mean_no_cc_with_tcms + 
+#            labs(caption = 'Black line represents the 1.5°C SSTA contour'), 
+#        # height=9,
+#        width=13, bg='white',
+#        path = '../figs/'
+#        )
+
+```
+
 <!-- ## Part 1: SSTA Map with Tracks -->
 
 ```{r 03-plot-ssta-mean-cc-tracks}
@@ -517,6 +557,21 @@ ras_sept_2023 <- sst_ras_stack[[i_cohort1_sept]]
 # 4) all time septs (1997-2023)
 i_sept <- dte[(m == "Sep")] %>% gsub(" ", ".", .)
 ras_sept_1997_2023 <- sst_ras_stack[[i_sept]]
+
+
+# 5) Longterm avgs (1985/1990 vs 2020-2023)
+# 1985-1995
+i_hist_sept_1985_1995 <- dte[(m == "Sep" & y >= "1985" & y <= "1995")] %>% gsub(" ", ".", .)
+ras_sept_1985_1995 <- sst_ras_stack[[i_hist_sept_1985_1995]]
+
+# 1990-1994
+i_hist_sept_1990_1994 <- dte[(m == "Sep" & y >= "1990" & y <= "1994")] %>% gsub(" ", ".", .)
+ras_sept_1990_1994 <- sst_ras_stack[[i_hist_sept_1990_1994]]
+
+# 2020-2023
+i_hist_sept_2020_2023 <- dte[(m == "Sep" & y >= "2020" & y <= "2023")] %>% gsub(" ", ".", .)
+ras_sept_2020_2023 <- sst_ras_stack[[i_hist_sept_2020_2023]]
+
 
 ```
 
@@ -1201,8 +1256,9 @@ chl_mday_ras_stack_mar <- chl_mday_ncs_mar %>% #ncs[fdates >= params$min_dt & fd
 chl_mday_ras_stack_sept <- setZ(chl_mday_ras_stack_sept, sept_fdates)
 names(chl_mday_ras_stack_sept) <- as.character(sept_fdates)  # mon-yr abbreb
 
+# 3006-2007 Sept subset
 chl_mday_ras_stack_sept_2006_2007 <- subset(chl_mday_ras_stack_sept, c(4:5))
-
+names(chl_mday_ras_stack_sept_2006_2007) <- as.character(sept_fdates)[4:5]  # mon-yr abbreb
 
 # set Z - Mar
 chl_mday_ras_stack_mar <- setZ(chl_mday_ras_stack_mar, mar_fdates)
@@ -1214,6 +1270,7 @@ names(chl_mday_ras_stack_mar) <- as.character(mar_fdates)  # mon-yr abbreb
 chla_ras_mean_2003_2011_sept <- chl_mday_ras_stack_sept %>%
      calc(., mean, na.rm=TRUE)
 
+# Septs 2006-2007
 chl_mday_ras_mean_sept_2006_2007 <- chl_mday_ras_stack_sept_2006_2007 %>%
      calc(., mean, na.rm=TRUE)
 
@@ -1245,7 +1302,7 @@ chla_ras_mean_2003_2011_mar_df <- chla_ras_mean_2003_2011_mar  %>% ras2df() %>%
     mutate(lon= make180(lon))
 
 
-chl_mday_ras_stack_sept_df <- chl_mday_ras_stack_sept 
+# chl_mday_ras_stack_sept_df <- chl_mday_ras_stack_sept 
 ```
 
 ```{r 03-set-chla-cpal-blue-green-zCuts}
@@ -1484,7 +1541,7 @@ subset_mn_lats <- mean_lats_historic %>%
      filter(!(id == "23045_03" & year == "2006")) 
 
 ## PLOT (w/o u-turn tags)
-p_sept_mean_chla_aug_sst_2003_2011_2023_rm_uturns <- ggplot(chl_mday_ras_mean_sept_2006_2007_df %>% drop_na(), aes(lon, lat)) +
+p_sept_mean_chla_aug_sst_2006_2007_2023_rm_uturns <- ggplot(chl_mday_ras_mean_sept_2006_2007_df %>% drop_na(), aes(lon, lat)) +
   # geom_raster(aes(x = lon, y = lat, fill = cut(val, zCuts), interpolate = TRUE, na.rm = TRUE)) +
      geom_tile(aes(x = lon, y = lat, fill = cut(val, zCuts), interpolate = TRUE, na.rm = TRUE)) +
   scale_fill_manual("Mean Chla", na.translate = F,
@@ -1525,9 +1582,9 @@ p_sept_mean_chla_aug_sst_2003_2011_2023_rm_uturns <- ggplot(chl_mday_ras_mean_se
                               "2006-2007"="mediumslateblue",
                                      "2023"="#E05087"
                                      )) +
-        labs(subtitle = "Mean Sept Chl-a (2006-2007) and Turtle Location (2003-2011)",
-         caption = str_c("Isotherms: Sept 18°C (2006-2007, gray line), Sept 19.5°C (2003-2011, black line)\n 
-         August 18°C (dotted gray line), August 19.5°C (dotted black line)\n
+        labs(subtitle = "Monthly Mean Sept Chl-a (2006-2007) and Turtle Location (2006-2007, 2023)",
+         caption = str_c("Isotherms: Sept 18°C (2006-2007, gray line), Sept 19.5°C (2006-2007, black line)\n 
+         August 18°C (2006-2007, dotted gray line), August 19.5°C (2006-2007, dotted black line)\n
                          Sept 18°C (2023, pink line)")) + 
          xlab("\nLongitude") +
          ylab("Latitude\n")

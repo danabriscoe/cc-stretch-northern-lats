@@ -273,7 +273,7 @@ getMaxLat <- function(df){
 load_wc_downloads <- function(wc_files){
     ret <- rbindlist(lapply(wc_files, fread)) %>%
         dplyr::select('Platform ID No.', 'Latitude', 'Longitude', 'Loc. quality', 'Loc. date') %>%
-        rename(id = 1,
+        dplyr::rename(id = 1,
                lat = 2, 
                lon = 3, 
                loc_quality = 4, 
@@ -289,7 +289,7 @@ load_wc_downloads <- function(wc_files){
 load_metadata_xls <- function(meta_files){
     ret <- readxl::read_excel(path = meta_files) %>%
     dplyr::select(1,3,5,6) %>%
-    rename("turtle_num"=1, "id"=2, "turtle_name"=3, "scl_cm"=4)
+        dplyr::rename("turtle_num"=1, "id"=2, "turtle_name"=3, "scl_cm"=4)
     return(ret)
 }    
 

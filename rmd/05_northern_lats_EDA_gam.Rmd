@@ -222,9 +222,19 @@ p_graph_hist_id_by_yrmon <- ggplot() +
   geom_line(data = hist_df_subset, aes(x=date, y=id, group=id)) +
     geom_line(data = hist_df_subset %>% filter(month == 9), aes(x=date, y=id, group=id, color='September'), lwd=2) +
     scale_color_manual(values=c("#952C23")) +
-    guides(color=guide_legend(title="Tracks 165W-140W Long")) +
+    guides(color=guide_legend(title="Tracks\n165W-140W\nLongitude")) +
     scale_x_date(breaks = "3 month", labels=date_format("%b-%Y")) +
-   theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1))
+   theme(axis.text.x = element_text(angle = 45, vjust = 1.0, hjust=1,size=6),
+         axis.text.y = element_text(size=6))
+
+
+# save
+ggsave(filename = 'ntags_historic_data_165W_140W_Sept_months.png', plot = p_graph_hist_id_by_yrmon + labs(subtitle=""), 
+       # height=4,
+       width=13,
+       bg='white',
+       path = '../figs/'
+       )
 
 gg_graph_hist_id_by_yrmon<- ggplotly(p_graph_hist_id_by_yrmon, tooltip = c("text")) %>% layout(xaxis = list(title = "Date"), yaxis = list(title = "Historic Turtle Data ID Number"))
 
@@ -651,7 +661,7 @@ test
 <!-- ``` -->
 
 
-```{r}
+```{r kfolds-cv-func}
 # Assuming 'df' is your data frame
 # df = min_18deg_lat_by_year %>% filter(month == 9)
 # df = mean_18deg_lat_by_year %>% filter(month == 3)
@@ -664,7 +674,7 @@ library(boot)
 
 # Load your dataset or replace this with your data loading method
 
-
+### K-FOLDS CV ------------------------------------------------------------
 run_gam_kfolds <- function(data, kfolds = 5, knts=3, mon = "March"){
         # Define the formula for the GAM model
     # model_formula <- y ~ s(year, k = 20)
@@ -721,9 +731,6 @@ run_gam_kfolds <- function(data, kfolds = 5, knts=3, mon = "March"){
     return(results_list)
 }
 
-
-
-
 ```
 
 
@@ -773,15 +780,96 @@ gam_18degC_lat_year_output_diff_sept_mar[[4]][[2]]$partial_plot
 
 
 ```{r 05-plot-mean_18deg_lat_by_year_diff_sept_mar}
+library(ggpmisc)
+
 p_mean_18deg_lat_by_year_diff_sept_mar <- 
 mean_18deg_lat_by_year_diff_sept_mar %>%
-ggplot() +    
-    geom_line(aes(x=year, y=y), fill = "steelblue", colour = "steelblue", alpha = 0.9, lwd =2) +
-    geom_point(aes(x=year, y=y), fill = "steelblue", colour = "steelblue", alpha = 0.6, size=3) + 
+ggplot(aes(x=year, y=y)) +    
+    geom_line(fill = "steelblue", colour = "steelblue", alpha = 0.9, lwd =2) +
+    geom_point(fill = "steelblue", colour = "steelblue", alpha = 0.6, size=3) + 
 
     scale_x_continuous(breaks=seq(1998,2023,2)) + 
-    labs(x='Year', y = 'Difference (°Latitude)')
+    labs(x='Year', y = 'Difference (°Latitude)') +
+    
+  geom_smooth(method="lm", fit = y ~ x,) 
+
+
 ```
+
+
+```{r kfolds-cv-func-by-ENSO}
+# Assuming 'df' is your data frame
+# df = min_18deg_lat_by_year %>% filter(month == 9)
+# df = mean_18deg_lat_by_year %>% filter(month == 3)
+
+
+# Load the required packages
+library(mgcv)
+library(boot)
+# library(ggplot2)
+
+# Load your dataset or replace this with your data loading method
+
+### K-FOLDS CV ------------------------------------------------------------
+run_gam_kfolds <- function(data, kfolds = 5, knts=3, mon = "March"){
+        # Define the formula for the GAM model
+    # model_formula <- y ~ s(year, k = 20)
+    model_formula <- y ~ s(year, k = knts, fx=T)
+        
+    
+    
+    # Create an empty vector to store RMSE values
+    rmse_values <- numeric()
+    
+    # Set the number of folds (e.g., 5-fold cross-validation)
+    k <- kfolds
+    
+    # Create a function to calculate the RMSE for the GAM model
+    calculate_rmse <- function(train_indices) {
+      train_data <- data[train_indices, ]
+      test_data <- data[-train_indices, ]
+      
+      gam_model <- gam(model_formula, data = train_data, method = "ML")
+      predictions <- predict(gam_model, newdata = test_data)
+      
+      rmse <- sqrt(mean((test_data$y - predictions)^2))
+      
+      # Create a partial dependence plot for 'year' variable
+      partial_plot <- draw(gam_model, residuals = TRUE) + labs(title = glue("Partial Plot: {mon}"))
+      # title("Partial Dependence Plot")
+      
+      return(list(rmse = rmse, partial_plot = partial_plot, model_summary = summary(gam_model)))
+    }
+    
+    # Perform k-fold cross-validation
+    set.seed(123)  # Set a random seed for reproducibility
+    folds <- sample(1:k, nrow(data), replace = TRUE)
+    
+    results_list <- list()
+    
+    for (i in 1:k) {
+      results <- calculate_rmse(folds != i)
+      rmse_values <- c(rmse_values, results$rmse)
+      print(results$partial_plot)
+      print(results$model_summary)
+      
+      results_list[[i]] <- list(k=i,results)#, rmse_values, partial_plot=results$partial_plot)
+    }
+    
+    # View the RMSE values for each fold
+    cat("RMSE values for each fold:\n")
+    print(rmse_values)
+    
+    # Calculate the mean RMSE
+    mean_rmse <- mean(rmse_values)
+    cat("Mean RMSE:", mean_rmse, "\n")
+    
+    return(results_list)
+}
+
+```
+
+
 
 <!-- ```{r 05-gam-18degC-lat-year-output-mar-16C} -->
 <!-- gam_16degC_lat_year_output_mar <- run_gam_kfolds(data=mean_16deg_lat_by_year_mar %>% filter(month == 3), kfolds = 5, mon = "March") -->
