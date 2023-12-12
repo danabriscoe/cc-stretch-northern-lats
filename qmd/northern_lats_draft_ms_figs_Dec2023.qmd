@@ -1,0 +1,180 @@
+---
+title: "STRETCH - Northern Latitudes Draft MS Figures"
+subtitle: "`r Sys.Date()` <br> D Briscoe"
+author: ""
+date: ""
+format:
+  html:
+    theme: flatly
+    fontsize: 20px
+    toc: true
+    toc-expand: true	
+    number-sections: false
+    toc-location: left
+    number-depth: 2
+    smooth-scroll: true
+    fig-cap-location: top
+filters:
+  - lightbox
+lightbox: 
+  match: auto
+  effect: zoom
+  desc-position: top
+---
+
+
+```{=html}
+<style>
+.main-container {
+    max-width: 1600px !important;
+    margin-left: 0;
+    margin-right: 1;
+}
+
+#quarto-document-content {
+  width: 950px;
+}
+
+</style>
+
+<style type="text/css">
+  body{
+  font-size: 12.5pt;
+}
+
+h1, .title, .subtitle {
+    <!-- font-family: Arial, sans-serif; -->
+    <!-- font-weight: 700; -->
+    color: black;
+}
+
+h2, h3 {
+  color: #447099;
+  font-weight: 500;
+}
+</style>
+
+```
+
+```{r 00-setup, include=FALSE}
+knitr::opts_chunk$set(
+    echo = FALSE,
+    eval = TRUE,
+    message = FALSE,
+    warning = FALSE,
+    dpi = 300,
+    fig.align = "center"
+    )
+
+# See Options: knitr::opts_chunk$get()
+```
+
+
+<br>
+
+
+### Fig 1 \| Average Turtle Latitude by Week
+
+<span style="font-size:14pt"></span>
+
+![](images/draft_fig1_plot_avg_turtle_lats_by_week_july_sept.png)
+
+
+
+### Fig 2 \| Density Histograms
+
+<span style="font-size:14pt">
+<!-- September Turtle-Env Preference: -->
+</span>
+
+![September Turtle-SST Preference](images/draft_fig2_p_density_hist_cc_sst_2006_2007_2023.png)
+
+![September Turtle-Chla Preference](images/draft_fig2b_p_density_hist_cc_chl_2006_2007_2023.png)
+
+
+### Fig 3 \| September Turtle & 18°C Isotherm Position
+
+<span style="font-size:14pt"></span>
+
+![](images/draft_fig3_plot_avg_cc_and_18C_195C_isotherms_sept.png)
+
+
+
+### Fig 4 \| September & March GAMs
+
+<br>
+
+[**Model: Latitude of 18C isotherm (Mar or Sept) \~ Year**]{style="font-size: 16pt"}
+
+
+![March](images/gam_partial_plot_Mar_18C.png)
+
+![Sept](images/gam_partial_plot_Sept_18C.png)
+
+![Difference September - Mar 18°C Isotherm Position (Placeholder)](images/draft_fig4x_plot_mean_18deg_lat_by_year_diff_sept_mar_lm.png)
+
+
+### Fig 5 \| Longterm Seasonal 18°C Isotherm Position
+
+<br>
+
+::: columns
+::: {.column width="8%"}
+[text]{style="color:transparent"}
+:::
+
+::: {.column width="92%"}
+<span style="font-size:14pt">
+**Black Line: 2020 - 2023 Average** <br>
+[**Medium Gray Line: 1990 - 1994 Average**]{style="color:#6C757D"} <br>
+[**Light Gray Line: 1985 - 1995 Average**]{style="color:#ADB5BD"} <br>
+</span>
+:::
+:::
+
+![](images/draft_fig5_plot_18C_isotherm_longterm_sept_mar.png)
+
+
+
+
+## Additional Figures 
+
+### Average Seasonal Position of 18C (March/Sept) between 1985 - 2023
+
+<br>
+
+[*Placeholder figure: * Not sure this works because if Sept 1997 is given an El Nino value, then March 1997 is also given the El Nino value -- when it should be March 1998.]{style="font-size: 16pt"} 
+
+<br>
+
+![](images/plot_mar_sept_avg_lats_no_turtles_18C_enso_conds.png)
+<br>
+<br>
+
+### Annual 18C Isotherm Position by ENSO 
+
+<br>
+
+[Location of 18C isotherm based on the September preceding an ENSO event <br> (ie Sept 1997 = 'El Nino' Sept)  *-- or-- * year of a marine heatwave (MHW, ie Sept 2015 = 'MHW')]{style="font-size: 16pt"}
+
+<span style="font-size:16pt">
+ENSO episodes were assigned using NOAA's
+[ONI Nino 3.4 ](https://origin.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php)
+</span>
+
+<br>
+<span style="font-size:16pt">
+For each of the figures below, the **given year's 18C SST isotherm location is in black**
+and [**the longterm 18C SST isotherm (1985-2023) location is noted in gray**]{style="color:#6C757D"}
+</span>
+
+<br>
+
+
+![El Nino (Septembers Preceding an El Nino Epsisode)](images/plot_sept_ssta_yrs_with_sst_18C_pre_el_nino.png)
+
+![La Nina (Septembers Preceding a La Nina Episode)](images/plot_sept_ssta_yrs_with_sst_18C_pre_la_nina.png)
+
+![Neutral (Septembers Preceding a Neutral Episode)](images/plot_sept_ssta_yrs_with_sst_18C_pre_neutral.png)
+
+![Marine Heatwave Septembers](images/plot_sept_ssta_yrs_with_sst_18C_mhw.png)
