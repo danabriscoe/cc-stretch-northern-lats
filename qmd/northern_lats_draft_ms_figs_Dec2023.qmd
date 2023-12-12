@@ -94,7 +94,21 @@ knitr::opts_chunk$set(
 
 ### Fig 3 \| September Turtle & 18°C Isotherm Position
 
-<span style="font-size:14pt"></span>
+<br>
+
+::: columns
+::: {.column width="5%"}
+[text]{style="color:transparent"}
+:::
+
+::: {.column width="95%"}
+<span style="font-size:16pt">
+Average SST Isotherm Location:<br>
+[**2006 - 2007 18°C (light purple)**]{style="color:#9D4EDD"};  [**19.5°C (dark purple)**]{style="color:#3C096C"} <br>
+[**2023 18°C (green)**]{style="color:#69b3a2"}
+</span>
+:::
+:::
 
 ![](images/draft_fig3_plot_avg_cc_and_18C_195C_isotherms_sept.png)
 
@@ -104,7 +118,7 @@ knitr::opts_chunk$set(
 
 <br>
 
-[**Model: Latitude of 18C isotherm (Mar or Sept) \~ Year**]{style="font-size: 16pt"}
+[**Model: Latitude of 18°C isotherm (Mar or Sept) \~ Year**]{style="font-size: 16pt"}
 
 
 ![March](images/gam_partial_plot_Mar_18C.png)
@@ -139,7 +153,7 @@ knitr::opts_chunk$set(
 
 ## Additional Figures 
 
-### Average Seasonal Position of 18C (March/Sept) between 1985 - 2023
+### Fig | Average Seasonal Position of 18°C (March/Sept) between 1985 - 2023
 
 <br>
 
@@ -151,11 +165,11 @@ knitr::opts_chunk$set(
 <br>
 <br>
 
-### Annual 18C Isotherm Position by ENSO 
+### Fig | Annual SST Anomaly & 18°C Isotherm Position in the NE Pacific, by ENSO 
 
 <br>
 
-[Location of 18C isotherm based on the September preceding an ENSO event <br> (ie Sept 1997 = 'El Nino' Sept)  *-- or-- * year of a marine heatwave (MHW, ie Sept 2015 = 'MHW')]{style="font-size: 16pt"}
+[Location of 18°C isotherm based on the September preceding an ENSO event <br> (ie Sept 1997 = 'El Nino' Sept)  *-- or-- * year of a marine heatwave (MHW, ie Sept 2015 = 'MHW')]{style="font-size: 16pt"}
 
 <span style="font-size:16pt">
 ENSO episodes were assigned using NOAA's
@@ -163,11 +177,15 @@ ENSO episodes were assigned using NOAA's
 </span>
 
 <br>
+
 <span style="font-size:16pt">
-For each of the figures below, the **given year's 18C SST isotherm location is in black**
-and [**the longterm 18C SST isotherm (1985-2023) location is noted in gray**]{style="color:#6C757D"}
+For each of the figures below: <br>
+**Black line: A given year's 18°C SST isotherm location** <br>
+[**Gray line: The longterm 18°C SST isotherm (1985-2023) location**]{style="color:#6C757D"} <br>
+The **black box is the spatial boundary (165°W to 140°W)** used to delineate the NE Pacific study area
 </span>
 
+<br>
 <br>
 
 
