@@ -75,9 +75,23 @@ knitr::opts_chunk$set(
 
 ### Fig 1 \| Average Turtle Latitude by Week
 
-<span style="font-size:14pt"></span>
+<br>
 
+[Main figure is shown in the first tab: **July-Sept**]{style="font-size: 15pt"} 
+
+<br>
+
+[Second figure is fyi to show how 2023 turtles are closing the gap and are now tracking much closer to historic lats since mid-Oct/Nov]{style="font-size: 15pt"}
+
+<br>
+
+::: {.panel-tabset}
+#### July-Sept
 ![](images/draft_fig1_plot_avg_turtle_lats_by_week_july_sept.png)
+
+#### July-Nov (extra)
+![](images/draft_fig1_plot_avg_turtle_lats_by_week_july_nov.png)
+:::
 
 
 
@@ -110,7 +124,7 @@ Average SST Isotherm Location:<br>
 :::
 :::
 
-![](images/draft_fig3_plot_avg_cc_and_18C_195C_isotherms_sept.png)
+![](images/draft_fig3_plot_avg_cc_and_18C_195C_isotherms_sept_by_enso.png)
 
 
 
@@ -162,6 +176,15 @@ Average SST Isotherm Location:<br>
 <br>
 
 ![](images/plot_mar_sept_avg_lats_no_turtles_18C_enso_conds.png)
+<br>
+<br>
+
+### Fig | Monthly 18C SST Isotherm Position by ENSO Year
+
+<br>
+
+![](images/plot_tzcf_enso_yrs.png)
+
 <br>
 <br>
 

@@ -303,6 +303,71 @@ grouped_by_year_tzcf_2006_2007 <- grouped_by_year_month %>%
     mutate(month_abb = month.abb[as.numeric(format(x, "%m"))]) 
 ```
 
+```{r 04-set-enso-conds}
+
+enso_yr <- data.frame(year = seq(1985,2023,1)) %>%
+    mutate(enso = case_when((year == 1986 | year == 1987 | year == 1991 | year == 1994 | year == 1997 | 
+                                 year == 2002 | year == 2004 | year == 2006 | year == 2009 | year == 2015 | year == 2018 | year == 2023) ~ "el_nino",
+                            
+                            (year == 1988 | year == 1995 | year == 1998 | year == 1999 | 
+                                 year == 2000 | 
+                                 # year == 2005 | 
+                                 year == 2007 | 
+                                 # year == 2008 | 
+                                 year == 2010 | year == 2011 | year == 2016 | year == 2017 | 
+                                 year == 2020 | year == 2021 | year == 2022) ~ "la_nina",
+                            
+                            (year == 2014 | year == 2015 | year == 2019 | year == 2020) ~ "mhw",    
+                            TRUE ~ "neutral"))
+
+
+
+sept_dte <- getZ(sept_sst_ras_stack)
+sept_y <- format(sept_dte, "%Y")
+
+```
+
+
+
+```{r 04-calc-avg-tzcf-by-enso}
+
+grouped_by_year_tzcf_enso_cond <- merge(grouped_by_year_month, enso_yr, by = "year")
+
+
+grouped_by_year_tzcf_enso_all <- grouped_by_year_tzcf_enso_cond %>%
+    # filter(enso == 'el_nino') %>%
+    group_by(enso, month, y) %>%
+     summarise(
+               z = mean(z),
+               z_min = min(z),
+               z_sd_lwr = mean(z)-sd(z),
+               z_sd_upr = mean(z)+sd(z),
+               z_max = max(z)) %>%
+    mutate(x = as.Date(paste0("2023-", month, "-01"))) %>%
+    mutate(year = lubridate::year(x),
+           month = lubridate::month(x),
+           day = lubridate::day(x)) %>%
+    mutate(month_abb = month.abb[as.numeric(format(x, "%m"))]) 
+
+
+
+# # el
+# grouped_by_year_tzcf_el <- grouped_by_year_tzcf_enso_all %>%
+#     filter(enso == 'el_nino') %>%
+#     group_by(month, y) %>%
+#      # summarise(
+#      #           z = mean(z)) %>%
+#     mutate(x = as.Date(paste0("1997-", month, "-01"))) %>%
+#     mutate(year = lubridate::year(x),
+#            month = lubridate::month(x),
+#            day = lubridate::day(x)) %>%
+#     mutate(month_abb = month.abb[as.numeric(format(x, "%m"))]) %>%
+#     mutate(enso = 'el_nino')
+
+```
+
+
+
 
 ```{r 04-set-ggplot-layers}
 
@@ -467,6 +532,57 @@ gg_tzcf_all_yrs <- ggplotly(p_tzcf_all_yrs, tooltip = c("text")) %>% layout(xaxi
 
 
 ```
+
+```{r 04-plot-tzcf-enso-yrs}
+
+p_tzcf_enso_yrs <- 
+ggplot() +
+    # Create additional contour layers (replace with your data and aesthetics)
+       # add_tzcf_indiv_contours(grouped_by_year_month %>% filter(year != 2023), col="Individual Years (1997-2022)") +
+    
+        add_tzcf_indiv_contours(grouped_by_year_tzcf_enso_all %>% filter(enso == 'el_nino'), col="El Nino") +
+        add_tzcf_indiv_contours(grouped_by_year_tzcf_enso_all %>% filter(enso == 'la_nina'), col="La Nina") +
+        add_tzcf_indiv_contours(grouped_by_year_tzcf_enso_all %>% filter(enso == 'neutral'), col="Neutral") +
+         add_tzcf_indiv_contours(grouped_by_year_tzcf_enso_all %>% filter(enso == 'mhw'), col="MHW") +
+    
+        # add_tzcf_contour_2023(col="2023") + 
+    #     geom_ribbon(data = grouped_by_year_tzcf_enso_all %>% filter(enso == 'el_nino'), 
+    #                 aes(x = x, ymin=z_min, ymax = z_max), linetype = 0, alpha = 0.5)+
+    #     # geom_ribbon(aes(ymin=xmin, ymax = xmax, fill = type), linetype = 0, alpha =0.5)+
+         # add_tzcf_indiv_contours(grouped_by_year_tzcf_enso_all %>% filter(enso == 'mhw'), col="MHW") +
+# 
+#     geom_contour(data=grouped_by_year_tzcf_enso_all %>% filter(enso == 'mhw'),
+#         aes(x=month, y=y, z = z_min, text = paste("Year: ", year), colour = "MHW"),
+#         linewidth = 1.25, breaks = c(18)) +
+    
+        add_baseplot_theme() +
+    
+    scale_y_continuous(breaks=seq(30, 45, 2)) +
+
+
+        scale_color_manual(
+        name = "18°C Isotherm\nAvg Latitude\n(165°W-140°W)\n ",
+        breaks = c("El Nino","La Nina", "Neutral", "MHW"),
+        values = c("El Nino" = "tomato",
+                   "La Nina" = "#4895EF",
+                   "Neutral" = "azure3", 
+                   "MHW" = "orange")#,  # Specify colors - don't know why this is backwards from labels....
+        # labels = c("Individual Years (1997-2022)", "2015","2023")  # Specify labels
+        )
+
+# save
+ggsave(filename = 'plot_tzcf_enso_yrs.png', plot = p_tzcf_enso_yrs + 
+               theme(plot.caption = element_text(hjust = 0)) +
+                labs(caption="Average location of 18°C SST isotherm by month (1985 - 2023)"), 
+       # height=4,
+       width=10,
+       bg='white',
+       path = '../figs/'
+       )
+
+```
+
+
 
 ```{r 04-plot-tzcf-pre-2010-post-yrs}
 p_tzcf_all_yrs_split <-  ggplot() +
