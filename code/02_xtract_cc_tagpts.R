@@ -38,7 +38,7 @@ ncpath = "/Users/briscoedk/dbriscoe@stanford.edu - Google Drive/My Drive/ncdf/np
 ### briefly change dir to not break other scripts ----
 # wd <- getwd()
 # setwd('./code/')
-source('../code/00_northern_lats_helper_functions.R')
+source('./code/00_northern_lats_helper_functions.R')
 
 source('../code/01_prep_turtle_data.R')
 
@@ -67,7 +67,7 @@ getDateRangeX <- function(inpts, ncIn){
 }
 
 ## PART 1: SET UP CC DATA SETS ----------------------------------------------------------
-
+### 1) Load DFs ------
 raw_df <- raw_data_cohort_1_w_names
 daily_df <- daily_avg_data_cohort_1
 
@@ -82,6 +82,7 @@ obsdata <- df_all %>%
     filter(lon >=-180 & lon <= 0) %>%
     filter(month == 9 | month == 3 | month == 8) 
 
+
 sst.lag = FALSE
 if(sst.lag){
 library(lubridate)
@@ -95,10 +96,21 @@ obsdata <- obsdata_sept_lag
 
 }
 
-
 ## for northern lats 165W to 140W long
 obsdata <- obsdata %>%
     filter(lon > -165 & lon < -140)
+
+
+### 2) Load alt file(s) ---------------------------------------------
+obsdata <- readRDS(file = "./data/interim/historic_1997_2013_subset_tags_178W_rm_uturn_septs.rds") %>%
+    dplyr::select(-c(dt, IDX, sept_num)) %>%
+    mutate(id = as.character(id)) %>%
+    rbind(.,daily_df) %>% 
+## for northern lats 165W to 140W long
+    filter(month == 9 | month == 3) %>%
+    filter(lon > -178 & lon < -140) 
+
+
 
 ## PART 2: XTRACTO LOCAL ----------------------------------------------------------
 
@@ -244,6 +256,7 @@ na_by_cols <- lapply(obsdata, function(x) sum(is.na(x)))
 
 
 ## Save RDS File ----
-saveRDS(obsdata, file = "./data/processed/xtracted_cc_sept_mar_aug_1997_2023.rds")
+# saveRDS(obsdata, file = "./data/processed/xtracted_cc_sept_mar_aug_1997_2023.rds")
+saveRDS(obsdata, file = "./data/processed/xtracted_cc_sept_mar_178W_140W_1997_2023.rds")
 
 # saveRDS(obsdata, file = "../data/processed/xtracted_cc_sept_sst_lag_aug_1997_2023.rds") # only for sept turtle position - aug sst lag
