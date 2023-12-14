@@ -212,8 +212,8 @@ print_ntags <- function(df, lon_bbox){
 }
 
 
-## 1) PLOT TAGS BBOX: 175W - 140W
-lons <- c(170, 250)
+## 1) PLOT TAGS BBOX: 175W - 140W (n=56 indivs)
+lons <- c(135, 250)
 lon_bbox <- c(make360(-175), make360(-140))
 
 subset_tags_175W <- subset_tags_by_lons(df=subset_tags, lon_rng = lons, lon_bbox = lon_bbox)
@@ -227,15 +227,15 @@ tracks_plot_list <-
     lapply(seq(1,n_tags), function(i) {
         
         g<- plot_tracks_along_longitudes(track_data = subset_tags_175W, id = ids[i], 
-                                         lon_range = '170E_140W_lon_box_175W', 
+                                         lon_range = '130E_140W_lon_box_175W', 
                                          lon_bbox = lon_bbox,
                                          .save_plot=TRUE) 
         
     })
 
 
-## 2) PLOT TAGS BBOX: 178W - 140W
-lons <- c(170, 250)
+## 2) PLOT TAGS BBOX: 178W - 140W (n=65 indivs)
+lons <- c(135, 250)
 lon_bbox <- c(make360(-178), make360(-140))
 
 subset_tags_178W <- subset_tags_by_lons(df=subset_tags, lon_rng = lons, lon_bbox = lon_bbox)
@@ -250,7 +250,7 @@ tracks_plot_list <-
     lapply(seq(1,n_tags), function(i) {
         
         g<- plot_tracks_along_longitudes(track_data = subset_tags_178W, id = ids[i], 
-                                         lon_range = '170E_140W_lon_box_178W', 
+                                         lon_range = '130E_140W_lon_box_178W', 
                                          lon_bbox = lon_bbox,
                                          .save_plot=TRUE) 
         
@@ -258,8 +258,26 @@ tracks_plot_list <-
 
 
 
+# save subset for extraction. First remove 2nd/3rd... septs (from manual inspection)
 
+subset_tags_178W_rm_uturn_septs <- subset_tags_178W %>%
+    filter(!(id == "19594_05" & year == "2007")) %>%
+    filter(!(id == "22534_05" & year == "2007")) %>%
+    filter(!(id == "23177_05" & year == "2007")) %>%
+    filter(!(id == "25317_05" & year == "2008")) %>%
+    filter(!(id == "25358_05" & year == "2007")) %>%
+    filter(!(id == "50136_05" & year == "2007" & year == "2008")) %>%
+    filter(!(id == "50141_05" & year == "2007")) %>%
+    filter(!(id == "57148_05" & year == "2007" & year == "2008")) %>%
+    filter(!(id == "57142_05" & year == "2006")) 
+    # filter(!(id == "23486_05" & year == "2007")) %> # decided to keep in
+    
+    # filter(!(id == "23082_05" & year == "2007")) %>% # decided to keep in
+    # filter(!(id == "23045_03" & year == "2006")) # pre-deleted above b/c scl cm > 40 cm (51.4 cm upon release)
+    
 
+## save for xtracto input
+saveRDS(subset_tags_178W_rm_uturn_septs, file = "./data/interim/historic_1997_2013_subset_tags_178W_rm_uturn_septs.rds")
 
 
 
