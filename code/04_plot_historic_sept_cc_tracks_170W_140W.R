@@ -19,32 +19,32 @@ daily_df <- daily_avg_data_cohort_1
 hist_df <-  historic_tags %>% wrangleHistDF()
 
 
-# just pull small sized turtles
-subset_tags_170W <-
-hist_df %>%
-    filter(lon360 >= 170 & lon360 <= 250) %>%
-    # filter(month == 9) %>%
-    # filter(year == 1998) %>%
-    filter(scl_cm <= 40) %>%
-    mutate(dt = date) 
-
-n_tags <- 
-    subset_tags_170W %>% 
-    pull(id) %>%
-    n_distinct()
-
-print(str_c('Number of tracks between -170W and -140W: ', n_tags))
-
-subset_tags_170W_sept <- subset_tags_170W %>% 
-    group_by(id) %>%
-    mutate(IDX = 1:n()) %>%
-    filter(month == 9) %>%
-    # summarise(sept_start_dt = min(date),
-    #           sept_end_dt = max(date)) %>%
-    mutate(sept_num = case_when((year == min(year)) ~ 1, 
-                                (year != min(year)) ~2,
-                                TRUE ~ 0)) %>%
-    filter(sept_num == 1)
+# # just pull small sized turtles
+# subset_tags_170W <-
+# hist_df %>%
+#     filter(lon360 >= 170 & lon360 <= 250) %>%
+#     # filter(month == 9) %>%
+#     # filter(year == 1998) %>%
+#     filter(scl_cm <= 40) %>%
+#     mutate(dt = date) 
+# 
+# n_tags <- 
+#     subset_tags_170W %>% 
+#     pull(id) %>%
+#     n_distinct()
+# 
+# print(str_c('Number of tracks between -170W and -140W: ', n_tags))
+# 
+# subset_tags_170W_sept <- subset_tags_170W %>% 
+#     group_by(id) %>%
+#     mutate(IDX = 1:n()) %>%
+#     filter(month == 9) %>%
+#     # summarise(sept_start_dt = min(date),
+#     #           sept_end_dt = max(date)) %>%
+#     mutate(sept_num = case_when((year == min(year)) ~ 1, 
+#                                 (year != min(year)) ~2,
+#                                 TRUE ~ 0)) %>%
+#     filter(sept_num == 1)
 
 ##
 # just pull small sized turtles
@@ -201,18 +201,19 @@ subset_tags_by_lons <- function(df, lon_rng = c(170, 250), lon_bbox = c(make360(
 }
 
 
-print_ntags <- function(df, lon_bbox){
+get_ntags <- function(df, lon_bbox){
     n_tags <- 
         df %>% 
         pull(id) %>%
         n_distinct()
     
-    return(print(str_c('Number of tracks: ', n_tags)))
+    print(str_c('Number of tracks: ', n_tags))
+    return(n_tags)
     
 }
 
 
-## 1) PLOT TAGS BBOX: 175W - 140W (n=56 indivs)
+## 1) PLOT TAGS BBOX: 175W - 140W (n=56 indivs)----
 lons <- c(135, 250)
 lon_bbox <- c(make360(-175), make360(-140))
 
@@ -221,7 +222,7 @@ subset_tags_175W <- subset_tags_by_lons(df=subset_tags, lon_rng = lons, lon_bbox
 ids <- set_ids(subset_tags_175W)
 
 # print n tags
-print_ntags(subset_tags_175W)
+n_tags <- get_ntags(subset_tags_175W)
 
 tracks_plot_list <- 
     lapply(seq(1,n_tags), function(i) {
@@ -234,16 +235,16 @@ tracks_plot_list <-
     })
 
 
-## 2) PLOT TAGS BBOX: 178W - 140W (n=65 indivs)
+## 2) PLOT TAGS BBOX: 178W - 140W (n=65 indivs) -----
 lons <- c(135, 250)
 lon_bbox <- c(make360(-178), make360(-140))
 
 subset_tags_178W <- subset_tags_by_lons(df=subset_tags, lon_rng = lons, lon_bbox = lon_bbox)
 
-ids <- set_ids(subset_tags_175W)
+ids <- set_ids(subset_tags_178W)
 
 # print n tags
-print_ntags(subset_tags_178W)
+n_tags <- get_ntags(subset_tags_178W)
 
 
 tracks_plot_list <- 
