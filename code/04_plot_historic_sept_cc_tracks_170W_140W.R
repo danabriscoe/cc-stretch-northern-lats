@@ -9,7 +9,6 @@ library(plotly)
 source('./code/00_northern_lats_helper_functions.R')
 source('./code/01_prep_turtle_data.R')
 
-
 ## Load Historic & 2023 Data
 
 raw_df <- raw_data_cohort_1_w_names
@@ -268,6 +267,36 @@ tracks_plot_list <-
         
     })
 
+
+## 3) PLOT TAGS BBOX -- 1st Septs only: 178W - 140W (n=65 indivs) -----
+lons <- c(135, 250)
+lon_bbox <- c(make360(-178), make360(-140))
+
+subset_tags_178W_1st_septs <- subset_tags_by_lons(df=subset_tags %>%
+                                            group_by(id) %>%
+                                            mutate(IDX = 1:n()) %>%
+                                            # filter(month == 9) %>%
+                                            mutate(sept_num = case_when((year == min(year)) ~ 1,
+                                                                        (year != min(year)) ~2,
+                                                                        TRUE ~ 0)) %>%
+                                            filter(sept_num == 1)
+                                            , lon_rng = lons, lon_bbox = lon_bbox)
+
+ids <- set_ids(subset_tags_178W_1st_septs)
+
+# print n tags
+n_tags <- get_ntags(subset_tags_178W_1st_septs)
+
+
+tracks_plot_list <- 
+    lapply(seq(1,n_tags), function(i) {
+        
+        g<- plot_tracks_along_longitudes(track_data = subset_tags_178W_1st_septs, id = ids[i], 
+                                         lon_range = '130E_140W_lon_box_178W_1st_septs_only', 
+                                         lon_bbox = lon_bbox,
+                                         .save_plot=TRUE) 
+        
+    })
 
 
 # save subset for extraction. First remove 2nd/3rd... septs (from manual inspection)
