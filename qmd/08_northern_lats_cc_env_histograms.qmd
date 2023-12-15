@@ -1,0 +1,420 @@
+---
+title: "northern_lats_cc_env_histograms"
+author: ""
+date: ""
+format:
+  html:
+    theme: flatly
+    fontsize: 20px
+    toc: true
+    toc-expand: true	
+    number-sections: false
+    toc-location: left
+    number-depth: 2
+    smooth-scroll: true
+    fig-cap-location: top
+filters:
+  - lightbox
+lightbox: 
+  match: auto
+  effect: zoom
+  desc-position: top
+---
+
+```{=html}
+<style>
+.main-container {
+    max-width: 1600px !important;
+    margin-left: 0;
+    margin-right: 1;
+}
+
+#quarto-document-content {
+  width: 950px;
+}
+
+</style>
+
+<style type="text/css">
+  body{
+  font-size: 12.5pt;
+}
+
+h1, .title, .subtitle {
+    <!-- font-family: Arial, sans-serif; -->
+    <!-- font-weight: 700; -->
+    color: black;
+}
+
+h2, h3 {
+  color: #447099;
+  font-weight: 500;
+}
+</style>
+
+```
+
+
+```{r 08-00-setup, include=FALSE}
+knitr::opts_chunk$set(
+    echo = FALSE,
+    eval = TRUE,
+    message = FALSE,
+    warning = FALSE,
+    dpi = 300#,
+    # fig.align = "center"
+    )
+
+# See Options: knitr::opts_chunk$get()
+```
+
+
+```{r load-obsdata-178W-140!}
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+obsdata <- readRDS(file = "../data/processed/xtracted_cc_sept_mar_178W_140W_1997_2023.rds") 
+
+obsdata_1st_septs <- obsdata %>%
+    group_by(id) %>%
+    mutate(IDX = 1:n()) %>%
+
+    mutate(sept_num = case_when((year == min(year)) ~ 1,
+                                (year != min(year)) ~2,
+                                TRUE ~ 0)) %>%
+    filter(sept_num == 1)
+
+```
+
+
+```{r func-get-sst-stats}
+
+get_n_turtles_yr <- function(df, lons){
+    
+    lons <- lons
+    tmp <- 
+        df %>%
+        filter(month == 9) %>% 
+        filter(lon >= lons[1] & lon <= lons[2])
+
+    yr_sst_mean <- tmp %>%
+        group_by(year) %>%
+        summarise(mean = mean(sst_dhw_5km_new_mean, na.rm=T))
+
+
+    ret <- tmp %>%
+        group_by(year) %>%
+        summarize(count=n_distinct(id)) %>%
+        spread(year, count) %>%
+         as.data.frame() 
+
+    row.names(ret) <- c("n Turtles")
+
+    print(ret, include.rownames = T)
+    
+}
+
+get_n_unique <- function(df, lons){
+    ret <- df %>%
+        filter(month == 9) %>% 
+        filter(lon >= lons[1] & lon <= lons[2]) %>%
+        group_by(group) %>%
+        summarize(count=n_distinct(id)) %>%
+        spread(group, count) 
+    return(ret)
+}
+
+get_summary_stats <- function(df, lons){
+    ret <- df %>%
+        filter(month == 9 | month == 3) %>% 
+        filter(lon >= lons[1] & lon <= lons[2]) %>%
+        group_by(group, month) %>%
+        summarize(sst_mean = round(mean(sst_dhw_5km_new_mean),2),
+                  chl_mean = round(mean(chl_mean, na.rm=T),2)) %>%
+         mutate(month = month.abb[month],
+                group = str_to_title(group)) %>%
+        arrange(month) %>%
+        arrange(desc(group)) %>%
+        as.data.frame()
+    colnames(ret) <- c("Group  ", "Month","Mean SST (°C)", "Mean Chla (mg/m3)")
+    return(ret)
+}
+    
+```
+
+<br>
+
+##### **A) Longitude: 178°W to 140°W**
+
+<br>
+
+::::::::::::::  {.columns}
+
+::: {.column width="55%"}
+
+**1st Septs only** (n = 65 unique turtles)
+
+```{r results=FALSE}
+get_n_unique(df = obsdata_1st_septs, lons = c(-178, -140))$historic 
+```
+
+
+```{r get-n-by-lon-178W-1st-septs}
+
+get_n_turtles_yr(df = obsdata_1st_septs, lons = c(-178, -140))
+
+```
+
+```{r get-sum-stats-178W-1st-septs}
+
+get_summary_stats(df = obsdata_1st_septs, lons = c(-178, -140))
+
+```
+
+:::
+
+::: {.column width="45%"}
+
+**Mult-year Septs**
+
+```{r results=FALSE}
+get_n_unique(df = obsdata, lons = c(-178, -140))$historic 
+```
+
+
+```{r get-n-by-lon-178W}
+
+get_n_turtles_yr(df = obsdata, lons = c(-178, -140))
+
+```
+
+```{r get-sum-stats-178W}
+
+get_summary_stats(df = obsdata, lons = c(-178, -140))
+
+```
+
+
+:::
+
+:::::::::::::: 
+
+
+<br>
+
+::: {.panel-tabset}
+
+#### Sept (SST by Group) 
+![](images/plot_facet_Sep_sst_histogram_by_group_178W_140W_1st_septs.png)
+
+#### Sept (SST by Year)
+![](images/plot_facet_Sep_sst_histogram_by_yr_178W_140W_1st_septs.png)
+
+#### Sept (Chl by Group) 
+![](images/plot_facet_Sep_chl_histogram_by_group_178W_140W_1st_septs.png)
+
+#### Sept (Chl by Year)
+![](images/plot_facet_Sep_chl_histogram_by_yr_178W_140W_1st_septs.png)
+
+:::
+
+::: {.panel-tabset}
+#### Mar (SST by Group) 
+![](images/plot_facet_Mar_sst_histogram_by_group_178W_140W_1st_septs.png)
+
+#### Mar (SST by Year)
+![](images/plot_facet_Mar_sst_histogram_by_yr_178W_140W_1st_septs.png)
+
+#### Mar (Chl by Group) 
+![](images/plot_facet_Mar_chl_histogram_by_group_178W_140W_1st_septs.png)
+
+#### Mar (Chl by Year)
+![](images/plot_facet_Mar_chl_histogram_by_yr_178W_140W_1st_septs.png)
+
+:::
+
+
+
+<br>
+
+#### **B) Longitude: 170°W to 140°W**
+
+<br>
+
+:::::::::::::: {.columns}
+::: {.column width="55%"}
+
+**1st Septs only** (n unique turtles = 28)
+
+```{r results=FALSE}
+get_n_unique(df = obsdata_1st_septs, lons = c(-170, -140))$historic 
+```
+
+
+```{r get-n-by-lon-170W-1st-septs}
+
+get_n_turtles_yr(df = obsdata_1st_septs, lons = c(-170, -140))
+
+```
+
+```{r get-sum-stats-170W-1st-septs}
+
+get_summary_stats(df = obsdata_1st_septs, lons = c(-170, -140))
+
+```
+
+:::
+::: {.column width="45%"}
+
+**Mult-year Septs** 
+
+```{r results=FALSE}
+get_n_unique(df = obsdata, lons = c(-170, -140))$historic 
+```
+
+
+```{r get-n-by-lon-170W}
+
+get_n_turtles_yr(df = obsdata, lons = c(-170, -140))
+
+```
+
+```{r get-sum-stats-170W}
+
+get_summary_stats(df = obsdata, lons = c(-170, -140))
+
+```
+
+
+:::
+::::::::::::::
+
+
+<br>
+
+::: {.panel-tabset}
+
+#### Sept (SST by Group) 
+![](images/plot_facet_Sep_sst_histogram_by_group_170W_140W_1st_septs.png)
+
+
+#### Sept (SST by Year) 
+![](images/plot_facet_Sep_sst_histogram_by_yr_170W_140W_1st_septs.png)
+
+#### Sept (Chl by Group) 
+![](images/plot_facet_Sep_chl_histogram_by_group_170W_140W_1st_septs.png)
+
+#### Sept (Chl by Year) 
+![](images/plot_facet_Sep_chl_histogram_by_yr_170W_140W_1st_septs.png)
+
+:::
+
+<br>
+
+
+::: {.panel-tabset}
+#### Mar (SST by Group) 
+![](images/plot_facet_Mar_sst_histogram_by_group_170W_140W_1st_septs.png)
+
+#### Mar (SST by Year)
+![](images/plot_facet_Mar_sst_histogram_by_yr_170W_140W_1st_septs.png)
+
+#### Mar (Chl by Group) 
+![](images/plot_facet_Mar_chl_histogram_by_group_170W_140W_1st_septs.png)
+
+#### Mar (Chl by Year)
+![](images/plot_facet_Mar_chl_histogram_by_yr_170W_140W_1st_septs.png)
+
+:::
+
+<br>
+
+
+<br>
+
+##### **C) Longitude: 165°W to 140°W** 
+
+<br>
+
+:::::::::::::: {.columns}
+::: {.column width="55%"}
+
+**1st Septs only** (n unique turtles = 17)
+
+```{r results=FALSE}
+get_n_unique(df = obsdata_1st_septs, lons = c(-165, -140))$historic 
+```
+
+
+```{r get-n-by-lon-165W-1st-septs}
+
+get_n_turtles_yr(df = obsdata_1st_septs, lons = c(-165, -140))
+
+```
+
+```{r get-sum-stats-165W-1st-septs}
+
+get_summary_stats(df = obsdata_1st_septs, lons = c(-165, -140))
+
+```
+
+:::
+::: {.column width="45%"}
+
+**Mult-year Septs** 
+
+```{r results=FALSE}
+get_n_unique(df = obsdata, lons = c(-165, -140))$historic 
+```
+
+
+```{r get-n-by-lon-165W}
+
+get_n_turtles_yr(df = obsdata, lons = c(-165, -140))
+
+```
+
+```{r get-sum-stats-165W}
+
+get_summary_stats(df = obsdata, lons = c(-165, -140))
+
+```
+
+
+:::
+::::::::::::::
+
+
+::: {.panel-tabset}
+
+#### Sept (SST by Group) 
+![](images/plot_facet_Sep_sst_histogram_by_group_165W_140W_1st_septs.png)
+
+#### Sept (SST by Year) 
+![](images/plot_facet_Sep_sst_histogram_by_yr_165W_140W_1st_septs.png)
+
+#### Sept (Chl by Group) 
+![](images/plot_facet_Sep_chl_histogram_by_group_165W_140W_1st_septs.png)
+
+#### Sept (Chl by Year) 
+![](images/plot_facet_Sep_chl_histogram_by_yr_165W_140W_1st_septs.png)
+
+:::
+
+
+::: {.panel-tabset}
+#### Mar (SST by Group) 
+![](images/plot_facet_Mar_sst_histogram_by_group_165W_140W_1st_septs.png)
+
+#### Mar (SST by Year) 
+![](images/plot_facet_Mar_sst_histogram_by_yr_165W_140W_1st_septs.png)
+
+#### Mar (Chl by Group) 
+![](images/plot_facet_Mar_chl_histogram_by_group_165W_140W_1st_septs.png)
+
+#### Mar (Chl by Year) 
+![](images/plot_facet_Mar_chl_histogram_by_yr_165W_140W_1st_septs.png)
+
+:::
+
+

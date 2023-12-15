@@ -24,8 +24,26 @@ lons <- c(-165, -140)
 
 mons = c(9, 3)
 envs = c('sst', 'chl')
+only_1st_septs = TRUE
 
 
+if(only_1st_septs){
+# pull only first septs of historic data
+obsdata_1st_septs <- obsdata %>%
+    group_by(id) %>%
+    mutate(IDX = 1:n()) %>%
+    # filter(month == 9) %>%
+    # summarise(sept_start_dt = min(date),
+    #           sept_end_dt = max(date)) %>%
+    mutate(sept_num = case_when((year == min(year)) ~ 1,
+                                (year != min(year)) ~2,
+                                TRUE ~ 0)) %>%
+    filter(sept_num == 1)
+
+    obsdata <- obsdata_1st_septs
+}
+
+## RUN PLOTS ------
 for(m in mons){
 
     for(env in envs){    
@@ -79,7 +97,13 @@ for(m in mons){
             facet_wrap(.~year, , scales = "free")
         
     # save
-    ggsave(filename = str_c('plot_facet_',month.abb[m],'_', env,'_histogram_by_yr_',lons[1]*-1,'W_',lons[2]*-1,'W.png'), plot = p_facet_var_histogram_by_yr, 
+    if(only_1st_septs){
+        fname_grp <- str_c('plot_facet_',month.abb[m],'_', env,'_histogram_by_yr_',lons[1]*-1,'W_',lons[2]*-1,'W_1st_septs.png')
+    } else {
+        fname_grp <- str_c('plot_facet_',month.abb[m],'_', env,'_histogram_by_yr_',lons[1]*-1,'W_',lons[2]*-1,'W.png')
+    }
+    
+    ggsave(filename = fname_grp, plot = p_facet_var_histogram_by_yr, 
            # height=4,
            width=10,
            bg='white',
@@ -113,8 +137,16 @@ for(m in mons){
              caption = "Vertical dashed line (red) represents group mean value") +
         facet_wrap(.~group, , scales = "free")
     
+   
     # save
-    ggsave(filename = str_c('plot_facet_',month.abb[m],'_', env, '_histogram_by_group_',lons[1]*-1,'W_',lons[2]*-1,'W.png'), plot = p_facet_var_histogram_by_group, 
+    if(only_1st_septs){
+        fname_yr <- str_c('plot_facet_',month.abb[m],'_', env, '_histogram_by_group_',lons[1]*-1,'W_',lons[2]*-1,'W_1st_septs.png')
+    } else {
+        fname_yr <- str_c('plot_facet_',month.abb[m],'_', env, '_histogram_by_group_',lons[1]*-1,'W_',lons[2]*-1,'W.png')
+    }
+    
+    # save
+    ggsave(filename = fname_yr, plot = p_facet_var_histogram_by_group, 
            # height=4,
            width=13,
            bg='white',
@@ -123,6 +155,8 @@ for(m in mons){
 
     } # end env
 } # end mon
+
+
 
 ## GAMS -------
 
