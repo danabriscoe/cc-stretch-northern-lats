@@ -95,16 +95,207 @@ knitr::opts_chunk$set(
 
 
 
-### Fig 2 \| Density Histograms
+### Fig 2 \| Turtle-Env Histograms
 
-<span style="font-size:14pt">
-<!-- September Turtle-Env Preference: -->
-</span>
 
-![September Turtle-SST Preference](images/draft_fig2_p_density_hist_cc_sst_2006_2007_2023.png)
+[September & March SSTs for Historic (1997 - 2012) vs 'Cohort 1' (2023)]{style="font-size: 18pt"}
 
-![September Turtle-Chla Preference](images/draft_fig2b_p_density_hist_cc_chl_2006_2007_2023.png)
 
+```{r load-obsdata-178W-140!}
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+obsdata <- readRDS(file = "../data/processed/xtracted_cc_sept_mar_178W_140W_1997_2023.rds")
+
+```
+
+```{r func-get-sst-stats}
+
+get_n_turtles_yr <- function(df, lons){
+    
+    lons <- lons
+    tmp <- 
+        df %>%
+        filter(month == 9) %>% 
+        filter(lon >= lons[1] & lon <= lons[2])
+
+    yr_sst_mean <- tmp %>%
+        group_by(year) %>%
+        summarise(mean = mean(sst_dhw_5km_new_mean, na.rm=T))
+
+
+    ret <- tmp %>%
+        group_by(year) %>%
+        summarize(count=n_distinct(id)) %>%
+        spread(year, count) %>%
+         as.data.frame() 
+
+    row.names(ret) <- c("n Turtles")
+
+    print(ret, include.rownames = T)
+    
+}
+
+get_n_unique <- function(df, lons){
+    ret <- df %>%
+        filter(month == 9) %>% 
+        filter(lon >= lons[1] & lon <= lons[2]) %>%
+        group_by(group) %>%
+        summarize(count=n_distinct(id)) %>%
+        spread(group, count) 
+    return(ret)
+}
+
+get_summary_stats <- function(df, lons){
+    ret <- df %>%
+        filter(month == 9 | month == 3) %>% 
+        filter(lon >= lons[1] & lon <= lons[2]) %>%
+        group_by(group, month) %>%
+        summarize(sst_mean = round(mean(sst_dhw_5km_new_mean),2),
+                  chl_mean = round(mean(chl_mean, na.rm=T),2)) %>%
+         mutate(month = month.abb[month],
+                group = str_to_title(group)) %>%
+        arrange(month) %>%
+        arrange(desc(group)) %>%
+        as.data.frame()
+    colnames(ret) <- c("Group  ", "Month","Mean SST (°C)", "Mean Chla (mg/m3)")
+    return(ret)
+}
+    
+```
+
+<br>
+
+##### **A) Longitude: 178°W to 140°W** (n = 65 unique turtles)
+
+<br>
+
+```{r results=FALSE}
+get_n_unique(df = obsdata, lons = c(-178, -140))$historic 
+```
+
+
+```{r get-n-by-lon-178W}
+
+get_n_turtles_yr(df = obsdata, lons = c(-178, -140))
+
+```
+
+```{r get-sum-stats-178W}
+
+get_summary_stats(df = obsdata, lons = c(-178, -140))
+
+```
+
+<br>
+
+::: {.panel-tabset}
+
+#### Sept (SST by Group) 
+![](images/plot_facet_Sep_sst_histogram_by_group_178W_140W.png)
+
+#### Sept (SST by Year)
+![](images/plot_facet_Sep_sst_histogram_by_yr_178W_140W.png)
+
+#### Sept (Chl by Group) 
+![](images/plot_facet_Sep_chl_histogram_by_group_178W_140W.png)
+
+#### Sept (Chl by Year)
+![](images/plot_facet_Sep_chl_histogram_by_yr_178W_140W.png)
+
+:::
+
+<br>
+
+#### **B) Longitude: 170°W to 140°W** (n unique turtles = 43)
+
+<br>
+
+```{r results=FALSE}
+get_n_unique(df = obsdata, lons = c(-170, -140))$historic 
+```
+
+```{r subet-by-lon-170W}
+
+get_n_turtles_yr(df = obsdata, lons = c(-170, -140))
+
+```
+
+```{r get-sum-stats-170W}
+
+get_summary_stats(df = obsdata, lons = c(-170, -140))
+
+```
+
+<br>
+
+::: {.panel-tabset}
+
+#### Sept (SST by Group) 
+![](images/plot_facet_Sep_sst_histogram_by_group_170W_140W.png)
+
+
+#### Sept (SST by Year) 
+![](images/plot_facet_Sep_sst_histogram_by_yr_170W_140W.png)
+
+#### Sept (Chl by Group) 
+![](images/plot_facet_Sep_chl_histogram_by_group_170W_140W.png)
+
+#### Sept (Chl by Year) 
+![](images/plot_facet_Sep_chl_histogram_by_yr_170W_140W.png)
+
+:::
+
+
+<br>
+
+##### **C) Longitude: 165°W to 140°W** (n unique turtles = 32)
+
+<br>
+
+```{r results=FALSE}
+get_n_unique(df = obsdata, lons = c(-165, -140))$historic 
+```
+
+```{r get-n-by-lon-165W}
+
+get_n_turtles_yr(df = obsdata, lons = c(-165, -140))
+
+```
+
+```{r get-sum-stats-165W}
+
+get_summary_stats(df = obsdata, lons = c(-165, -140))
+
+```
+
+<br>
+
+::: {.panel-tabset}
+
+
+```{r subet-by-lon-165W}
+
+get_n_turtles_yr(df = obsdata, lons = c(-165, -140))
+
+```
+
+
+#### Sept (SST by Group) 
+![](images/plot_facet_Sep_sst_histogram_by_group_165W_140W.png)
+
+#### Sept (SST by Year) 
+![](images/plot_facet_Sep_sst_histogram_by_yr_165W_140W.png)
+
+#### Sept (Chl by Group) 
+![](images/plot_facet_Sep_chl_histogram_by_group_165W_140W.png)
+
+#### Sept (Chl by Year) 
+![](images/plot_facet_Sep_chl_histogram_by_yr_165W_140W.png)
+
+:::
+
+<br>
 
 ### Fig 3 \| September Turtle & 18°C Isotherm Position
 
@@ -118,8 +309,11 @@ knitr::opts_chunk$set(
 ::: {.column width="95%"}
 <span style="font-size:16pt">
 Average SST Isotherm Location:<br>
-[**2006 - 2007 18°C (light purple)**]{style="color:#9D4EDD"};  [**19.5°C (dark purple)**]{style="color:#3C096C"} <br>
-[**2023 18°C (green)**]{style="color:#69b3a2"}
+[**2006 - 2007 18°C (light purple)**]{style="color:#9D4EDD"} <br>
+[**19.5°C (dark purple)**]{style="color:#3C096C"} <br>
+[**2023 18°C (light green)**]{style="color:#69b3a2"} <br>
+[**2023 19.5°C (dark green)**]{style="color:#2D6D5E"}
+
 </span>
 :::
 :::
@@ -154,8 +348,7 @@ Average SST Isotherm Location:<br>
 ::: {.column width="92%"}
 <span style="font-size:14pt">
 **Black Line: 2020 - 2023 Average** <br>
-[**Medium Gray Line: 1990 - 1994 Average**]{style="color:#6C757D"} <br>
-[**Light Gray Line: 1985 - 1995 Average**]{style="color:#ADB5BD"} <br>
+[**Light Gray Line: 1990 - 1993 Average**]{style="color:#ADB5BD"} <br>
 </span>
 :::
 :::

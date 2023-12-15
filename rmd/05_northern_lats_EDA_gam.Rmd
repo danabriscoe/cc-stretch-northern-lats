@@ -563,6 +563,83 @@ ggsave(filename = 'plot_mar_sept_avg_lats_no_turtles_18C.png', plot = p,
        )
 ```
 
+```{r 05-set-enso-conds}
+
+enso_yr <- data.frame(year = seq(1985,2023,1)) %>%
+    mutate(enso = case_when((year == 1986 | year == 1987 | year == 1991 | year == 1994 | year == 1997 | 
+                                 year == 2002 | year == 2004 | year == 2006 | year == 2009 | year == 2015 | year == 2018 | year == 2023) ~ "el_nino",
+                            
+                            (year == 1988 | year == 1995 | year == 1998 | year == 1999 | 
+                                 year == 2000 | 
+                                 # year == 2005 | 
+                                 year == 2007 | 
+                                 # year == 2008 | 
+                                 year == 2010 | year == 2011 | year == 2016 | year == 2017 | 
+                                 year == 2020 | year == 2021 | year == 2022) ~ "la_nina",
+                            
+                            (year == 2014 | year == 2015 | year == 2019 | year == 2020) ~ "mhw",    
+                            TRUE ~ "neutral"))
+
+
+
+sept_dte <- getZ(sept_sst_ras_stack)
+sept_y <- format(sept_dte, "%Y")
+
+```
+
+```{r 05-gg-plot-sum-stats-avg-lats-18C-no-cc-year-mar-sept-with-enso-conds}
+
+df_list = df_sum_stats_lat_year_list
+
+p_enso <- ggplot() +
+
+    geom_point(data = df_list[['mean']] %>% filter(month == 3), aes(x=year, y=y, col='March 18°C Isotherm',
+                      text = str_c("Year: ", year, "\nLat: ", y, "°N", "\nStat: Mean")), size=4) + 
+    geom_point(data = df_list[['mean']] %>% filter(month == 9), aes(x=year, y=y, col='Sept 18°C Isotherm',
+                      text = str_c("Year: ", year, "\nLat: ", y, "°N", "\nStat: Mean")), size=4) + 
+
+       scale_color_manual(
+        name = glue("Average Latitude\nof 18°C isotherm\n\n"),
+        breaks = c('March 18°C Isotherm','Sept 18°C Isotherm'),
+        values = c('March 18°C Isotherm'="#F48C06",'Sept 18°C Isotherm'="#9D0208")#,  # Specify colors - don't know why this is backwards from labels....
+        # labels = c("1997-2022", "2023")  # Specify labels
+        ) + 
+    geom_line(data = df_list[['mean']] %>% filter(month == 3), aes(x=year, y=y), col='#F48C06') +
+    geom_line(data = df_list[['mean']] %>% filter(month == 9), aes(x=year, y=y), col='#9D0208') +
+
+    # el yrs
+    geom_rect(data=enso_yr %>% filter(enso == 'el_nino'), aes(xmin=year-.5, xmax=year+.5, ymin=29, ymax=45, 
+              fill = "El Nino"), color = NA, alpha = .3) +
+    # la yrs
+    geom_rect(data=enso_yr %>% filter(enso == 'la_nina'), aes(xmin=year-.5, xmax=year+.5, ymin=29, ymax=45, 
+              fill = "La Nina"), color = NA, alpha = .3) +
+    
+     # mhw yrs
+    geom_rect(data=enso_yr %>% filter(enso == 'mhw'), aes(xmin=year-.5, xmax=year+.5, ymin=29, ymax=45, 
+              fill = "MHW"), color = NA, alpha = .3) +
+    
+    scale_fill_manual('ENSO/MWH\nYear',
+                      values = c('red', 'dodgerblue', 'orange'),  
+                      guide = guide_legend(override.aes = list(alpha = 1))) +
+    
+    scale_x_continuous(breaks=seq(1985,2023, 2)) +
+    scale_y_continuous(breaks=seq(29,46,1)) +
+    labs(x = "Year", y = "Average Latitude (°N)") + 
+    theme_minimal() +
+    theme(legend.position="top", legend.title = element_text(hjust=0.5)) +
+    guides(fill=guide_legend(nrow=2,byrow=TRUE))
+
+### Save plot ----
+ggsave(filename = 'plot_mar_sept_avg_lats_no_turtles_18C_enso_conds.png', plot = p_enso, 
+       # height=9,
+       width=13, bg='white',
+       path = '../figs/'
+       )
+
+```
+
+
+
 ```{r 05-fit-gam-18deg-lat-by-year- sept}
 
 # df = min_18deg_lat_by_year %>% filter(month == 9)
@@ -766,7 +843,7 @@ mean_18deg_lat_by_year_diff_sept_mar <-
     mean_18deg_lat_by_year %>% filter(month == 9 | month == 3) %>%
     ungroup() %>%
     dplyr::select(c("year", "month_abb", "mean_18degC_lat")) %>%
-    filter(year > 1997) %>% # fyi, there is no march '97, so remove full year
+    # filter(year > 1997) %>% # fyi, there is no march '97, so remove full year
     spread(month_abb,mean_18degC_lat) %>%
     mutate(y = Sep - Mar)
 
@@ -788,11 +865,19 @@ ggplot(aes(x=year, y=y)) +
     geom_line(fill = "steelblue", colour = "steelblue", alpha = 0.9, lwd =2) +
     geom_point(fill = "steelblue", colour = "steelblue", alpha = 0.6, size=3) + 
 
-    scale_x_continuous(breaks=seq(1998,2023,2)) + 
-    labs(x='Year', y = 'Difference (°Latitude)') +
+    scale_x_continuous(breaks=seq(1985,2023,2)) + 
+    labs(x='Year', y = 'Sept - Mar Difference (°Latitude)') +
     
   geom_smooth(method="lm", fit = y ~ x,) 
 
+
+# save
+ggsave(filename = 'draft_fig4x_plot_mean_18deg_lat_by_year_diff_sept_mar_lm.png', plot = p_mean_18deg_lat_by_year_diff_sept_mar + labs(subtitle=""), 
+       # height=4,
+       width=11,
+       bg='white',
+       path = '../figs/'
+       )
 
 ```
 
