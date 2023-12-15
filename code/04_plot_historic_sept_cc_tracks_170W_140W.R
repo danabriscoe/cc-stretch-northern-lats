@@ -107,6 +107,16 @@ plot_tracks_along_longitudes <- function(track_data, id, lon_range = '170E_140W'
                                         # colour = id, 
                                         text = paste0('TagID: ', id, 
                                          '\n', 'Date: ', dt)), colour = 'coral3')) +
+        
+        suppressWarnings(geom_point(data=track_tmp %>% 
+                                        filter(id == (!!id_expr)) %>%
+                                        
+                                        # filter(dt >= min(lon_tag$dt) & dt <= max(lon_tag$dt)), 
+                                        filter(month == 3), 
+                                    aes(x=lon, y=lat, 
+                                        # colour = id, 
+                                        text = paste0('TagID: ', id, 
+                                                      '\n', 'Date: ', dt)), colour = 'dodgerblue')) +
         geom_point(data = track_tmp %>% 
                        filter(id == (!!id_expr)) %>% 
                        filter(date == min(date)),
@@ -129,6 +139,7 @@ plot_tracks_along_longitudes <- function(track_data, id, lon_range = '170E_140W'
         theme(plot.caption = element_text(hjust = 0)) +
         labs(subtitle = str_c('Tag ID: ', id),
             caption = str_c('Sept Locations (red)',
+                            '\nMarch Locations (blue)\n',
                             '\nLongitude Box (black): ', make180(lon_bbox[1])*-1,'°W - ',make180(lon_bbox[2])*-1,'°W',
                 
                               '\n\nStart Date: ', track_tmp %>% 
@@ -253,7 +264,7 @@ tracks_plot_list <-
         g<- plot_tracks_along_longitudes(track_data = subset_tags_178W, id = ids[i], 
                                          lon_range = '130E_140W_lon_box_178W', 
                                          lon_bbox = lon_bbox,
-                                         .save_plot=F) 
+                                         .save_plot=TRUE) 
         
     })
 
