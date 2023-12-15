@@ -253,7 +253,7 @@ tracks_plot_list <-
         g<- plot_tracks_along_longitudes(track_data = subset_tags_178W, id = ids[i], 
                                          lon_range = '130E_140W_lon_box_178W', 
                                          lon_bbox = lon_bbox,
-                                         .save_plot=TRUE) 
+                                         .save_plot=F) 
         
     })
 
@@ -267,9 +267,9 @@ subset_tags_178W_rm_uturn_septs <- subset_tags_178W %>%
     filter(!(id == "23177_05" & year == "2007")) %>%
     filter(!(id == "25317_05" & year == "2008")) %>%
     filter(!(id == "25358_05" & year == "2007")) %>%
-    filter(!(id == "50136_05" & year == "2007" & year == "2008")) %>%
+    filter(!(id == "50136_05" & year == "2007" | year == "2008")) %>%
     filter(!(id == "50141_05" & year == "2007")) %>%
-    filter(!(id == "57148_05" & year == "2007" & year == "2008")) %>%
+    filter(!(id == "57148_05" & year == "2007" | year == "2008")) %>%
     filter(!(id == "57142_05" & year == "2006")) 
     # filter(!(id == "23486_05" & year == "2007")) %> # decided to keep in
     
