@@ -613,6 +613,38 @@ unique(obsdata_165W_mar_septs_augs$year[obsdata_165W_mar_septs_augs$month == 8 &
 load(file = "../data/interim/03_northern_lats_EDA_interim_data.RData")
 ```
 
+```{r}
+params <- tibble(
+    eov = "sst",
+    timestep = "month",
+    # min_dt = '1997-07-16',
+    min_dt = '1985-01-16',
+    max_dt = '2023-10-16')
+
+bbox <- c(-170, -110, 20, 50)
+e <- extent(bbox[1], bbox[2], bbox[3], bbox[4])
+
+
+nc_path = "/Users/briscoedk/dbriscoe@stanford.edu - Google Drive/My Drive/ncdf/npac"
+
+sst_ncs <- list.files(nc_path, pattern = str_c(params$eov, "_"), full.names=T) %>%
+    .[grep(params$timestep, .)]
+
+
+sst_fdates <- sst_ncs %>% 
+    str_split(., "_") %>%
+    purrr::map_chr(~ pluck(., 6)) %>%
+    substr(., start=1, stop=10)
+       
+
+sst_ras_stack <- #ncs[fdates >= params$min_dt & fdates <= params$max_dt] %>%
+    sst_ncs %>%
+    raster::stack(.) %>%
+    crop(., e)
+
+```
+
+
 ```{r 06-sst-monthly-rast-subsets}
 sst_ras_stack_monthlies <- sst_ras_stack # create a copy - don't overwrite this obj
 
@@ -640,6 +672,9 @@ ras_augs = subset(sst_ras_stack_monthlies, idx$id[idx$month == 8])
 
 
 ```{r 06-plot-cc-septs-monthly-sst-by-year-1997-2012}
+
+## FYI, HAVE TO HAVE 03RMD DATASET 0 thru line 209 LOADED B/C of RASTER TMP FILES 
+
 yrs <- seq(1997,2023)
 
 hist_yrs_idx <- which(yrs <= 2012)
@@ -711,6 +746,86 @@ ggsave(filename = str_c('plot_',month.name[mon_idx],'_turtles_sst_18C_195C_',yrs
 }
 
 ```
+
+<!-- ```{r 06-plot-cc-1st-septs-monthly-sst-by-year-1997-2012-178W} -->
+
+<!-- ## FYI, HAVE TO HAVE 03RMD DATASET LOADED B/C of RASTER TMP FILES -->
+
+<!-- obsdata_1st_septs_next_mars <- readRDS(file = "../data/processed/xtracted_cc_sept_mar_178W_140W_1997_2023.rds") -->
+
+<!-- yrs <- seq(1997,2023) -->
+
+<!-- hist_yrs_idx <- which(yrs <= 2012) -->
+
+<!-- zCuts <- seq(10,32,1) -->
+
+<!-- # sept loop -->
+<!-- plot_list <- list() -->
+
+<!-- mon_idx = 9 -->
+<!-- for(i in seq_along(hist_yrs_idx)){ -->
+<!--     # print(yrs[i]) -->
+
+<!--     tmp_cc <-  -->
+<!--         # obsdata_165W_mar_septs %>% -->
+<!--         obsdata_1st_septs_next_mars %>%  -->
+<!--         filter(month == mon_idx) %>% -->
+<!--         filter(year == yrs[i])  -->
+
+<!--     tmp_ras <- subset(ras_septs, i) -->
+<!--                 #subset(ras_augs, i) -->
+
+<!--     p_1st_sept_next_mars <- ggplot() + -->
+<!--     # add sst sept all-time clim layer -->
+<!--     geom_raster(data = tmp_ras %>% ras2df(),  -->
+<!--                 # aes(x = lon, y = lat, fill = val, interpolate = TRUE)) + -->
+<!--                 aes(x = lon, y = lat, fill = cut(val, zCuts), interpolate = TRUE)) +  -->
+<!--     # scale_fill_gradientn(colours = sst_cpal[6:length(sst_cpal)], -->
+<!--                          # breaks=seq(8,32,2), -->
+<!--                          # limits = c(8,32),  -->
+<!--     # scale_fill_gradientn(colours = sst_cpal[2:length(sst_cpal)], -->
+<!--     #                      breaks=seq(4,30,2), -->
+<!--     #                      limits = c(3,32),  -->
+<!--     #  -->
+<!--     #                      na.value="transparent", -->
+<!--     #                      name = "SST (°C) \n") + -->
+
+<!--                 scale_fill_manual("SST", na.translate = F, -->
+<!--                     values = sst_cpal[7:length(sst_cpal)], na.value="transparent", -->
+<!--                       labels = seq(10,32,1) -->
+<!--                       ) +    -->
+<!--     # add baselayers -->
+<!--     add_baseplot(bbox) + -->
+<!--     add_contour_lines(df=tmp_ras %>% ras2df(), contours=c(18), col='gray80') +  -->
+<!--         add_contour_lines(df=tmp_ras %>% ras2df(), contours=c(19.5), col='black') +  -->
+
+<!--      guides(fill = guide_legend(title = 'SST (°C)', ncol=1, reverse=T)) +  -->
+
+<!--     add_turtle_pts(df=tmp_cc, col="Turtle Location", size=2) + -->
+<!--         scale_color_manual("Turtle Location",  -->
+<!--                   breaks = c("Turtle Location"), -->
+<!--                   values = c("Turtle Location"="#6D4C94")) + -->
+
+<!--     labs(subtitle = str_c(month.name[mon_idx], " ", yrs[i]), -->
+<!--          caption = str_c("Isotherms: Sept 18°C (gray line), Sept 19.5°C (black line); Turtles (n=", length(unique(tmp_cc$id)),")")) +  -->
+<!--          xlab("\nLongitude") + -->
+<!--          ylab("Latitude\n") -->
+
+
+<!--     plot_list[[i]] <- p -->
+
+<!--     ### Save plot ---- -->
+<!-- ggsave(filename = str_c('plot_',month.name[mon_idx],'_turtles_sst_18C_195C_',yrs[i],'_discrete_cbar_1st_sept_next_mars_only.png'), plot = p_1st_sept_next_mars,  -->
+<!--        # height=9, -->
+<!--        width=13, bg='white', -->
+<!--        path = '../figs/' -->
+<!--        ) -->
+
+<!-- } -->
+
+<!-- ``` -->
+
+
 
 ```{r 06-plot-cc-septs-monthly-sst-by-year-2023-only}
 yrs <- seq(1997,2023)

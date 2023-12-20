@@ -14,6 +14,7 @@ format:
     number-depth: 2
     smooth-scroll: true
     fig-cap-location: top
+    scrollable: true
 filters:
   - lightbox
 lightbox: 
@@ -52,6 +53,7 @@ h2, h3 {
   color: #447099;
   font-weight: 500;
 }
+
 </style>
 
 ```
@@ -93,19 +95,33 @@ knitr::opts_chunk$set(
 ![](images/draft_fig1_plot_avg_turtle_lats_by_week_july_nov.png)
 :::
 
+<br>
 
+### Table \| SCL (cm)
 
-### Fig 2 \| Turtle-Env Histograms
+<br>
 
-
-[September & March SSTs for Historic (1997 - 2012) vs 'Cohort 1' (2023)]{style="font-size: 18pt"}
+[SCL Size Distribution ('Historic' 1997 - 2012 vs 'Cohort 1' (2023)]{style="font-size: 18pt"}
 
 
 {{< include 08_northern_lats_cc_env_histograms.qmd >}}
 
 <br>
 
+
+<!-- ### Fig 2 \| Turtle-Env Histograms -->
+
+<!-- <br> -->
+
+<!-- [September & March SSTs for Historic (1997 - 2012) vs 'Cohort 1' (2023)]{style="font-size: 18pt"} -->
+
+<!-- <br> -->
+
+
 ### Fig 3 \| September Turtle & 18°C Isotherm Position
+
+<br>
+[Mean Lat/Long for Multi-year September Turtles]{style="font-size: 18pt"}
 
 <br>
 
@@ -127,21 +143,217 @@ Average SST Isotherm Location:<br>
 :::
 
 ![](images/draft_fig3_plot_avg_cc_and_18C_195C_isotherms_sept_by_enso.png)
+<br>
 
+[Mean Lat/Long for '1st September' Turtles]{style="font-size: 18pt"}
+
+<br>
+
+::: columns
+::: {.column width="5%"}
+[text]{style="color:transparent"}
+:::
+
+::: {.column width="95%"}
+<span style="font-size:16pt">
+Average SST Isotherm Location:<br>
+[**2005 18°C (light purple, n=31)**]{style="color:#9D4EDD"} <br>
+[**2023 18°C (light green, n=24)**]{style="color:#69b3a2"} <br>
+
+</span>
+:::
+:::
+
+
+![](images/draft_fig3_alt_plot_avg_cc_and_18C_1st_septs_isotherms_sept.png)
+
+
+<br>
+
+[Sept & March Mean Lat/Long for Turtles (1997-2012, 2023)]{style="font-size: 18pt"}
+
+<br>
+
+::: columns
+::: {.column width="5%"}
+[text]{style="color:transparent"}
+:::
+
+::: {.column width="95%"}
+<span style="font-size:16pt">
+Average Turtle Location between 178°W and 140°W:<br>
+[**March 1997 - 2012 (blue)**]{style="color:#0077B6"} <br>
+[**September 1997 - 2012 (red)**]{style="color:#9e2a2b"} <br>
+[**September 2023 (green)**]{style="color:#69b3a2"} <br>
+
+</span>
+:::
+:::
+
+<br>
+
+![](images/draft_fig3_alt_plot_avg_cc_1997_2012_2023.png)
+
+<br>
 
 
 ### Fig 4 \| September & March GAMs
 
 <br>
 
-[**Model: Latitude of 18°C isotherm (Mar or Sept) \~ Year**]{style="font-size: 16pt"}
+### **18°C Isotherm GAMs**
+
+```{r 07-05rmd-load-grouped-by-year-month-rds}
+
+# fyi, need to load this df from '04 rmd'
+grouped_by_year_month <- readRDS("../data/interim/04_grouped_by_year_month_Jan1981_Oct2023.rds")
+
+```
+
+```{r 07-05rmd-get-sum-stats-lat-year-sept-mar}
+# calc average lat of the 18deg C isotherm (165W-140W)
+mean_18deg_lat_by_year <- grouped_by_year_month %>%
+    group_by(year, x, month, day, month_abb) %>%
+        # filter(month == 9) %>%
+    filter(z >= 18 & z < 18.1) %>%
+    summarise(y = mean(y, na.rm=T),
+              z = mean(z, na.rm=T)) %>%
+    relocate(year, .after=x) %>%
+    relocate(y, .before=x) %>%
+    relocate(z, .after=x) %>%
+    mutate(mean_18degC_lat = y) %>%
+    ungroup() %>%
+    mutate(., c.month = row_number())
+
+```
 
 
-![March](images/gam_partial_plot_Mar_18C.png)
+```{r 07-gam-libraries}
+library(mgcv)
+library(gratia)
+```
 
-![Sept](images/gam_partial_plot_Sept_18C.png)
+[**Model: March Latitude of 18°C isotherm \~ Year**]{style="font-size: 16pt"}
 
-![Difference September - Mar 18°C Isotherm Position (Placeholder)](images/draft_fig4x_plot_mean_18deg_lat_by_year_diff_sept_mar_lm.png)
+```{r 07-gam-yr-mar}
+
+model_mar = gam(y~s(year, k=7, fx=T), #+s(month,bs="cc",k=12.5),
+                       data=mean_18deg_lat_by_year %>% filter(month == 3))
+```
+
+::: {.panel-tabset}
+
+#### Partial Plot
+```{r}
+df <- mean_18deg_lat_by_year %>% filter(month == 3)
+
+pd <- with(df, data.frame(year = seq(min(year),max(year),1)))
+pd <- cbind(pd, predict(model_mar, pd, se = TRUE))
+pd <- transform(pd, upr = fit + (2*se.fit), lwr = fit - (2*se.fit))
+
+ggplot(pd, aes(x = year, y = fit)) +
+    geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.2) +
+    geom_point(data = df, aes(year, y), col = 'dodgerblue') +
+    geom_line(alpha = 0.5) + 
+    labs(x = "Year", y = "Latitude (°N)")
+```
+
+
+#### GAM Summary
+```{r}
+summary(model_mar)
+```
+
+#### GAM Check
+```{r}
+gam.check(model_mar, rep=100)
+
+```
+<!-- ![March](images/gam_partial_plot_Mar_18C.png) -->
+:::
+
+
+<br>
+
+[**Model: September Latitude of 18°C isotherm \~ Year**]{style="font-size: 16pt"}
+
+<!-- ![Sept](images/gam_partial_plot_Sept_18C.png) -->
+```{r 07-gam-yr-sept}
+model_sept = gam(y~s(year, k=9, fx=T), #+s(month,bs="cc",k=12.5),
+                       data=mean_18deg_lat_by_year %>% filter(month == 9))
+```
+
+::: {.panel-tabset}
+
+#### Partial Plot
+```{r}
+df <- mean_18deg_lat_by_year %>% filter(month == 9)
+
+pd <- with(df, data.frame(year = seq(min(year),max(year),1)))
+pd <- cbind(pd, predict(model_sept, pd, se = TRUE))
+pd <- transform(pd, upr = fit + (2*se.fit), lwr = fit - (2*se.fit))
+
+ggplot(pd, aes(x = year, y = fit)) +
+    geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.2) +
+    geom_point(data = df, aes(year, y), col = 'dodgerblue') +
+    geom_line(alpha = 0.5) + 
+    labs(x = "Year", y = "Latitude (°N)")
+```
+
+
+#### GAM Summary
+```{r}
+summary(model_sept)
+```
+
+#### GAM Check
+```{r}
+gam.check(model_sept, rep=100)
+
+```
+<!-- ![March](images/gam_partial_plot_Mar_18C.png) -->
+:::
+
+
+
+[Difference September - Mar 18°C Isotherm Position (165°W - 140°W)]{style="font-size: 16pt"}
+
+```{r 07-05-gam-18degC-lat-year-output-diff-sept-mar}
+
+mean_18deg_lat_by_year_sept_only <- mean_18deg_lat_by_year %>% filter(month == 9)
+mean_18deg_lat_by_year_mar_only <- mean_18deg_lat_by_year %>% filter(month == 3)
+
+mean_18deg_lat_by_year_diff_sept_mar <- 
+    mean_18deg_lat_by_year %>% filter(month == 9 | month == 3) %>%
+    ungroup() %>%
+    dplyr::select(c("year", "month_abb", "mean_18degC_lat")) %>%
+    # filter(year > 1997) %>% # fyi, there is no march '97, so remove full year
+    spread(month_abb,mean_18degC_lat) %>%
+    mutate(y = Sep - Mar)
+
+```
+
+```{r}
+mean_18deg_lat_by_year_diff_sept_mar %>%
+ggplot(., aes(year, y)) +
+    geom_point(fill = "steelblue", colour = "steelblue", alpha = 0.6, size=2) +
+    # geom_line(colour = "steelblue", alpha = 0.9, lwd =1) +
+    # geom_smooth(method = "loess", colour = "black") +
+    geom_smooth(span = 0.3) +
+    theme(axis.title.x = element_blank(),
+          legend.position = "none") +
+    scale_x_continuous(breaks=seq(1985,2023,2)) + 
+    labs(x = 'Year', y = 'Difference Between Sept - Mar 18°C (°Latitude)',
+         caption = 'Loess smoother') 
+```
+
+<br>
+
+
+### **Turtle GAMs**
+
+
+{{< include 09b_northern_lats_cc_gams.qmd >}}
 
 
 ### Fig 5 \| Longterm Seasonal 18°C Isotherm Position
@@ -172,11 +384,10 @@ Average SST Isotherm Location:<br>
 
 <br>
 
-[*Placeholder figure: * Not sure this works because if Sept 1997 is given an El Nino value, then March 1997 is also given the El Nino value -- when it should be March 1998.]{style="font-size: 16pt"} 
 
 <br>
 
-![](images/plot_mar_sept_avg_lats_no_turtles_18C_enso_conds.png)
+![](images/plot_mar_sept_avg_lats_no_turtles_18C.png)
 <br>
 <br>
 

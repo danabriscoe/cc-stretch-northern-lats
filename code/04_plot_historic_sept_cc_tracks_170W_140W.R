@@ -88,7 +88,7 @@ plot_tracks_along_longitudes <- function(track_data, id, lon_range = '170E_140W'
         ggplot() + 
         geom_rect(aes_all(vars = c('xmin', 'xmax', 'ymin', 'ymax')), fill = "transparent", color = 'gray20', 
                   alpha = .3,
-                  data.frame(xmin = lon_bbox[1], xmax = lon_bbox[2], ymin = 30, ymax = 45)) +
+                  data.frame(xmin = lon_bbox[1], xmax = lon_bbox[2], ymin = 20, ymax = 50)) +
         
         geom_polygon(data = mapdata, aes(x=long, y = lat, group = group), color = "black", fill = "black") +
         
@@ -299,6 +299,58 @@ tracks_plot_list <-
     })
 
 
+# 4) PLOT TAGS BBOX -- 1st Septs & 1st marchs only: 178W - 140W (n=65 indivs) -----
+lons <- c(135, 250)
+lon_bbox <- c(make360(-178), make360(-140))
+
+subset_tags_178W_1st_septs_next_mar <- subset_tags_by_lons(df=subset_tags %>%
+                                                      group_by(id) %>%
+                                                      mutate(IDX = 1:n()) %>%
+                                                      # filter(month == 9) %>%
+                                                      mutate(sept_num = case_when((year == min(year)) ~ 1,
+                                                                                  (year != min(year)) ~2,
+                                                                                  TRUE ~ 0)) %>%
+                                                          mutate(mar_num = case_when((month == 3 & year <= min(year)+1) ~ 1,
+                                                                                     (month > 3 & year >= min(year)+1) ~2,
+                                                                                     (year >= min(year)+2) ~3,
+                                                                                     (year >= min(year)+3) ~4,
+                                                                                     (year >= min(year)+4) ~5,
+                                                                                     TRUE ~ 0)) %>%
+                                                          filter(mar_num < 2)
+                                                  , lon_rng = lons, lon_bbox = lon_bbox)
+# 
+# idx <- which(subset_tags_178W_1st_septs$id %in% subset_tags$id)
+# 
+# subset_tags_178W_1st_septs_next_mar <- #subset_tags[idx,] %>%
+#     subset_tags %>%
+#     mutate(mar_num = case_when((month == 3 & year <= min(year)+1) ~ 1,
+#                                 (month > 3 & year >= min(year)+1) ~2,
+#                                 TRUE ~ 0)) %>%
+#     filter(mar_num != 2)
+#     # filter(id == '19594_05')
+
+test <- subset_tags_178W_1st_septs_next_mar[subset_tags_178W_1st_septs_next_mar$id == '19594_05',]
+
+ids <- set_ids(subset_tags_178W_1st_septs_next_mar)
+
+# print n tags
+n_tags <- get_ntags(subset_tags_178W_1st_septs_next_mar)
+
+
+tracks_plot_list <- 
+    lapply(seq(1,n_tags), function(i) {
+        
+        g<- plot_tracks_along_longitudes(track_data = subset_tags_178W_1st_septs_next_mar, id = ids[i], 
+                                         lon_range = '130E_140W_lon_box_178W_1st_septs_next_mar', 
+                                         lon_bbox = lon_bbox,
+                                         .save_plot=TRUE) 
+        
+    })
+
+
+
+
+
 # save subset for extraction. First remove 2nd/3rd... septs (from manual inspection)
 
 subset_tags_178W_rm_uturn_septs <- subset_tags_178W %>%
@@ -320,7 +372,8 @@ subset_tags_178W_rm_uturn_septs <- subset_tags_178W %>%
 ## save for xtracto input
 saveRDS(subset_tags_178W_rm_uturn_septs, file = "./data/interim/historic_1997_2013_subset_tags_178W_rm_uturn_septs.rds")
 
-
+## save just 1st septs for extraction
+saveRDS(subset_tags_178W_1st_septs_next_mar, file = "./data/interim/historic_1997_2013_subset_tags_178W_1st_septs_next_mar.rds")
 
 # ####
 # mapdata <- map_data('world', wrap=c(-25,335), ylim=c(-55,75)) %>%

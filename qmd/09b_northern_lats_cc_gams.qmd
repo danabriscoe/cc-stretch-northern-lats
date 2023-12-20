@@ -1,0 +1,284 @@
+---
+title: "STRETCH - Northern Latitudes Draft MS Figures"
+author: ""
+date: ""
+format:
+  html:
+    theme: flatly
+    fontsize: 20px
+    toc: true
+    toc-expand: true	
+    number-sections: false
+    toc-location: left
+    number-depth: 2
+    smooth-scroll: true
+    fig-cap-location: top
+filters:
+  - lightbox
+lightbox: 
+  match: auto
+  effect: zoom
+  desc-position: top
+---
+
+```{=html}
+<style>
+.main-container {
+    max-width: 1600px !important;
+    margin-left: 0;
+    margin-right: 1;
+}
+
+#quarto-document-content {
+  width: 950px;
+}
+
+</style>
+
+<style type="text/css">
+  body{
+  font-size: 12.5pt;
+}
+
+h1, .title, .subtitle {
+    <!-- font-family: Arial, sans-serif; -->
+    <!-- font-weight: 700; -->
+    color: black;
+}
+
+h2, h3 {
+  color: #447099;
+  font-weight: 500;
+}
+
+</style>
+
+```
+
+
+```{r 09b-00-setup, include=FALSE}
+knitr::opts_chunk$set(
+    echo = FALSE,
+    eval = TRUE,
+    message = FALSE,
+    warning = FALSE,
+    dpi = 300#,
+    # fig.align = "center"
+    )
+
+# See Options: knitr::opts_chunk$get()
+```
+
+
+```{r 09b-load-obsdata-178W-140}
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(mgcv)
+library(ggplot2)
+library(gratia)
+
+```
+
+```{r 09b-load-cohort-1}
+source('../code/01_prep_turtle_data.R')
+
+raw_df <- raw_data_cohort_1_w_names
+daily_df <- daily_avg_data_cohort_1
+
+# make historic df consistent with cohort df(s)
+hist_df <-  historic_tags %>% wrangleHistDF()
+```
+
+
+```{r 09b-turtle-gams}
+
+obsdata <- readRDS(file = "../data/interim/historic_1997_2013_subset_tags_178W_rm_uturn_septs.rds") %>%
+    dplyr::select(-c(dt, IDX, sept_num)) %>%
+    mutate(id = as.character(id)) %>%
+    rbind(., daily_df) %>% 
+    ## for northern lats 165W to 140W long
+    filter(month == 9 | month == 3) %>%
+    filter(lon > -178 & lon < -140) 
+
+
+mean_cc_position_sept_mar_178W <- obsdata %>%
+    group_by(group, id, month, year) %>% # fyi - grouping to include month and year, for means so that 
+    summarise(lat = mean(lat, na.rm=TRUE),
+              lon = mean(lon, na.rm=TRUE)) %>%
+    mutate(lon = round(lon, 3),
+           lat = round(lat, 3)) %>%
+    mutate(id = as.factor(id)) %>%
+    as_tibble()
+
+```
+
+
+
+
+[**Model: Mean March Turtle Latitude \~ Year + Longitude**]{style="font-size: 16pt"}
+
+<br>
+
+```{r 09b-turtle-gam-mar}
+## March
+m = 3
+df = mean_cc_position_sept_mar_178W %>% filter(month == m)
+
+model_cc_mar = gam(lat~s(year, k=5) +s(lon, k=3),
+                       data=df)
+
+```
+
+::: {.panel-tabset}
+
+#### Partial Plot | Year
+```{r}
+# Create a data frame for predictions
+grid_data_year <- expand.grid(
+  year = round(seq(min(df$year), max(df$year), length = 100),0),
+  lon = mean(df$lon)  # Use the mean lon value for simplicity
+)
+
+# Make predictions on the grid
+grid_data_year$predicted_lat <- predict(model_cc_mar, newdata = grid_data_year)
+
+# grid_data_year <- grid_data_year %>% mutate(year == as.numeric(year))
+
+# Partial dependence plot using ggplot2 for Year
+ggplot(grid_data_year, aes(x = year, y = predicted_lat)) +
+  geom_point(data = df, aes(year, lat, col = factor(year))) +
+  geom_line() +
+  labs(x = "Year", y = "Lat", title = "Partial Dependence Plot for Year in March Turtle GAM",
+       subtitle = "Average Turtle Latitude Shown for Each Year", colour="Year")
+
+
+```
+
+#### Partial Plot | Longitude
+```{r}
+grid_data_lon <- expand.grid(
+  year = mean(df$year),  # Use the mean year value for simplicity
+  lon = seq(min(df$lon), max(df$lon), length = 100)
+)
+
+# Make predictions on the grid
+grid_data_lon$predicted_lat <- predict(model_cc_mar, newdata = data.frame(year = rep(mean(df$year), 100), lon = grid_data_lon$lon))
+
+# Partial dependence plot using ggplot2 for Lon
+ggplot(grid_data_lon, aes(x = lon, y = predicted_lat)) +
+  geom_point(data = df, aes(lon, lat, col = factor(year))) +
+  geom_line() +
+  labs(x = "Lon", y = "Lat", title = "Partial Dependence Plot for March Turtle Longitude in GAM",
+       subtitle = "Average Turtle Latitude & Longitudes Shown for Each Year", colour="Year")
+
+```
+
+
+
+#### GAM Summary
+```{r}
+summary(model_cc_mar)
+```
+
+#### GAM Check
+```{r}
+gam.check(model_cc_mar, rep=100)
+
+```
+
+:::
+
+
+<br>
+<br>
+
+[**Model: Mean September Turtle Latitude \~ Year + Longitude**]{style="font-size: 16pt"}
+
+<br>
+
+```{r 09b-turtle-gam-sept}
+## Sept
+m = 9
+df = mean_cc_position_sept_mar_178W %>% filter(month == m)
+
+model_cc_sept = gam(lat~s(year, k=4) +s(lon, k=3, fx=T),
+                       data=df)
+
+```
+
+::: {.panel-tabset}
+
+#### Partial Plot | Year
+```{r}
+# Create a data frame for predictions
+grid_data_year <- expand.grid(
+  year = round(seq(min(df$year), max(df$year), length = 100),0),
+  lon = mean(df$lon)  # Use the mean lon value for simplicity
+)
+
+# Make predictions on the grid
+grid_data_year$predicted_lat <- predict(model_cc_sept, newdata = grid_data_year)
+
+# grid_data_year <- grid_data_year %>% mutate(year == as.numeric(year))
+
+# Partial dependence plot using ggplot2 for Year
+ggplot(grid_data_year, aes(x = year, y = predicted_lat)) +
+  geom_point(data = df, aes(year, lat, col = factor(year))) +
+  geom_line() +
+  labs(x = "Year", y = "Lat", title = "Partial Dependence Plot for Year in Sept Turtle GAM",
+       subtitle = "Average Turtle Latitude Shown for Each Year",  colour="Year")
+
+
+```
+
+#### Partial Plot | Longitude
+```{r}
+grid_data_lon <- expand.grid(
+  year = mean(df$year),  # Use the mean year value for simplicity
+  lon = seq(min(df$lon), max(df$lon), length = 100)
+)
+
+# Make predictions on the grid
+grid_data_lon$predicted_lat <- predict(model_cc_sept, newdata = data.frame(year = rep(mean(df$year), 100), lon = grid_data_lon$lon))
+
+# Partial dependence plot using ggplot2 for Lon
+ggplot(grid_data_lon, aes(x = lon, y = predicted_lat)) +
+  geom_point(data = df, aes(lon, lat, col = factor(year))) +
+  geom_line() +
+  labs(x = "Lon", y = "Lat", title = "Partial Dependence Plot for Sept Turtle Longitude in GAM",
+       subtitle = "Average Turtle Latitude & Longitudes Shown for Each Year", colour="Year")
+
+```
+
+
+
+#### GAM Summary
+```{r}
+summary(model_cc_sept)
+```
+
+#### GAM Check
+```{r}
+gam.check(model_cc_sept, rep=100)
+
+```
+
+:::
+
+<br>
+
+[**TrialModel: Mean March Turtle Latitude \~ s(Year, Longitude)**]{style="font-size: 14pt"}
+
+Ran spatial model for sept lats ~ s(lon, year)
+
+<br>
+
+```{r}
+model_cc_sept <- gam(lat ~ s(lon, year, k = 5), data = df, method = "REML")
+draw(model_cc_sept, contour = TRUE, n = 50,
+     continuous_fill = scale_fill_distiller(palette = "Spectral",
+                                            type = "div"))
+```
+
+<br>
