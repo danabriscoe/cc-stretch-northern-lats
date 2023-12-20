@@ -13,6 +13,15 @@ library(data.table)
 
 
 ## Source functions ----
+# # dir depends on rmd or r
+# tryCatch( { source('../code/00_northern_lats_helper_functions.R') }
+#           , warning = function(w) { print("Cannot load source code (../)") })
+# 
+# tryCatch( { source('./code/00_northern_lats_helper_functions.R') }
+#           , warning = function(w) { print("Cannot load source code (./)") })
+
+
+# ## Source functions ----
 source('../code/00_northern_lats_helper_functions.R')
 
 
@@ -27,6 +36,14 @@ raw_data_cohort_1 <- load_wc_downloads(wc_files) %>%
 
 ## 2) Add turtle metadata ----
 # load metadata
+# # dir depends on rmd or r
+# tryCatch( { meta_files <- "../utils/2023_Turtle_Info.xlsx" }
+#           , warning = function(w) { print("Cannot load meta file (../)") })
+# 
+# tryCatch( { meta_files <- "./utils/2023_Turtle_Info.xlsx" }
+#           , warning = function(w) { print("Cannot load meta file (./)") })
+
+
 meta_files <- "../utils/2023_Turtle_Info.xlsx"
 meta_cohort_1 <- load_metadata_xls(meta_files)
 
