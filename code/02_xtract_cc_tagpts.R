@@ -71,34 +71,34 @@ getDateRangeX <- function(inpts, ncIn){
 raw_df <- raw_data_cohort_1_w_names
 daily_df <- daily_avg_data_cohort_1
 
-# make historic df consistent with cohort df(s)
-hist_df <-  historic_tags %>% wrangleHistDF()
+# # make historic df consistent with cohort df(s)
+# hist_df <-  historic_tags %>% wrangleHistDF()
+# 
+# # combine cohort 1 & historic dfs
+# df_all <- rbind(daily_df, hist_df)
+# 
+# # rename tagpts for consistency
+# obsdata <- df_all %>%
+#     filter(lon >=-180 & lon <= 0) %>%
+#     filter(month == 9 | month == 3 | month == 8) 
+# 
+# 
+# sst.lag = FALSE
+# if(sst.lag){
+# library(lubridate)
+# obsdata_sept_lag <- obsdata %>%
+#     filter(month == 9) %>%
+#     mutate(orig_date = date,
+#                date = ymd(as.Date(orig_date)) %m+% months(-1)) 
+# 
+# # rename for consistency:
+# obsdata <- obsdata_sept_lag
+# 
+# }
 
-# combine cohort 1 & historic dfs
-df_all <- rbind(daily_df, hist_df)
-
-# rename tagpts for consistency
-obsdata <- df_all %>%
-    filter(lon >=-180 & lon <= 0) %>%
-    filter(month == 9 | month == 3 | month == 8) 
-
-
-sst.lag = FALSE
-if(sst.lag){
-library(lubridate)
-obsdata_sept_lag <- obsdata %>%
-    filter(month == 9) %>%
-    mutate(orig_date = date,
-               date = ymd(as.Date(orig_date)) %m+% months(-1)) 
-
-# rename for consistency:
-obsdata <- obsdata_sept_lag
-
-}
-
-## for northern lats 165W to 140W long
-obsdata <- obsdata %>%
-    filter(lon > -165 & lon < -140)
+# ## for northern lats 165W to 140W long
+# obsdata <- obsdata %>%
+#     filter(lon > -165 & lon < -140)
 
 
 ### 2) Load alt file(s) ---------------------------------------------
@@ -110,6 +110,14 @@ obsdata <- readRDS(file = "./data/interim/historic_1997_2013_subset_tags_178W_rm
     filter(month == 9 | month == 3) %>%
     filter(lon > -178 & lon < -140) 
 
+## 1st septs
+obsdata <- readRDS(file = "./data/interim/historic_1997_2013_subset_tags_178W_1st_septs_next_mar.rds") %>%
+    dplyr::select(-c(dt, IDX, sept_num, mar_num)) %>%
+    mutate(id = as.character(id)) %>%
+    rbind(.,daily_df) %>% 
+    ## for northern lats 165W to 140W long
+    filter(month == 9 | month == 3) %>%
+    filter(lon > -178 & lon < -140) 
 
 
 ## PART 2: XTRACTO LOCAL ----------------------------------------------------------
@@ -257,6 +265,7 @@ na_by_cols <- lapply(obsdata, function(x) sum(is.na(x)))
 
 ## Save RDS File ----
 # saveRDS(obsdata, file = "./data/processed/xtracted_cc_sept_mar_aug_1997_2023.rds")
-saveRDS(obsdata, file = "./data/processed/xtracted_cc_sept_mar_178W_140W_1997_2023.rds")
+# saveRDS(obsdata, file = "./data/processed/xtracted_cc_sept_mar_178W_140W_1997_2023.rds")
+saveRDS(obsdata, file = "./data/processed/xtracted_cc_1st_septs_next_mar_178W_140W_1997_2023.rds")
 
 # saveRDS(obsdata, file = "../data/processed/xtracted_cc_sept_sst_lag_aug_1997_2023.rds") # only for sept turtle position - aug sst lag
